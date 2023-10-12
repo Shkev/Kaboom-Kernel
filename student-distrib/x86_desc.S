@@ -27,6 +27,12 @@ ldt_desc:
     .long ldt
 
     .align 4
+
+gdt_desc:
+    .word gdt_bottom - gdt - 1
+    .long gdt
+    .align 4
+
 tss:
 _tss:
     .rept 104
@@ -35,6 +41,7 @@ _tss:
 tss_bottom:
 
     .align  16
+
 gdt:
 _gdt:
 
