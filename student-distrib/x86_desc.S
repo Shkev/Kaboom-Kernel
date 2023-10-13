@@ -29,7 +29,7 @@ ldt_desc:
     .align 4
 
 gdt_desc:
-    .word gdt_bottom - gdt - 1
+    .long gdt_bottom - gdt - 1
     .long gdt
     .align 4
 
