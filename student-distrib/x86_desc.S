@@ -28,7 +28,7 @@ ldt_desc:
 
     .align 4
 
-gdt_desc:
+gdt_desc:                              # added gdt_desc size and ptr
     .long gdt_bottom - gdt - 1
     .long gdt
     .align 4
