@@ -7,6 +7,7 @@
 #include "interrupts/idt_handlers.h"
 #include "lib.h"
 #include "i8259.h"
+#include "init_devices.h"
 #include "debug.h"
 #include "tests.h"
 
@@ -207,7 +208,7 @@ void entry(unsigned long magic, unsigned long addr) {
     disable_all_irq();
     i8259_init();
     /* initialize devices. Turn on IRQs for these devices */
-
+    init_rtc();
     
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
