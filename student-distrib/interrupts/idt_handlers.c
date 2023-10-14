@@ -1,112 +1,126 @@
 #include "idt_handlers.h"
 #include "../lib.h"
 
+#define PRINT_HANDLER(task) printf("EXCEPTION: " task "error")
+
 
 void divide_zero_handler() {
-    printf("EXCEPTION: div 0 error");
+    PRINT_HANDLER("divide_zero");
     while(1);
 }
 
-// void exp_debug(){
-//     printf("EXCEPTION: debug error");
-//     while(1);
-// }
+void debug_handler() {
+    PRINT_HANDLER("debug");
+    while(1);
+}
 
-// void exp_nmi(){
-//     printf("EXCEPTION: non maskable interrupt");
-//     while(1);
-// }
-// void exp_breakpoint(){
-//     printf("EXCEPTION: breakpoint");
-//     while(1);
-// }
-// void exp_overflow(){
-//     printf("EXCEPTION: overflow");
-//     while(1);
-// }
-// void exp_bounds_range(){
-//     printf("EXCEPTION: out of bounds");
-//     while(1);
-// }
-// void exp_invalid_opcode(){
-//     printf("EXCEPTION: invalid opcode");
-//     while(1);
-// }
-// void exp_device_unavailable(){
-//     printf("EXCEPTION: device unavailable");
-//     while(1);
-// }
-// void exp_double_fault(){
-//     printf("EXCEPTION: double fault");
-//     while(1);
-// }
-// void exp_seg_overrun(){
-//     printf("EXCEPTION: coprocessor segment overrun");
-//     while(1);
-// }
-// void exp_invalid_tss(){
-//     printf("EXCEPTION: invalid tss");
-//     while(1);
-// }
-// void exp_seg_not_present(){
-//     printf("EXCEPTION: segment not present");
-//     while(1);
-// }
-// void exp_stack_seg_fault(){
-//     printf("EXCEPTION: stack segment fault");
-//     while(1);
-// }
-// void exp_general_protect_fault(){
-//     printf("EXCEPTION: general protection fault");
-//     while(1);
-// }
-// void exp_page_fault(){
-//     printf("EXCEPTION: page fault");
-//     while(1);
-// }
+void nmi_handler() {
+    PRINT_HANDLER("nmi");
+    while(1);
+}
 
+void breakpoint_handler() {
+    PRINT_HANDLER("breakpoint");
+    while(1);
+}
 
-// void exp_x87_floating_point(){
-//     printf("EXCEPTION: x87 floating point exception");
-//     while(1);
-// }
-// void exp_alignment_check(){
-//     printf("EXCEPTION: alignment check");
-//     while(1);
-// }
-// void exp_machine_check(){
-//     printf("EXCEPTION: machine check");
-//     while(1);
-// }
-// void exp_simd_float_point(){
-//     printf("EXCEPTION: SIMD floating point exception");
-//     while(1);
-// }
-// void exp_virtualization(){
-//     printf("EXCEPTION: virtualization exception");
-//     while(1);
-// }
-// void exp_control_protection(){
-//     printf("EXCEPTION: control protection exception");
-//     while(1);
-// }
-// void exp_hyper_injection(){
-//     printf("EXCEPTION: hypervisor injection exception");
-//     while(1);
-// }
-// void exp_vmm_communication(){
-//     printf("EXCEPTION: VMM communication exception");
-//     while(1);
-// }
-// void exp_security(){
-//     printf("EXCEPTION: security exception");
-//     while(1);
-// }
-// void exp_triple_fault(){
-//     printf("EXCEPTION: triple fault");
-//     while(1);
-// }
+void overflow_handler() {
+    PRINT_HANDLER("overflow");
+    while(1);
+}
 
-// void int_keyboard();
-// void int_rtc();
-// void int_system_call();
+void bnd_rng_exceed_handler() {
+    PRINT_HANDLER("bnd_rng_exceed");
+    while(1);
+}
+
+void invalid_opcode_handler() {
+    PRINT_HANDLER("invalid_opcode");
+    while(1);
+}
+
+void device_na_handler() {
+    PRINT_HANDLER("device_na");
+    while(1);
+}
+
+void double_fault_handler() {
+    PRINT_HANDLER("double_fault");
+    while(1);
+}
+
+void seg_overrun_handler() {
+    PRINT_HANDLER("seg_overrun");
+    while(1);
+}
+
+void invalid_tss_handler() {
+    PRINT_HANDLER("invalid_tss");
+    while(1);
+}
+
+void seg_nopres_handler() {
+    PRINT_HANDLER("seg_nopres");
+    while(1);
+}
+
+void stack_segfault_handler() {
+    PRINT_HANDLER("stack_segfault");
+    while(1);
+}
+
+void gen_protect_flt_handler() {
+    PRINT_HANDLER("gen_protect_flt");
+    while(1);
+}
+
+void pg_fault() {
+    PRINT_HANDLER("pg");
+    while(1);
+}
+
+void x87_fpe_handler() {
+    PRINT_HANDLER("x87_fpe");
+    while(1);
+}
+
+void align_check_handler() {
+    PRINT_HANDLER("align_check");
+    while(1);
+}
+
+void machine_check_handler() {
+    PRINT_HANDLER("machine_check");
+    while(1);
+}
+
+void simd_fpe_handler() {
+    PRINT_HANDLER("simd_fpe");
+    while(1);
+}
+
+void virt_handler() {
+    PRINT_HANDLER("virt");
+    while(1);
+}
+
+void ctl_protect_handler() {
+    PRINT_HANDLER("ctl_protect");
+    while(1);
+}
+
+void hpi_handler() {
+    PRINT_HANDLER("hpi");
+    while(1);
+}
+
+void vmm_comm_handler() {
+    PRINT_HANDLER("vmm_comm");
+    while(1);
+}
+
+void security_handler() {
+    PRINT_HANDLER("security");
+    while(1);
+}
+
