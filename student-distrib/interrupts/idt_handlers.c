@@ -3,7 +3,6 @@
 
 #define PRINT_HANDLER(task) printf("EXCEPTION: " task "error")
 
-
 void divide_zero_handler() {
     PRINT_HANDLER("divide_zero");
     while(1);

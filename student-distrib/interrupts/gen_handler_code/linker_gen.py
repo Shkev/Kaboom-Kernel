@@ -14,16 +14,6 @@ with open("set_idt.c", "w") as f:
         f.write(s)
 
 with open("linkage.asm", "w") as f:
-    for h in handlers:
-        l = h[:-10]
-        l += "linkage"
-        s = f"""
-{l}:
-    pushal
-    pushfl
-    call {h[:-3]}
-    popfl
-    popal
-    iret
-        """
+    for l, h in zip(linkers, handlers):
+        s = f"INTR_LINK({l}, {h[:-3]})\n\n"
         f.write(s)
