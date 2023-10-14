@@ -60,6 +60,13 @@ extern void vmm_comm_handler();
 /* security exception handler */
 extern void security_handler();
 
+
+/* Interrupt handlers. Do something in response to interrupt from a device */
+
+extern void rtc_handler();
+
+extern void kbd_handler();
+
 /* ----------------------------------------------------------------- */
 
 /* Exception functions. Assembly wrappers around interrupt handlers.
@@ -116,5 +123,11 @@ extern void hpi_linkage();
 extern void vmm_comm_linkage();
 
 extern void security_linkage();
+
+/* linkage for interrupts */
+
+extern void rtc_linkage();
+
+extern void kbd_linkage();
 
 #endif // IDT_FNCS_H

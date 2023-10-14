@@ -3,7 +3,6 @@
 
 #define PRINT_HANDLER(task) printf("EXCEPTION: " task "error")
 
-
 void divide_zero_handler() {
     PRINT_HANDLER("divide_zero");
     while(1);
@@ -124,3 +123,19 @@ void security_handler() {
     while(1);
 }
 
+/* Interrupt Handlers */
+
+void rtc_handler() {
+    /* We read register C to see what type of interrupt occured.
+    * If register C not read RTC will not send future interrupts */
+    // select register C on RTC
+    outb(0x0C, 0x70);
+    // throw away info about interrupt. Change this later to do something
+    (void)inb(0x71);
+    
+    test_interrupts();
+}
+
+void kbd_handler() {
+    
+}
