@@ -29,11 +29,13 @@ void disable_all_irq() {
     disable_all_master_irq();
 }
 
+void enable_all_irq()  {
+    outb(master_mask, MASTER_8259_DATA);
+    outb(slave_mask, SLAVE_8259_DATA);
+}
+
 /* Initialize the 8259 PIC */
 void i8259_init(void) {
-    master_mask = inb(MASTER_8259_DATA);
-    slave_mask = inb(SLAVE_8259_DATA);
-
     outb(ICW1,MASTER_8259_PORT);
     outb(ICW2_MASTER,MASTER_8259_DATA);
     outb(ICW3_MASTER,MASTER_8259_DATA);
@@ -43,10 +45,6 @@ void i8259_init(void) {
     outb(ICW2_SLAVE,SLAVE_8259_DATA);
     outb(ICW3_SLAVE,SLAVE_8259_DATA);
     outb(ICW4,SLAVE_8259_DATA);
-
-    outb(master_mask,MASTER_8259_DATA);
-    outb(slave_mask,SLAVE_8259_DATA);
-
 }
 
 /* Enable (unmask) the specified IRQ */

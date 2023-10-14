@@ -40,6 +40,9 @@ extern void disable_all_slave_irq();
 /* disable all IRQs on all PICs */
 extern void disable_all_irq();
 
+/* enable all IRQs on all PICs (restore to state before disable_all_irq called) */
+extern void enable_all_irq();
+
 /* Initialize both PICs */
 extern void i8259_init(void);
 /* Enable (unmask) the specified IRQ */
