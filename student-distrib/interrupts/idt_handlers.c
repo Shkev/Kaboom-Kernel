@@ -74,7 +74,7 @@ void gen_protect_flt_handler() {
     while(1);
 }
 
-void pg_fault() {
+void pg_fault_handler() {
     PRINT_HANDLER("pg");
     while(1);
 }

@@ -37,7 +37,7 @@ extern void stack_segfault_handler();
 extern void gen_protect_flt_handler();
 
 /* page fault */
-extern void pg_fault();
+extern void pg_fault_handler();
 
 extern void x87_fpe_handler();
 
@@ -97,7 +97,7 @@ extern void stack_segfault_linkage();
 
 extern void gen_protect_flt_linkage();
 
-extern void pg_fault();
+extern void pg_fault_linkage();
 
 extern void x87_fpe_linkage();
 

@@ -12,7 +12,7 @@ extern void invalid_tss_handler();
 extern void seg_nopres_handler();
 extern void stack_segfault_handler();
 extern void gen_protect_flt_handler();
-extern void pg_fault();
+extern void pg_fault_handler();
 extern void x87_fpe_handler();
 extern void align_check_handler();
 extern void machine_check_handler();
