@@ -64,5 +64,5 @@ INTR_LINK(security_linkage, security_handler)
 	
 INTR_LINK(rtc_linkage, rtc_handler)
 
-INTR_LINK(kbd_linkage, kbd_handler
+INTR_LINK(kbd_linkage, kbd_handler)
 	
