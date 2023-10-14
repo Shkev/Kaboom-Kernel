@@ -4,6 +4,7 @@
 
 #include "multiboot.h"
 #include "x86_desc.h"
+// #include "idt_functions_asm.h"
 #include "lib.h"
 #include "i8259.h"
 #include "debug.h"
@@ -134,6 +135,75 @@ void entry(unsigned long magic, unsigned long addr) {
         tss.ss0 = KERNEL_DS;
         tss.esp0 = 0x800000;
         ltr(KERNEL_TSS);
+    }
+    //===================================================
+    //OUR CODE
+    //===================================================
+    /* Construct an IDT table*/
+    {
+
+        int idt_init;
+        for(idt_init = 0; idt_init < NUM_VEC; idt_init++){
+            
+            idt[idt_init].seg_selector = KERNEL_CS;
+
+            idt[idt_init].reserved4 = 0;
+            idt[idt_init].reserved3 = 0;
+            idt[idt_init].reserved2 = 0;
+            idt[idt_init].reserved1 = 0;
+            idt[idt_init].reserved0 = 0;
+
+            idt[idt_init].size = 0;    //each gate is 32 bits
+            idt[idt_init].dpl = 0;
+            idt[idt_init].present = 0;
+        }
+
+        //initialize IDT entries 0x00-0x1F
+        for(idt_init = 0x00; idt_init < 0x1F; idt_init++){
+            idt[idt_init].present = 1;
+        }
+
+        idt[0x21].present = 1;      //keyboard interrupts
+        idt[0x28].present = 1;      //RTC interrupts
+        
+        idt[0x80].present = 1;      //system calls
+        idt[0x80].dpl = 3;
+
+        SET_IDT_ENTRY(idt[0x0], exp1);
+        // SET_IDT_ENTRY(idt[0x1], debug);
+        // SET_IDT_ENTRY(idt[0x2], nmi);
+        // SET_IDT_ENTRY(idt[0x3], breakpoint);
+        // SET_IDT_ENTRY(idt[0x4], overflow);
+        // SET_IDT_ENTRY(idt[0x5], bounds_range);
+        // SET_IDT_ENTRY(idt[0x6], invalid_opcode);
+        // SET_IDT_ENTRY(idt[0x7], device_unavailable);
+        // SET_IDT_ENTRY(idt[0x8], double_fault);
+
+        // SET_IDT_ENTRY(idt[0x9], seg_overrun);
+
+        // SET_IDT_ENTRY(idt[0xA], invalid_tss);
+        // SET_IDT_ENTRY(idt[0xB], seg_not_present);
+        // SET_IDT_ENTRY(idt[0xC], stack_seg_fault);
+        // SET_IDT_ENTRY(idt[0xD], general_protect_fault);
+        // SET_IDT_ENTRY(idt[0xE], page_fault);
+
+        // SET_IDT_ENTRY(idt[0x10], x87_floating_point);
+        // SET_IDT_ENTRY(idt[0x11], alignment_check);
+        // SET_IDT_ENTRY(idt[0x12], machine_check);
+        // SET_IDT_ENTRY(idt[0x13], simd_float_point);
+        // SET_IDT_ENTRY(idt[0x14], virtualization);
+        // SET_IDT_ENTRY(idt[0x15], control_protection);
+
+        // SET_IDT_ENTRY(idt[0x1C], hyper_injection);
+        // SET_IDT_ENTRY(idt[0x1D], vmm_communication);
+        // SET_IDT_ENTRY(idt[0x1E], security);
+
+        // SET_IDT_ENTRY(idt[0x21], keyboard);
+        // SET_IDT_ENTRY(idt[0x28], rtc);
+
+        // SET_IDT_ENTRY(idt[0x80], system_call);
+        //===============================================
+
     }
 
     /* Init the PIC */
