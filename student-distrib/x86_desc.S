@@ -29,7 +29,7 @@ ldt_desc:
     .align 4
 
 gdt_desc:                              # added gdt_desc size and ptr
-    .long gdt_bottom - gdt - 1
+    .word gdt_bottom - gdt - 1
     .long gdt
     .align 4
 
@@ -111,5 +111,6 @@ _idt:
     .rept NUM_VEC
     .quad 0
     .endr
+
 
 idt_bottom:
