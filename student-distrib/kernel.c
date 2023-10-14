@@ -4,7 +4,7 @@
 
 #include "multiboot.h"
 #include "x86_desc.h"
-// #include "idt_functions_asm.h"
+#include "interrupts/idt_handlers.h"
 #include "lib.h"
 #include "i8259.h"
 #include "debug.h"
@@ -169,7 +169,7 @@ void entry(unsigned long magic, unsigned long addr) {
         idt[0x80].present = 1;      //system calls
         idt[0x80].dpl = 3;
 
-        SET_IDT_ENTRY(idt[0x0], exp1);
+        SET_IDT_ENTRY(idt[0x0], divide_zero_linkage);
         // SET_IDT_ENTRY(idt[0x1], debug);
         // SET_IDT_ENTRY(idt[0x2], nmi);
         // SET_IDT_ENTRY(idt[0x3], breakpoint);
