@@ -10,11 +10,23 @@
 uint8_t master_mask; /* IRQs 0-7  */
 uint8_t slave_mask;  /* IRQs 8-15 */
 
-void disable_irq(void){
+void disable_all_master_irq() {
     int irq;
-    for(irq = 0;irq < 16; irq++){
+    for(irq = 0; irq <= 7; irq++){
         disable_irq(irq);
     }
+}
+
+void disable_all_slave_irq() {
+    int irq;
+    for(irq = 8; irq <= 15; irq++){
+        disable_irq(irq);
+    }
+}
+
+void disable_all_irq() {
+    disable_all_slave_irq();
+    disable_all_master_irq();
 }
 
 /* Initialize the 8259 PIC */
@@ -41,17 +53,16 @@ void i8259_init(void) {
 void enable_irq(uint32_t irq_num) {
     uint16_t pic_port;
     uint8_t pic_data;
-    assert (irq_num<= 15); //easier to debug if we fuck up
 
-    if(irq_num < 8){        //calculate which PIC the interrupt is coming from
+    // determine which PIC the interrupt is coming from
+    if(irq_num < 8) {
         pic_port = MASTER_8259_DATA;
-    }
-    else{
+    } else {
         pic_port = SLAVE_8259_DATA; 
         irq_num -= 8;
     }
 
-    pic_data = inb(pic_port) & (1 << irq_num); //enable the mask
+    pic_data = inb(pic_port) & (1 << irq_num); // enable the mask
     outb(pic_data,pic_port);
 }
 
@@ -59,24 +70,22 @@ void enable_irq(uint32_t irq_num) {
 void disable_irq(uint32_t irq_num) {
     uint16_t pic_port;
     uint8_t pic_data;
-    assert (irq_num<= 15);
 
-    if(irq_num < 8){        //calculate which PIC the interrupt is coming from
+    // determine which PIC the interrupt is coming from
+    if(irq_num < 8) {
         pic_port = MASTER_8259_DATA;
-    }
-    else{
+    } else {
         pic_port = SLAVE_8259_DATA; 
         irq_num -= 8;
     }
 
     pic_data = inb(pic_port) & ~(1 << irq_num); //disable the mask
     outb(pic_data,pic_port);
-
 }
 
 /* Send end-of-interrupt signal for the specified IRQ */
 void send_eoi(uint32_t irq_num) {
-    if(irq_num >= 8){
+    if (irq_num >= 8) {
         outb(MASTER_8259_PORT,EOI);
     }
     outb(SLAVE_8259_PORT,EOI);
