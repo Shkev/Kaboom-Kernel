@@ -149,9 +149,3 @@ tags
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/vim,emacs,c,visualstudiocode,assembler
-
-**/Makefile.dep
-
-# binaries from mp
-**/mp3.img
-**/bootimg
