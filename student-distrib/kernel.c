@@ -164,7 +164,7 @@ void entry(unsigned long magic, unsigned long addr) {
             idt[idt_init].present = 1;
         }
 
-	// change 0x21, 0x28 to interrupt gates (add more later?)
+	// change 0x21, 0x28 to interrupt gates (kbd and rtc for now; add more later?)
 	idt[0x21].reserved3 = 0;
 	idt[0x28].reserved3 = 0;
 
@@ -198,6 +198,9 @@ void entry(unsigned long magic, unsigned long addr) {
 	SET_IDT_ENTRY(idt[0x1C], hpi_linkage);
 	SET_IDT_ENTRY(idt[0x1D], vmm_comm_linkage);
 	SET_IDT_ENTRY(idt[0x1D], security_linkage);
+
+	SET_IDT_ENTRY(idt[0x21], kdb_linkage);
+	SET_IDT_ENTRY(idt[0x28], rtc_linkage);
 
         //===============================================
 

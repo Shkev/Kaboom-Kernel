@@ -9,7 +9,9 @@
 	iret                 
 	
 .text
-	
+
+### Linkage for exception handlers 
+
 INTR_LINK(divide_zero_linkage, divide_zero_handler)
 
 INTR_LINK(debug_linkage, debug_handler)
@@ -58,3 +60,9 @@ INTR_LINK(vmm_comm_linkage, vmm_comm_handler)
 
 INTR_LINK(security_linkage, security_handler)
 
+### Linkage for interrupt handlers
+	
+INTR_LINK(rtc_linkage, rtc_handler)
+
+INTR_LINK(kbd_linkage, kbd_handler
+	
