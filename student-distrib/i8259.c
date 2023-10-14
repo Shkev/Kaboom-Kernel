@@ -5,22 +5,86 @@
 #include "i8259.h"
 #include "lib.h"
 
+
 /* Interrupt masks to determine which interrupts are enabled and disabled */
 uint8_t master_mask; /* IRQs 0-7  */
 uint8_t slave_mask;  /* IRQs 8-15 */
 
+void disable_all_master_irq() {
+    int irq;
+    for(irq = 0; irq <= 7; irq++){
+        disable_irq(irq);
+    }
+}
+
+void disable_all_slave_irq() {
+    int irq;
+    for(irq = 8; irq <= 15; irq++){
+        disable_irq(irq);
+    }
+}
+
+void disable_all_irq() {
+    disable_all_slave_irq();
+    disable_all_master_irq();
+}
+
+void enable_all_irq()  {
+    outb(master_mask, MASTER_8259_DATA);
+    outb(slave_mask, SLAVE_8259_DATA);
+}
+
 /* Initialize the 8259 PIC */
 void i8259_init(void) {
+    outb(ICW1,MASTER_8259_PORT);
+    outb(ICW2_MASTER,MASTER_8259_DATA);
+    outb(ICW3_MASTER,MASTER_8259_DATA);
+    outb(ICW4,MASTER_8259_DATA);
+
+    outb(ICW1,SLAVE_8259_PORT);
+    outb(ICW2_SLAVE,SLAVE_8259_DATA);
+    outb(ICW3_SLAVE,SLAVE_8259_DATA);
+    outb(ICW4,SLAVE_8259_DATA);
 }
 
 /* Enable (unmask) the specified IRQ */
 void enable_irq(uint32_t irq_num) {
+    uint16_t pic_port;
+    uint8_t pic_data;
+
+    // determine which PIC the interrupt is coming from
+    if(irq_num < 8) {
+        pic_port = MASTER_8259_DATA;
+    } else {
+        pic_port = SLAVE_8259_DATA; 
+        irq_num -= 8;
+    }
+
+    pic_data = inb(pic_port) & (1 << irq_num); // enable the mask
+    outb(pic_data,pic_port);
 }
 
 /* Disable (mask) the specified IRQ */
 void disable_irq(uint32_t irq_num) {
+    uint16_t pic_port;
+    uint8_t pic_data;
+
+    // determine which PIC the interrupt is coming from
+    if(irq_num < 8) {
+        pic_port = MASTER_8259_DATA;
+    } else {
+        pic_port = SLAVE_8259_DATA; 
+        irq_num -= 8;
+    }
+
+    pic_data = inb(pic_port) & ~(1 << irq_num); //disable the mask
+    outb(pic_data,pic_port);
 }
 
 /* Send end-of-interrupt signal for the specified IRQ */
 void send_eoi(uint32_t irq_num) {
+    if (irq_num >= 8) {
+        outb(MASTER_8259_PORT,EOI);
+    }
+    outb(SLAVE_8259_PORT,EOI);
 }

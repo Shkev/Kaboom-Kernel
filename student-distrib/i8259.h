@@ -11,6 +11,8 @@
 /* Ports that each PIC sits on */
 #define MASTER_8259_PORT    0x20
 #define SLAVE_8259_PORT     0xA0
+#define MASTER_8259_DATA    0x21
+#define SLAVE_8259_DATA     0xA1
 
 /* Initialization control words to init each PIC.
  * See the Intel manuals for details on the meaning
@@ -29,13 +31,25 @@
 
 /* Externally-visible functions */
 
+/* disable all IRQs on master PIC */
+extern void disable_all_master_irq();
+
+/* disable all IRQs on slave PIC */
+extern void disable_all_slave_irq();
+
+/* disable all IRQs on all PICs */
+extern void disable_all_irq();
+
+/* enable all IRQs on all PICs (restore to state before disable_all_irq called) */
+extern void enable_all_irq();
+
 /* Initialize both PICs */
-void i8259_init(void);
+extern void i8259_init(void);
 /* Enable (unmask) the specified IRQ */
-void enable_irq(uint32_t irq_num);
+extern void enable_irq(uint32_t irq_num);
 /* Disable (mask) the specified IRQ */
-void disable_irq(uint32_t irq_num);
+extern void disable_irq(uint32_t irq_num);
 /* Send end-of-interrupt signal for the specified IRQ */
-void send_eoi(uint32_t irq_num);
+extern void send_eoi(uint32_t irq_num);
 
 #endif /* _I8259_H */
