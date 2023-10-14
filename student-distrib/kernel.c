@@ -200,7 +200,7 @@ void entry(unsigned long magic, unsigned long addr) {
 	SET_IDT_ENTRY(idt[0x1D], vmm_comm_linkage);
 	SET_IDT_ENTRY(idt[0x1E], security_linkage);
 
-	SET_IDT_ENTRY(idt[0x21], kdb_linkage);
+	SET_IDT_ENTRY(idt[0x21], kbd_linkage);
 	SET_IDT_ENTRY(idt[0x28], rtc_linkage);
 
         //===============================================
