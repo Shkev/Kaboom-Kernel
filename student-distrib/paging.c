@@ -4,8 +4,8 @@
 // 3 FUNCTIONS; page_init (C), load_page_directory (ASM), enablePaging (ASM), extra one in case needed: flushTLB (C)
 
 // make an array of structs for the directories and tables
-pagedirectory pdarray[PAGEDIREC_SIZE] __attribute__((aligned (PAGE_SIZE))); //fix this line
-pageTable ptarray[PAGETABLE_SIZE] __attribute__((aligned (PAGE_SIZE)));
+// pagedirectory_t pdarray[PAGEDIREC_SIZE] __attribute__((aligned (PAGE_SIZE))); //fix this line
+// struct pageTable_t ptarray[PAGETABLE_SIZE] __attribute__((aligned (PAGE_SIZE)));
 
 ///////////////////////////////////////////////// INITIALIZING EVERYTHING IN REGARDS TO PAGES //////////////////////////////////////////
 
@@ -45,7 +45,7 @@ void page_init()
     {
         if (j == 0)
         {
-            pdarray[j].pageKB.pdbaseaddress = ((&ptarray[0][0] >> 12) & 0xFFFFF);           //(uint32_t)(&ptarray[0][0] >> 12);             /* SET THE INITIAL 20 BITS */
+            pdarray[j].pageKB.pdbaseaddress = (((unsigned int)ptarray) >> 12);           //(uint32_t)(&ptarray[0][0] >> 12);             /* SET THE INITIAL 20 BITS */
             pdarray[j].pageKB.availabilitypd = 0;                                           /* SET THE AVAILABILITY BITS */
             pdarray[j].pageKB.ps0 = 0;                       /* SET THE PAGE SIZE BITS */
             pdarray[j].pageKB.avl = 0;                       /* SET THE AVAILABILITY BITS */
@@ -85,7 +85,7 @@ void page_init()
         }
     }
 
-    load_page_directory((unsigned int) pdarray);
+    load_page_directory((unsigned int*) pdarray);
     enablePaging();
     allowMixedPages();
 }

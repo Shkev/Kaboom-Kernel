@@ -20,7 +20,7 @@
 load_page_directory:
     pushl %ebp
     mov %esp, %ebp
-    mov 8(%esp), %eax
+    mov 8(%ebp), %eax
     mov %eax, %cr3
     mov %ebp, %esp
     popl %ebp
@@ -41,14 +41,9 @@ enablePaging:
 allowMixedPages:
     push %ebp
     mov %esp, %ebp
-    # mov %eax, %cr4
     mov %cr4, %eax
-    # or %eax, $0x00000010
     or $0x00000010, %eax
-
-    # mov %cr4, %eax
     mov %eax, %cr4
-	
     mov %ebp, %esp
     pop %ebp
     ret
