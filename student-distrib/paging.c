@@ -8,7 +8,6 @@
 // struct pageTable_t ptarray[PAGETABLE_SIZE] __attribute__((aligned (PAGE_SIZE)));
 
 ///////////////////////////////////////////////// INITIALIZING EVERYTHING IN REGARDS TO PAGES //////////////////////////////////////////
-
 void page_init()
 {
     unsigned int i;

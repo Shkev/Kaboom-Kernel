@@ -1,16 +1,16 @@
 #ifndef PAGING_H
 #define PAGING_H
+#include "types.h"
 
 #define PAGEDIREC_SIZE 1024	/* size of the non 4 mb page directory */
 #define PAGETABLE_SIZE 1024	/* size of the page table */
 #define PAGE_SIZE 4096		/* size of an individual page */
 
-#include "types.h"
 
-void load_page_directory(unsigned int*);
-void enablePaging();
-void allowMixedPages();
-// void page_init();
+extern void load_page_directory(unsigned int*);
+extern void enablePaging();
+extern void allowMixedPages();
+extern void page_init();
 
 ////////////////////////////////////////////////// PAGE DIRECTORY NON 4MB STRUCT /////////////////////////////////////////////////////
 typedef struct __attribute__ ((packed, aligned(4))) pagedirectKB_t {
@@ -27,7 +27,7 @@ typedef struct __attribute__ ((packed, aligned(4))) pagedirectKB_t {
 } pagedirectKB_t;
 
 ////////////////////////////////////////////////// PAGE DIRECTORY 4MB STRUCT /////////////////////////////////////////////////////
-typedef struct __attribute__ ((packed,  aligned(4))) pagedirectMB_t {
+typedef struct __attribute__ ((packed, aligned(4))) pagedirectMB_t {
     uint32_t presentpd4mb : 1;
     uint32_t read_writepd4mb : 1;
     uint32_t user_supervisorpd4mb : 1;
@@ -66,7 +66,7 @@ typedef struct __attribute__ ((packed,  aligned(4))) pageTable_t {
 } pageTable_t;
 
 
-pagedirectory_t pdarray[PAGEDIREC_SIZE] __attribute__((aligned (PAGE_SIZE))); //fix this line
-struct pageTable_t ptarray[PAGETABLE_SIZE] __attribute__((aligned (PAGE_SIZE)));
+pagedirectory_t pdarray[PAGEDIREC_SIZE] __attribute__((aligned (PAGE_SIZE)));
+struct pageTable_t ptarray[PAGETABLE_SIZE] __attribute__((aligned (PAGE_SIZE))); //do i need struct again if i typedef'd it
 
 #endif

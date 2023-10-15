@@ -11,43 +11,9 @@
 .globl tss, tss_desc_ptr, ldt, ldt_desc_ptr
 .globl gdt_ptr
 .globl idt_desc_ptr, idt
-.globl load_page_directory, enablePaging, allowMixedPages
-
 
 
 .align 4
-
-load_page_directory:
-    pushl %ebp
-    mov %esp, %ebp
-    mov 8(%ebp), %eax
-    mov %eax, %cr3
-    mov %ebp, %esp
-    popl %ebp
-    ret
-
-
-enablePaging:
-    pushl %ebp
-    mov %esp, %ebp
-    mov %cr0, %eax
-    #or $0x80000000, %eax
-    or $0x80000001, %eax
-    mov %eax, %cr0
-    mov %ebp, %esp
-    popl %ebp
-    ret
-
-allowMixedPages:
-    push %ebp
-    mov %esp, %ebp
-    mov %cr4, %eax
-    or $0x00000010, %eax
-    mov %eax, %cr4
-    mov %ebp, %esp
-    pop %ebp
-    ret
-
 
 tss_size:
     .long tss_bottom - tss - 1
