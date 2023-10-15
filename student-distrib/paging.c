@@ -54,46 +54,49 @@ void page_init()
     {
         if (j == 0)
         {
-            pagedirectory[j].pageKB.pdbaseaddress = (uint32_t)(&ptarray[0][0] >> 12);             /* SET THE INITIAL 20 BITS */
-            pagedirectory[j].pageKB.availabilitypd = 0;                                           /* SET THE AVAILABILITY BITS */
-            pagedirectory[j].pageKB.ps0 = 0;                       /* SET THE PAGE SIZE BITS */
-            pagedirectory[j].pageKB.avl = 0;                       /* SET THE AVAILABILITY BITS */
-            pagedirectory[j].pageKB.accessedpd = 0;                /* SET THE ACCESSED BITS */
-            pagedirectory[j].pageKB.cachedisablepd = 0;            /* SET THE CACHE DISABLE BITS */
-            pagedirectory[j].pageKB.writethroughpd = 0;            /* SET THE WRITE-THROUGH BITS */
-            pagedirectory[j].pageKB.user_supervisorpd = 0;         /* SET THE USER SUPERVISOR BITS */
-            pagedirectory[j].pageKB.read_writepd = 1;              /* SET THE READ WRITE BITS */               //according to setting up page tables
-            pagedirectory[j].pageKB.presentpd = 0;                 /* SET THE PRESENT BITS */
+            pdarray[j].pageKB.pdbaseaddress = (uint32_t)(&ptarray[0][0] >> 12);             /* SET THE INITIAL 20 BITS */
+            pdarray[j].pageKB.availabilitypd = 0;                                           /* SET THE AVAILABILITY BITS */
+            pdarray[j].pageKB.ps0 = 0;                       /* SET THE PAGE SIZE BITS */
+            pdarray[j].pageKB.avl = 0;                       /* SET THE AVAILABILITY BITS */
+            pdarray[j].pageKB.accessedpd = 0;                /* SET THE ACCESSED BITS */
+            pdarray[j].pageKB.cachedisablepd = 0;            /* SET THE CACHE DISABLE BITS */
+            pdarray[j].pageKB.writethroughpd = 0;            /* SET THE WRITE-THROUGH BITS */
+            pdarray[j].pageKB.user_supervisorpd = 0;         /* SET THE USER SUPERVISOR BITS */
+            pdarray[j].pageKB.read_writepd = 1;              /* SET THE READ WRITE BITS */               //according to setting up page tables
+            pdarray[j].pageKB.presentpd = 0;                 /* SET THE PRESENT BITS */
         } else if (j == 1)
         {
-            pagedirectory[j].pageMB.bit31_22pd = 0;                /* SET THE INITIAL 10 BITS TO ZERO */
-            pagedirectory[j].pageMB.rsvd = 0;                      /* SET THE RESERVED BITS TO ZERO */
-            pagedirectory[j].pageMB.bit39_32pd = 0;                /* SET THE RANDOM BITS TO ZERO */
-            pagedirectory[j].pageMB.page_attribute_table = 0;      /* SET THE PAGE ATTRIBUTE TABLE BITS TO ZERO */
-            pagedirectory[j].pageMB.availabilitypd4mb = 0;         /* SET THE AVAILABILITY BITS TO ZERO */
-            pagedirectory[j].pageMB.global4mb = 0;                 /* SET THE GLOBAL BITS TO ZERO */
-            pagedirectory[j].pageMB.ps14mb = 1;                    /* SET THE PAGE SIZE BITS TO ZERO */
-            pagedirectory[j].pageMB.dirty4mb = 0;                  /* SET THE DIRTY BITS TO ZERO */
-            pagedirectory[j].pageMB.accessedpd4mb = 0;             /* SET THE ACCESS BITS TO ZERO */
-            pagedirectory[j].pageMB.cachedisablepd4mb = 0;         /* SET THE CACHE DISABLE BITS TO ZERO */
-            pagedirectory[j].pageMB.writethroughpd4mb = 0;         /* SET THE WRITE-THROUGH BITS TO ZERO */
-            pagedirectory[j].pageMB.user_supervisorpd4mb = 0;      /* SET THE USER SUPERVISOR BITS TO ZERO */
-            pagedirectory[j].pageMB.read_writepd4mb = 1;           /* SET THE READ WRITE BITS TO ZERO */
-            pagedirectory[j].pageMB.presentpd4mb = 0;              /*  SET THE PRESENT BITS TO ZERO */
+            pdarray[j].pageMB.bit31_22pd = 0;                /* SET THE INITIAL 10 BITS TO ZERO */
+            pdarray[j].pageMB.rsvd = 0;                      /* SET THE RESERVED BITS TO ZERO */
+            pdarray[j].pageMB.bit39_32pd = 0;                /* SET THE RANDOM BITS TO ZERO */
+            pdarray[j].pageMB.page_attribute_table = 0;      /* SET THE PAGE ATTRIBUTE TABLE BITS TO ZERO */
+            pdarray[j].pageMB.availabilitypd4mb = 0;         /* SET THE AVAILABILITY BITS TO ZERO */
+            pdarray[j].pageMB.global4mb = 0;                 /* SET THE GLOBAL BITS TO ZERO */
+            pdarray[j].pageMB.ps14mb = 1;                    /* SET THE PAGE SIZE BITS TO ZERO */
+            pdarray[j].pageMB.dirty4mb = 0;                  /* SET THE DIRTY BITS TO ZERO */
+            pdarray[j].pageMB.accessedpd4mb = 0;             /* SET THE ACCESS BITS TO ZERO */
+            pdarray[j].pageMB.cachedisablepd4mb = 0;         /* SET THE CACHE DISABLE BITS TO ZERO */
+            pdarray[j].pageMB.writethroughpd4mb = 0;         /* SET THE WRITE-THROUGH BITS TO ZERO */
+            pdarray[j].pageMB.user_supervisorpd4mb = 0;      /* SET THE USER SUPERVISOR BITS TO ZERO */
+            pdarray[j].pageMB.read_writepd4mb = 1;           /* SET THE READ WRITE BITS TO ZERO */
+            pdarray[j].pageMB.presentpd4mb = 0;              /*  SET THE PRESENT BITS TO ZERO */
         } else {
-            pagedirectory[j].pageKB.pdbaseaddress = 0;             /* SET THE INITIAL 20 BITS */
-            pagedirectory[j].pageKB.availabilitypd = 0;            /* SET THE AVAILABILITY BITS */
-            pagedirectory[j].pageKB.ps0 = 0;                       /* SET THE PAGE SIZE BITS */
-            pagedirectory[j].pageKB.avl = 0;                       /* SET THE AVAILABILITY BITS */
-            pagedirectory[j].pageKB.accessedpd = 0;                /* SET THE ACCESSED BITS */
-            pagedirectory[j].pageKB.cachedisablepd = 0;            /* SET THE CACHE DISABLE BITS */
-            pagedirectory[j].pageKB.writethroughpd = 0;            /* SET THE WRITE-THROUGH BITS */
-            pagedirectory[j].pageKB.user_supervisorpd = 0;         /* SET THE USER SUPERVISOR BITS */
-            pagedirectory[j].pageKB.read_writepd = 1;              /* SET THE READ WRITE BITS */               //according to setting up page tables
-            pagedirectory[j].pageKB.presentpd = 0;                 /* SET THE PRESENT BITS */
+            pdarray[j].pageKB.pdbaseaddress = 0;             /* SET THE INITIAL 20 BITS */
+            pdarray[j].pageKB.availabilitypd = 0;            /* SET THE AVAILABILITY BITS */
+            pdarray[j].pageKB.ps0 = 0;                       /* SET THE PAGE SIZE BITS */
+            pdarray[j].pageKB.avl = 0;                       /* SET THE AVAILABILITY BITS */
+            pdarray[j].pageKB.accessedpd = 0;                /* SET THE ACCESSED BITS */
+            pdarray[j].pageKB.cachedisablepd = 0;            /* SET THE CACHE DISABLE BITS */
+            pdarray[j].pageKB.writethroughpd = 0;            /* SET THE WRITE-THROUGH BITS */
+            pdarray[j].pageKB.user_supervisorpd = 0;         /* SET THE USER SUPERVISOR BITS */
+            pdarray[j].pageKB.read_writepd = 1;              /* SET THE READ WRITE BITS */               //according to setting up page tables
+            pdarray[j].pageKB.presentpd = 0;                 /* SET THE PRESENT BITS */
         }
     }
 
     loadPageDirectory(pagedirectory pdarray);
     enablePaging();
 }
+
+
+page_init();

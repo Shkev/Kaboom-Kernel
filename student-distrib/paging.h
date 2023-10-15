@@ -1,3 +1,6 @@
+extern void loadPageDirectory(unsigned int*);
+extern void enablePaging();
+
 ////////////////////////////////////////////////// PAGE DIRECTORY NON 4MB STRUCT /////////////////////////////////////////////////////
 typedef struct {
     uint32_t pdbaseaddress : 20; //setting the values for all sub parts
@@ -50,3 +53,4 @@ typedef struct pageTable {
     uint32_t read_writept : 1;
     uint32_t presentpt   : 1;
 } pageTable;
+

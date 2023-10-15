@@ -13,7 +13,7 @@
 .globl idt_desc_ptr, idt
 .globl loadPageDirectory
 .globl enablePaging
-.globl allow4MB
+.globl allowMixedPages
 
 
 
@@ -39,7 +39,7 @@ mov %ebp, %esp
 pop %ebp
 ret
 
-allow4MB:
+allowMixedPages:
 push %ebp
 mov %esp, %ebp
 mov eax, cr4
