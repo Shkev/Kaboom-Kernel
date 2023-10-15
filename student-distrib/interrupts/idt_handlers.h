@@ -1,6 +1,8 @@
 #ifndef IDT_FNCS_H
 #define IDT_FNCS_H
 
+#include "../init_devices.h"
+
 #define KBD_PORT 0x60
 
 /* Exception handlers. These are the functions that are called when an

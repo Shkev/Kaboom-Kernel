@@ -155,7 +155,7 @@ void entry(unsigned long magic, unsigned long addr) {
             idt[idt_init].reserved1 = 1;
             idt[idt_init].reserved0 = 0;
 
-            idt[idt_init].size = 0;    //each gate is 32 bits
+            idt[idt_init].size = 1;    //each gate is 32 bits
             idt[idt_init].dpl = 0;
             idt[idt_init].present = 0;
         }
@@ -214,7 +214,7 @@ void entry(unsigned long magic, unsigned long addr) {
     /*IRQ2 is enabled to account for scondary PIC*/
     enable_irq(2);
     init_rtc();
-    init_kbd();
+    //init_kbd();
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
 
