@@ -11,51 +11,47 @@
 .globl tss, tss_desc_ptr, ldt, ldt_desc_ptr
 .globl gdt_ptr
 .globl idt_desc_ptr, idt
-.globl loadPageDirectory
-.globl enablePaging
-.globl allowMixedPages
+.globl load_page_directory, enablePaging, allowMixedPages
 
 
 
 .align 4
 
-loadPageDirectory:
-push %ebp
-mov %esp, %ebp
-mov 8(%esp), %eax
-mov %eax, %cr3
-mov %ebp, %esp
-pop %ebp
-ret
+load_page_directory:
+    pushl %ebp
+    mov %esp, %ebp
+    mov 8(%esp), %eax
+    mov %eax, %cr3
+    mov %ebp, %esp
+    popl %ebp
+    ret
 
 
 enablePaging:
-push %ebp
-mov %esp, %ebp
-mov %cr0, %eax
-#or $0x80000000, %eax
-or $0x80000001, %eax
-mov %eax, %cr0
-mov %ebp, %esp
-pop %ebp
-ret
+    pushl %ebp
+    mov %esp, %ebp
+    mov %cr0, %eax
+    #or $0x80000000, %eax
+    or $0x80000001, %eax
+    mov %eax, %cr0
+    mov %ebp, %esp
+    popl %ebp
+    ret
 
 allowMixedPages:
-push %ebp
-mov %esp, %ebp
+    push %ebp
+    mov %esp, %ebp
+    # mov %eax, %cr4
+    mov %cr4, %eax
+    # or %eax, $0x00000010
+    or $0x00000010, %eax
 
-# mov %eax, %cr4
-mov %cr4, %eax
-
-# or %eax, $0x00000010
-or $0x00000010, %eax
-
-# mov %cr4, %eax
-mov %eax, %cr4
-
-mov %ebp, %esp
-pop %ebp
-ret
+    # mov %cr4, %eax
+    mov %eax, %cr4
+	
+    mov %ebp, %esp
+    pop %ebp
+    ret
 
 
 tss_size:

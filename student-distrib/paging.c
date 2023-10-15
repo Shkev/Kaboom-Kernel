@@ -1,25 +1,20 @@
 #include "paging.h"
-// I'M PRETTY SURE WE NEED TO INCLUDE SOME STUFF
-// FIGURE OUT WHAT TO INCLUDE/IMPORT OR DEFINE
-#define pagedirecnon4 1024   //size of the non 4 mb page directory
-#define pagetable 1024       //size of the page table
-#define pagesize 4096        //size of an individual page
 
 //WHAT TO DO
-// 3 FUNCTIONS; page_init (C), loadPageDirectory (ASM), enablePaging (ASM), extra one in case needed: flushTLB (C)
+// 3 FUNCTIONS; page_init (C), load_page_directory (ASM), enablePaging (ASM), extra one in case needed: flushTLB (C)
 
 // make an array of structs for the directories and tables
-pagedirectory pdarray[pagedirecnon4] __attribute__((aligned (pagesize))); //fix this line
-pageTable ptarray[pagetable] __attribute__((aligned (pagesize)));
+pagedirectory pdarray[PAGEDIREC_SIZE] __attribute__((aligned (PAGE_SIZE))); //fix this line
+pageTable ptarray[PAGETABLE_SIZE] __attribute__((aligned (PAGE_SIZE)));
 
 ///////////////////////////////////////////////// INITIALIZING EVERYTHING IN REGARDS TO PAGES //////////////////////////////////////////
-unsigned int i;
-unsigned int j;
 
 void page_init()
 {
+    unsigned int i;
+    unsigned int j;
     // INITIALIZE THE PAGE TABLE STRUCT
-    for (i = 0; i < pagetable; i++)
+    for (i = 0; i < PAGETABLE_SIZE; i++)
     {
         ptarray[i].availabilitypt = 0;               /* SET THE AVAILABILITY BITS TO ZERO */
         ptarray[i].global = 0;                       /* SET THE GLOBAL SIZE BITS */
@@ -32,21 +27,21 @@ void page_init()
         
         if (i != 184)
         {
-            ptarray[i].ptbaseaddress = i * pagesize;     /* SET THE INITIAL 20 BITS TO THE PAGE ADDRESS */       //as each page is 4096, and you are determining what page to go to
+            ptarray[i].ptbaseaddress = i * PAGE_SIZE;     /* SET THE INITIAL 20 BITS TO THE PAGE ADDRESS */       //as each page is 4096, and you are determining what page to go to
             ptarray[i].read_writept = 1;                 /* SET THE READ WRITE BITS */               //since a page exists, allow read and writes
             ptarray[i].presentpt = 0;                    /* SET THE PRESENT BITS */                  //initializing some pages
         }
 
         if (i == 184)
         {
-            ptarray[i].ptbaseaddress = 0xB8000 / pagesize;     /* SET THE INITIAL 20 BITS TO PAGE ADDRESS */       //as each page is 4096, and you are determining what page to go to
+            ptarray[i].ptbaseaddress = 0xB8000 / PAGE_SIZE;     /* SET THE INITIAL 20 BITS TO PAGE ADDRESS */       //as each page is 4096, and you are determining what page to go to
             ptarray[i].read_writept = 1;                 /* SET THE READ WRITE BITS */               //since a page exists, allow read and writes
             ptarray[i].presentpt = 1;                    /* SET THE PRESENT BITS */                  //initializing some pages
         }
     }
 
     // INITIALIZE THE PAGE DIRECTORY WITHOUT THE 4 MB STRUCT
-    for (j = 0; j < pagedirecnon4; j++)
+    for (j = 0; j < PAGEDIREC_SIZE; j++)
     {
         if (j == 0)
         {
@@ -90,7 +85,7 @@ void page_init()
         }
     }
 
-    loadPageDirectory((unsigned int) pdarray);
+    load_page_directory((unsigned int) pdarray);
     enablePaging();
     allowMixedPages();
 }
