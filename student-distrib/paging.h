@@ -9,7 +9,7 @@ void load_page_directory(unsigned int*);
 void enablePaging();
 
 ////////////////////////////////////////////////// PAGE DIRECTORY NON 4MB STRUCT /////////////////////////////////////////////////////
-typedef struct __attribute__((__packed__)) pagedirectKB {
+typedef struct __attribute__ ((packed)) pagedirectKB {
     uint32_t presentpd   : 1;
     uint32_t read_writepd : 1;
     uint32_t user_supervisorpd : 1;
@@ -23,7 +23,7 @@ typedef struct __attribute__((__packed__)) pagedirectKB {
 } pagedirectKB;
 
 ////////////////////////////////////////////////// PAGE DIRECTORY 4MB STRUCT /////////////////////////////////////////////////////
-typedef struct __attribute__((__packed__)) pagedirectMB {
+typedef struct __attribute__ ((packed)) pagedirectMB {
     uint32_t presentpd4mb : 1;
     uint32_t read_writepd4mb : 1;
     uint32_t user_supervisorpd4mb : 1;
@@ -47,7 +47,7 @@ typedef union pagedirectory {
 } pagedirectory;
 
 ////////////////////////////////////////////////// PAGE TABLE STRUCT /////////////////////////////////////////////////////
-typedef struct __attribute__ ((__packed__)) pageTable {
+typedef struct __attribute__ ((packed)) pageTable {
     uint32_t presentpt   : 1;
     uint32_t read_writept : 1;
     uint32_t user_supervisorpt : 1;
