@@ -97,6 +97,7 @@ void page_init()
         }
     }
 
-    loadPageDirectory((unsigned int*) pdarray);
+    loadPageDirectory((unsigned int) pdarray);
     enablePaging();
+    allowMixedPages();
 }
