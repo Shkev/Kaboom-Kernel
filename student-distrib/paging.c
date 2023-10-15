@@ -10,7 +10,7 @@
 
 // make an array of structs for the directories and tables
 pagedirectory pdarray[pagedirecnon4] __attribute__((aligned (pagesize))); //fix this line
-pageTable ptarray[2][pagetable] __attribute__((aligned (pagesize)));
+pageTable ptarray[pagetable] __attribute__((aligned (pagesize)));
 
 ///////////////////////////////////////////////// INITIALIZING EVERYTHING IN REGARDS TO PAGES //////////////////////////////////////////
 unsigned int i;
@@ -21,31 +21,34 @@ void page_init()
     // INITIALIZE THE PAGE TABLE STRUCT
     for (i = 0; i < pagetable; i++)
     {
-        ptarray[0][i].ptbaseaddress = i * pagesize;     /* SET THE INITIAL 20 BITS TO ZERO */       //as each page is 4096, and you are determining what page to go to
-        ptarray[0][i].availabilitypt = 0;               /* SET THE AVAILABILITY BITS TO ZERO */
-        ptarray[0][i].global = 0;                       /* SET THE GLOBAL SIZE BITS */
-        ptarray[0][i].pageattribute = 0;                /* SET THE PAGE ATTRIBUTE BITS */
-        ptarray[0][i].dirty = 0;                        /* SET THE DIRTY BITS */
-        ptarray[0][i].accessedpt = 0;                   /* SET THE ACCESSED BITS */
-        ptarray[0][i].cachedisablept = 0;               /* SET THE CACHE DISABLE BITS */
-        ptarray[0][i].writethroughpt = 0;               /* SET THE WRITE THROUGH BITS */
-        ptarray[0][i].user_supervisorpt = 0;            /* SET THE USER SUPERVISOR BITS */
-        ptarray[0][i].read_writept = 1;                 /* SET THE READ WRITE BITS */               //since a page exists, allow read and writes
-        ptarray[0][i].presentpt = 0;                    /* SET THE PRESENT BITS */                  //initializing some pages
+        if (i != 184)
+        {
+            ptarray[i].ptbaseaddress = i * pagesize;     /* SET THE INITIAL 20 BITS TO ZERO */       //as each page is 4096, and you are determining what page to go to
+            ptarray[i].availabilitypt = 0;               /* SET THE AVAILABILITY BITS TO ZERO */
+            ptarray[i].global = 0;                       /* SET THE GLOBAL SIZE BITS */
+            ptarray[i].pageattribute = 0;                /* SET THE PAGE ATTRIBUTE BITS */
+            ptarray[i].dirty = 0;                        /* SET THE DIRTY BITS */
+            ptarray[i].accessedpt = 0;                   /* SET THE ACCESSED BITS */
+            ptarray[i].cachedisablept = 0;               /* SET THE CACHE DISABLE BITS */
+            ptarray[i].writethroughpt = 0;               /* SET THE WRITE THROUGH BITS */
+            ptarray[i].user_supervisorpt = 0;            /* SET THE USER SUPERVISOR BITS */
+            ptarray[i].read_writept = 1;                 /* SET THE READ WRITE BITS */               //since a page exists, allow read and writes
+            ptarray[i].presentpt = 0;                    /* SET THE PRESENT BITS */                  //initializing some pages
+        }
 
         if (i == 184)
         {
-            ptarray[0][i].ptbaseaddress = 0xB8000 / pagesize;     /* SET THE INITIAL 20 BITS TO ZERO */       //as each page is 4096, and you are determining what page to go to
-            ptarray[0][i].availabilitypt = 0;               /* SET THE AVAILABILITY BITS TO ZERO */
-            ptarray[0][i].global = 0;                       /* SET THE GLOBAL SIZE BITS */
-            ptarray[0][i].pageattribute = 0;                /* SET THE PAGE ATTRIBUTE BITS */
-            ptarray[0][i].dirty = 0;                        /* SET THE DIRTY BITS */
-            ptarray[0][i].accessedpt = 0;                   /* SET THE ACCESSED BITS */
-            ptarray[0][i].cachedisablept = 0;               /* SET THE CACHE DISABLE BITS */
-            ptarray[0][i].writethroughpt = 0;               /* SET THE WRITE THROUGH BITS */
-            ptarray[0][i].user_supervisorpt = 0;            /* SET THE USER SUPERVISOR BITS */
-            ptarray[0][i].read_writept = 1;                 /* SET THE READ WRITE BITS */               //since a page exists, allow read and writes
-            ptarray[0][i].presentpt = 1;                    /* SET THE PRESENT BITS */                  //initializing some pages
+            ptarray[i].ptbaseaddress = 0xB8000 / pagesize;     /* SET THE INITIAL 20 BITS TO ZERO */       //as each page is 4096, and you are determining what page to go to
+            ptarray[i].availabilitypt = 0;               /* SET THE AVAILABILITY BITS TO ZERO */
+            ptarray[i].global = 0;                       /* SET THE GLOBAL SIZE BITS */
+            ptarray[i].pageattribute = 0;                /* SET THE PAGE ATTRIBUTE BITS */
+            ptarray[i].dirty = 0;                        /* SET THE DIRTY BITS */
+            ptarray[i].accessedpt = 0;                   /* SET THE ACCESSED BITS */
+            ptarray[i].cachedisablept = 0;               /* SET THE CACHE DISABLE BITS */
+            ptarray[i].writethroughpt = 0;               /* SET THE WRITE THROUGH BITS */
+            ptarray[i].user_supervisorpt = 0;            /* SET THE USER SUPERVISOR BITS */
+            ptarray[i].read_writept = 1;                 /* SET THE READ WRITE BITS */               //since a page exists, allow read and writes
+            ptarray[i].presentpt = 1;                    /* SET THE PRESENT BITS */                  //initializing some pages
         }
     }
 
@@ -97,6 +100,3 @@ void page_init()
     loadPageDirectory(pagedirectory pdarray);
     enablePaging();
 }
-
-
-page_init();

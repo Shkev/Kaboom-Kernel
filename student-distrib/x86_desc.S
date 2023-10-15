@@ -33,7 +33,8 @@ enablePaging:
 push %ebp
 mov %esp, %ebp
 mov %cr0, %eax
-or $0x80000000, %eax
+#or $0x80000000, %eax
+or $0x80000001, %eax
 mov %eax, %cr0
 mov %ebp, %esp
 pop %ebp
@@ -42,12 +43,20 @@ ret
 allowMixedPages:
 push %ebp
 mov %esp, %ebp
-mov eax, cr4
-or eax, 0x00000010
-mov cr4, eax
+
+# mov %eax, %cr4
+mov %cr4, %eax
+
+# or %eax, $0x00000010
+or $0x00000010, %eax
+
+# mov %cr4, %eax
+mov %eax, %cr4
+
 mov %ebp, %esp
 pop %ebp
 ret
+
 
 tss_size:
     .long tss_bottom - tss - 1
