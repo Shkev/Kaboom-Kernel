@@ -25,8 +25,11 @@ void disable_all_slave_irq() {
 }
 
 void disable_all_irq() {
-    disable_all_slave_irq();
-    disable_all_master_irq();
+    master_mask = 0xFF;
+    slave_mask - 0xFF;
+    outb(master_mask, MASTER_8259_DATA);
+    outb(slave_mask, SLAVE_8259_DATA);
+
 }
 
 void enable_all_irq()  {
@@ -36,15 +39,29 @@ void enable_all_irq()  {
 
 /* Initialize the 8259 PIC */
 void i8259_init(void) {
+    //master_mask = inb(MASTER_8259_DATA);
+    //slave_mask = inb(SLAVE_8259_DATA);
+
+    master_mask = inb(MASTER_8259_DATA);
+
     outb(ICW1,MASTER_8259_PORT);
     outb(ICW2_MASTER,MASTER_8259_DATA);
     outb(ICW3_MASTER,MASTER_8259_DATA);
     outb(ICW4,MASTER_8259_DATA);
 
+    outb(master_mask,MASTER_8259_DATA);
+    
+    slave_mask = inb(SLAVE_8259_DATA);
+
     outb(ICW1,SLAVE_8259_PORT);
     outb(ICW2_SLAVE,SLAVE_8259_DATA);
     outb(ICW3_SLAVE,SLAVE_8259_DATA);
     outb(ICW4,SLAVE_8259_DATA);
+
+    outb(slave_mask,SLAVE_8259_DATA);
+
+    //outb(master_mask, MASTER_8259_DATA);
+    //outb(slave_mask, SLAVE_8259_DATA);
 }
 
 /* Enable (unmask) the specified IRQ */
@@ -54,13 +71,13 @@ void enable_irq(uint32_t irq_num) {
 
     // determine which PIC the interrupt is coming from
     if(irq_num < 8) {
-        pic_port = MASTER_8259_DATA;
+        pic_port = 0x21;
     } else {
-        pic_port = SLAVE_8259_DATA; 
+        pic_port = 0xA1;
         irq_num -= 8;
     }
 
-    pic_data = inb(pic_port) & (1 << irq_num); // enable the mask
+    pic_data = inb(pic_port) & ~(1 << irq_num); // enable the mask
     outb(pic_data,pic_port);
 }
 
@@ -77,14 +94,17 @@ void disable_irq(uint32_t irq_num) {
         irq_num -= 8;
     }
 
-    pic_data = inb(pic_port) & ~(1 << irq_num); //disable the mask
+    pic_data = inb(pic_port) | (1 << irq_num); //disable the mask
     outb(pic_data,pic_port);
 }
 
 /* Send end-of-interrupt signal for the specified IRQ */
 void send_eoi(uint32_t irq_num) {
     if (irq_num >= 8) {
-        outb(MASTER_8259_PORT,EOI);
+        outb(EOI | 2,MASTER_8259_PORT);
+        uint32_t irq_on_slave = irq_num - 8;
+        outb(EOI | irq_on_slave,SLAVE_8259_PORT);
+        return;
     }
-    outb(SLAVE_8259_PORT,EOI);
+    outb(EOI | irq_num,MASTER_8259_PORT);
 }

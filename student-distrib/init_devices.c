@@ -3,7 +3,7 @@
 #include "lib.h"
 
 void init_rtc() {
-    disable_all_irq();
+    //disable_all_irq();
     outb(0x8B, 0x70); // disable NMI and set read from reg B
     char prev = inb(0x71); // get previous value in reg B
     outb(0x8B, 0x70); // set read again
@@ -13,5 +13,5 @@ void init_rtc() {
 }
 
 void init_kbd() {
-    
+    enable_irq(KBD_IRQ);
 }

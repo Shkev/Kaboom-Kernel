@@ -211,8 +211,10 @@ void entry(unsigned long magic, unsigned long addr) {
     disable_all_irq();
     i8259_init();
     /* initialize devices. Turn on IRQs for these devices */
+    /*IRQ2 is enabled to account for scondary PIC*/
+    enable_irq(2);
     init_rtc();
-    
+    init_kbd();
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
 
@@ -220,8 +222,8 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Do not enable the following until after you have set up your
      * IDT correctly otherwise QEMU will triple fault and simple close
      * without showing you any output */
-    /*printf("Enabling Interrupts\n");
-    sti();*/
+    printf("Enabling Interrupts\n");
+    sti();
 
 #ifdef RUN_TESTS
     /* Run tests */
