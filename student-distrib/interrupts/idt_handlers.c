@@ -1,5 +1,6 @@
 #include "idt_handlers.h"
 #include "../lib.h"
+#include "../i8259.h"
 
 #define PRINT_HANDLER(task) printf("EXCEPTION: " task "error")
 
@@ -126,16 +127,40 @@ void security_handler() {
 /* Interrupt Handlers */
 
 void rtc_handler() {
+    cli();
+
     /* We read register C to see what type of interrupt occured.
     * If register C not read RTC will not send future interrupts */
     // select register C on RTC
-    outb(0x0C, 0x70);
+    outb(0x0C, RTC_INDEX);
     // throw away info about interrupt. Change this later to do something
-    (void)inb(0x71);
-    
+    (void)inb(RTC_DATA);
     test_interrupts();
+    // send end of interrupt for IRQ8
+    send_eoi(RTC_IRQ);
+    
+    sti();
 }
 
 void kbd_handler() {
+    cli();
+
+    char key_code_value[] = {'\0', '\0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 
+    '\0', '\0', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']', '\0', '\0', 'A', 'S', 
+    'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', '\'', '`', '\0', '\\', 'Z', 'X', 'C', 'V', 'B', 'N', 
+    'M', ',', '.', '/', '\0', '*', '\0', ' ', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', 
+    '\0', '\0', '\0', '\0', '\0', '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', 
+    '.', '\0', '\0', '\0', '\0', '\0'};
+
+    uint8_t scan_code;
+    scan_code = inb(KBD_PORT);
     
+    if (scan_code <= 0x59) {
+         uint8_t key_value = key_code_value[scan_code];
+         printf("%c", key_value);
+    }
+
+    send_eoi(1);
+
+    sti();
 }

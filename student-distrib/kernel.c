@@ -157,7 +157,7 @@ void entry(unsigned long magic, unsigned long addr) {
             idt[idt_init].reserved1 = 1;
             idt[idt_init].reserved0 = 0;
 
-            idt[idt_init].size = 0;    //each gate is 32 bits
+            idt[idt_init].size = 1;    //each gate is 32 bits
             idt[idt_init].dpl = 0;
             idt[idt_init].present = 0;
         }
@@ -210,11 +210,13 @@ void entry(unsigned long magic, unsigned long addr) {
     }
 
     /* Init the PIC */
-    disable_all_irq();
+//    disable_all_irq();
     i8259_init();
     /* initialize devices. Turn on IRQs for these devices */
-    init_rtc();
-    
+    /*IRQ2 is enabled to account for scondary PIC*/
+    enable_irq(2);
+    //init_rtc();
+    init_kbd();
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
     page_init();
@@ -223,8 +225,8 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Do not enable the following until after you have set up your
      * IDT correctly otherwise QEMU will triple fault and simple close
      * without showing you any output */
-    /*printf("Enabling Interrupts\n");
-    sti();*/
+    printf("Enabling Interrupts\n");
+    sti();
 
 #ifdef RUN_TESTS
     /* Run tests */
