@@ -69,12 +69,12 @@ void page_init()
             pdarray[j].pageKB.presentpd = 0;                 /* SET THE PRESENT BITS */
         } else if (j == 1)
         {
-            pdarray[j].pageMB.bit31_22pd = 0;                /* SET THE INITIAL 10 BITS TO ZERO */
+            pdarray[j].pageMB.bit31_22pd = 1;                /* SET THE INITIAL 10 BITS TO ZERO */
             pdarray[j].pageMB.rsvd = 0;                      /* SET THE RESERVED BITS TO ZERO */
             pdarray[j].pageMB.bit39_32pd = 0;                /* SET THE RANDOM BITS TO ZERO */
             pdarray[j].pageMB.page_attribute_table = 0;      /* SET THE PAGE ATTRIBUTE TABLE BITS TO ZERO */
             pdarray[j].pageMB.availabilitypd4mb = 0;         /* SET THE AVAILABILITY BITS TO ZERO */
-            pdarray[j].pageMB.global4mb = 0;                 /* SET THE GLOBAL BITS TO ZERO */
+            pdarray[j].pageMB.global4mb = 1;                 /* SET THE GLOBAL BITS TO ONE */
             pdarray[j].pageMB.ps14mb = 1;                    /* SET THE PAGE SIZE BITS TO ZERO */
             pdarray[j].pageMB.dirty4mb = 0;                  /* SET THE DIRTY BITS TO ZERO */
             pdarray[j].pageMB.accessedpd4mb = 0;             /* SET THE ACCESS BITS TO ZERO */
@@ -97,6 +97,6 @@ void page_init()
         }
     }
 
-    loadPageDirectory((int*) pdarray);
+    loadPageDirectory((unsigned int*) pdarray);
     enablePaging();
 }
