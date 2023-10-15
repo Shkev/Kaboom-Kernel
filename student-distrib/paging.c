@@ -57,7 +57,7 @@ void page_init()
     {
         if (j == 0)
         {
-            pdarray[j].pageKB.pdbaseaddress = (uint32_t)(&ptarray[0][0] >> 12);             /* SET THE INITIAL 20 BITS */
+            pdarray[j].pageKB.pdbaseaddress = ((&ptarray[0][0] >> 12) & 0xFFFFF);           //(uint32_t)(&ptarray[0][0] >> 12);             /* SET THE INITIAL 20 BITS */
             pdarray[j].pageKB.availabilitypd = 0;                                           /* SET THE AVAILABILITY BITS */
             pdarray[j].pageKB.ps0 = 0;                       /* SET THE PAGE SIZE BITS */
             pdarray[j].pageKB.avl = 0;                       /* SET THE AVAILABILITY BITS */
@@ -97,6 +97,6 @@ void page_init()
         }
     }
 
-    loadPageDirectory(pagedirectory pdarray);
+    loadPageDirectory((int*) pdarray);
     enablePaging();
 }
