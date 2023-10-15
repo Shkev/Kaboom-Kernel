@@ -11,9 +11,43 @@
 .globl tss, tss_desc_ptr, ldt, ldt_desc_ptr
 .globl gdt_ptr
 .globl idt_desc_ptr, idt
+.globl loadPageDirectory
+.globl enablePaging
+.globl allow4MB
+
+
 
 .align 4
 
+loadPageDirectory:
+push %ebp
+mov %esp, %ebp
+mov 8(%esp), %eax
+mov %eax, %cr3
+mov %ebp, %esp
+pop %ebp
+ret
+
+
+enablePaging:
+push %ebp
+mov %esp, %ebp
+mov %cr0, %eax
+or $0x80000000, %eax
+mov %eax, %cr0
+mov %ebp, %esp
+pop %ebp
+ret
+
+allow4MB:
+push %ebp
+mov %esp, %ebp
+mov eax, cr4
+or eax, 0x00000010
+mov cr4, eax
+mov %ebp, %esp
+pop %ebp
+ret
 
 tss_size:
     .long tss_bottom - tss - 1
@@ -92,6 +126,9 @@ ldt_desc_ptr:
 gdt_bottom:
 
     .align 16
+
+# need a gdt_desc here
+
 ldt:
     .rept 4
     .quad 0
