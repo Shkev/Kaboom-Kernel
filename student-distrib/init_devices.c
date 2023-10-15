@@ -3,7 +3,6 @@
 #include "lib.h"
 
 void init_rtc() {
-    //disable_all_irq();
     outb(0x8B, RTC_INDEX); // disable NMI and set read from reg B
     char prev = inb(RTC_DATA); // get previous value in reg B
     outb(0x8B, RTC_INDEX); // set read again

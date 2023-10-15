@@ -127,7 +127,7 @@ void security_handler() {
 /* Interrupt Handlers */
 
 void rtc_handler() {
-//    disable_all_irq();
+    cli();
 
     /* We read register C to see what type of interrupt occured.
     * If register C not read RTC will not send future interrupts */
@@ -139,11 +139,11 @@ void rtc_handler() {
     // send end of interrupt for IRQ8
     send_eoi(RTC_IRQ);
     
-//    enable_all_irq();
+    sti();
 }
 
 void kbd_handler() {
-//    disable_all_irq();
+    cli();
 
     char key_code_value[] = {'\0', '\0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 
     '\0', '\0', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']', '\0', '\0', 'A', 'S', 
@@ -162,6 +162,5 @@ void kbd_handler() {
 
     send_eoi(1);
 
-//    enable_all_irq();
-    
+    sti();
 }

@@ -208,13 +208,13 @@ void entry(unsigned long magic, unsigned long addr) {
     }
 
     /* Init the PIC */
-    disable_all_irq();
+//    disable_all_irq();
     i8259_init();
     /* initialize devices. Turn on IRQs for these devices */
     /*IRQ2 is enabled to account for scondary PIC*/
     enable_irq(2);
-    init_rtc();
-    //init_kbd();
+    //init_rtc();
+    init_kbd();
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
 

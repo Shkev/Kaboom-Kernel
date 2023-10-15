@@ -10,27 +10,30 @@
 uint8_t master_mask; /* IRQs 0-7  */
 uint8_t slave_mask;  /* IRQs 8-15 */
 
-uint8_t disable_cnt;
+/* static uint8_t disable_cnt; */
 
-void disable_all_irq() {
-    if (disable_cnt == 0) {
-	master_mask = inb(MASTER_8259_DATA);
-	slave_mask = inb(MASTER_8259_DATA);
-    }
-    disable_cnt = 1;
-    outb(0xFF, MASTER_8259_DATA);
-    outb(0xFF, SLAVE_8259_DATA);
-}
+/* void disable_all_irq() { */
+/*     if (disable_cnt != 0) return; */
+/*     disable_cnt = 1; */
+/*     master_mask = inb(MASTER_8259_DATA); */
+/*     slave_mask = inb(MASTER_8259_DATA); */
+/*     outb(0xFF, MASTER_8259_DATA); */
+/*     outb(0xFF, SLAVE_8259_DATA); */
+/* } */
 
-void enable_all_irq()  {
-    disable_cnt = 0;
-    outb(master_mask, MASTER_8259_DATA);
-    outb(slave_mask, SLAVE_8259_DATA);
-}
+/* void enable_all_irq()  { */
+/*     if (disable_cnt == 0) return; */
+/*     disable_cnt = 0; */
+/*     outb(master_mask, MASTER_8259_DATA); */
+/*     outb(slave_mask, SLAVE_8259_DATA); */
+/* } */
 
 /* Initialize the 8259 PIC */
 void i8259_init(void) {
-    disable_cnt = 0;
+    //disable_cnt = 0;
+    // disable all IRQs
+    outb(0xFF, MASTER_8259_DATA);
+    outb(0xFF, SLAVE_8259_DATA);
     
     master_mask = inb(MASTER_8259_DATA);
 
