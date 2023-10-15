@@ -8,6 +8,8 @@
 
 #include "types.h"
 
+#define SLAVE_IRQ 2
+
 /* Ports that each PIC sits on */
 #define MASTER_8259_PORT    0x20
 #define SLAVE_8259_PORT     0xA0
@@ -31,17 +33,11 @@
 
 /* Externally-visible functions */
 
-/* disable all IRQs on master PIC */
-extern void disable_all_master_irq();
-
-/* disable all IRQs on slave PIC */
-extern void disable_all_slave_irq();
-
 /* disable all IRQs on all PICs */
-extern void disable_all_irq();
+/* extern void disable_all_irq(); */
 
 /* enable all IRQs on all PICs (restore to state before disable_all_irq called) */
-extern void enable_all_irq();
+/* extern void enable_all_irq(); */
 
 /* Initialize both PICs */
 extern void i8259_init(void);

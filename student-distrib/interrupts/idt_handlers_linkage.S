@@ -1,5 +1,5 @@
 #define INTR_LINK(link_name, handler) \
-    .globl link_name                 ;\
+    .globl link_name, handler        ;\
     link_name:                       ;\
 	pushal                       ;\
 	pushfl                       ;\
@@ -65,4 +65,4 @@ INTR_LINK(security_linkage, security_handler)
 INTR_LINK(rtc_linkage, rtc_handler)
 
 INTR_LINK(kbd_linkage, kbd_handler)
-	
+

@@ -47,6 +47,16 @@ int idt_test(){
 
 // add more tests here
 
+int idt_div_zero_trigger_test() {
+    TEST_HEADER;
+
+    int a, zero, b;
+    a = 2;
+    zero = 0;
+    b = a / zero;
+    return b;
+}
+
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -54,7 +64,8 @@ int idt_test(){
 
 
 /* Test suite entry point */
-void launch_tests(){
+void launch_tests() {
 	TEST_OUTPUT("idt_test", idt_test());
 	// launch your tests here
+//	TEST_OUTPUT("idt_div_zero_trigger_test", idt_div_zero_trigger_test());
 }
