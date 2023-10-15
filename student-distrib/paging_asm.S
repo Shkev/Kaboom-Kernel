@@ -2,35 +2,41 @@
 
 .text
 
-.globl load_page_directory, enablePaging, allowMixedPages
+.globl load_page_directory, enable_paging, allow_mixed_pages
 
+/*
+ * load_page_directory(pagedir_entry_t* pd)
+ * Loads the address of the page directory array into register cr3.
+ * INPUTS       : pd   - address of start of page directory
+ * OUTPUTS      : none
+ * SIDE EFFECTS : modify cr3
+ */
 load_page_directory:
     pushl %ebp
-    mov %esp, %ebp
-    mov 8(%ebp), %eax
-    mov %eax, %cr3
-    mov %ebp, %esp
+    movl %esp, %ebp
+    movl 8(%ebp), %eax
+    movl %eax, %cr3
+    movl %ebp, %esp
     popl %ebp
     ret
 
 
-enablePaging:
+enable_paging:
     pushl %ebp
-    mov %esp, %ebp
-    mov %cr0, %eax
-    #or $0x80000000, %eax
-    or $0x80000001, %eax
-    mov %eax, %cr0
-    mov %ebp, %esp
+    movl %esp, %ebp
+    movl %cr0, %eax
+    orl $0x80000001, %eax
+    movl %eax, %cr0
+    movl %ebp, %esp
     popl %ebp
     ret
 
-allowMixedPages:
-    push %ebp
-    mov %esp, %ebp
-    mov %cr4, %eax
-    or $0x00000010, %eax
-    mov %eax, %cr4
-    mov %ebp, %esp
-    pop %ebp
+allow_mixed_pages:
+    pushl %ebp
+    movl %esp, %ebp
+    movl %cr4, %eax
+    orl $0x00000010, %eax
+    movl %eax, %cr4
+    movl %ebp, %esp
+    popl %ebp
     ret

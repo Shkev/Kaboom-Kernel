@@ -1,72 +1,88 @@
 #ifndef PAGING_H
 #define PAGING_H
 #include "types.h"
+#include "lib.h"
 
-#define PAGEDIREC_SIZE 1024	/* size of the non 4 mb page directory */
+#define PAGEDIR_SIZE 1024	/* size of the non 4 mb page directory */
 #define PAGETABLE_SIZE 1024	/* size of the page table */
 #define PAGE_SIZE 4096		/* size of an individual page */
+#define KERNEL_ADDR 0x400000
 
+// Implemented in paging.c //
 
-extern void load_page_directory(unsigned int*);
-extern void enablePaging();
-extern void allowMixedPages();
-extern void page_init();
+/* initalize page directory and page table entries and enable in x86  */
+extern void paging_init();
+
+// Functions implemented in paging_asm.S //
+
+/* load address of page directory array into registers */
+extern void load_page_directory(uint32_t);
+
+/* enable paging in x86 */
+extern void enable_paging();
+
+/* enable mixed pages in x86 */
+extern void allow_mixed_pages();
+
+// Data structures for page directory entries and page table entries //
 
 ////////////////////////////////////////////////// PAGE DIRECTORY NON 4MB STRUCT /////////////////////////////////////////////////////
 typedef struct __attribute__ ((packed, aligned(4))) pagedirectKB_t {
-    uint32_t presentpd   : 1;
-    uint32_t read_writepd : 1;
-    uint32_t user_supervisorpd : 1;
-    uint32_t writethroughpd : 1;
-    uint32_t cachedisablepd : 1;
-    uint32_t accessedpd : 1;
-    uint32_t avl : 1;
-    uint32_t ps0 : 1;
-    uint32_t availabilitypd : 4;
-    uint32_t pdbaseaddress : 20;
-} pagedirectKB_t;
+    uint32_t present             : 1; /* whether page tables/pages present for this entry */
+    uint32_t rw                  : 1; /* read/write permissions flags */
+    uint32_t us                  : 1; /* User/supervisor access control bit */
+    uint32_t pwt                 : 1; /* write-through */
+    uint32_t pcd                 : 1; /* cache disable */
+    uint32_t accessed            : 1; /* whether the page directory was accessed in memory translation */
+    uint32_t avl1                : 1; /* available (?) */
+    uint32_t ps0                 : 1; /* page size for entry. Always 0 for 4kb dir entries */
+    uint32_t avl2                : 4; /* idk why there's two AVL entries */
+    uint32_t pt_baseaddr         : 20; /* addr to start of page table */
+} pagedirkb_entry_t;
 
 ////////////////////////////////////////////////// PAGE DIRECTORY 4MB STRUCT /////////////////////////////////////////////////////
-typedef struct __attribute__ ((packed, aligned(4))) pagedirectMB_t {
-    uint32_t presentpd4mb : 1;
-    uint32_t read_writepd4mb : 1;
-    uint32_t user_supervisorpd4mb : 1;
-    uint32_t writethroughpd4mb : 1;
-    uint32_t cachedisablepd4mb : 1;
-    uint32_t accessedpd4mb : 1;
-    uint32_t dirty4mb : 1;
-    uint32_t ps14mb : 1;
-    uint32_t global4mb : 1;
-    uint32_t availabilitypd4mb : 3;
-    uint32_t page_attribute_table : 1;
-    uint32_t bit39_32pd : 8;
-    uint32_t rsvd : 1;
-    uint32_t bit31_22pd : 10;
-} pagedirectMB_t;
+/* note these don't point to a page table; point directly to a page */
+typedef struct __attribute__ ((packed, aligned(4))) pagedirmb_entry_t {
+    uint32_t present            : 1;
+    uint32_t rw                 : 1;
+    uint32_t us                 : 1;
+    uint32_t pwt                : 1;
+    uint32_t pcd                : 1;
+    uint32_t accessed           : 1;
+    uint32_t dirty              : 1;
+    uint32_t ps1                : 1; /* page size for entry. Always 1 for 4MB entries */
+    uint32_t global             : 1; /* tells processor to not invalidate TLB entry on reload of CR3 */
+    uint32_t avl                : 3;
+    uint32_t pat                : 1; /* page attribute table (set to 0 for now...) */
+    uint32_t bit39_32           : 8; /* used for metadata */
+    uint32_t rsvd               : 1; /* reserved for CPU use (set to 0) */
+    uint32_t page_baseaddr      : 10; /* addr to start of 4MB page */
+} pagedirmb_entry_t;
 
 ////////////////////////////////////////////////// UNION THE TWO PAGE DIRECTORY STRUCTS /////////////////////////////////////////////
-typedef union pagedirectory_t {
-    struct pagedirectKB_t pageKB;
-    struct pagedirectMB_t pageMB;
-} pagedirectory_t;
+typedef union pagedir_entry_t {
+    struct pagedirkb_entry_t kb;
+    struct pagedirmb_entry_t mb;
+} pagedir_entry_t;
 
 ////////////////////////////////////////////////// PAGE TABLE STRUCT /////////////////////////////////////////////////////
-typedef struct __attribute__ ((packed,  aligned(4))) pageTable_t {
-    uint32_t presentpt   : 1;
-    uint32_t read_writept : 1;
-    uint32_t user_supervisorpt : 1;
-    uint32_t writethroughpt : 1;
-    uint32_t cachedisablept : 1;
-    uint32_t accessedpt : 1;
-    uint32_t dirty : 1;
-    uint32_t pageattribute : 1;
-    uint32_t global : 1;
-    uint32_t availabilitypt : 3;
-    uint32_t ptbaseaddress : 20;
-} pageTable_t;
+typedef struct __attribute__ ((packed,  aligned(4))) page_table_entry_t {
+    uint32_t present         : 1;
+    uint32_t rw              : 1;
+    uint32_t us              : 1;
+    uint32_t pwt             : 1;
+    uint32_t pcd             : 1;
+    uint32_t accessed        : 1;
+    uint32_t d               : 1;
+    uint32_t pat             : 1;
+    uint32_t global          : 1;
+    uint32_t avl             : 3;
+    uint32_t page_baseaddr   : 20;
+} page_table_entry_t;
 
-
-pagedirectory_t pdarray[PAGEDIREC_SIZE] __attribute__((aligned (PAGE_SIZE)));
-struct pageTable_t ptarray[PAGETABLE_SIZE] __attribute__((aligned (PAGE_SIZE))); //do i need struct again if i typedef'd it
+/* only has 1 page directory. All memory can be accessed through it */
+pagedir_entry_t pd[PAGEDIR_SIZE] __attribute__((aligned (PAGE_SIZE)));
+/* one page table for now for first 4MB in mem. Add more as needed by programs */
+page_table_entry_t pt0[PAGETABLE_SIZE] __attribute__((aligned (PAGE_SIZE));
 
 #endif
