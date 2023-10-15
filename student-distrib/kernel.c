@@ -215,7 +215,7 @@ void entry(unsigned long magic, unsigned long addr) {
     /* initialize devices. Turn on IRQs for these devices */
     /*IRQ2 is enabled to account for scondary PIC*/
     enable_irq(2);
-    //init_rtc();
+    init_rtc();
     init_kbd();
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
