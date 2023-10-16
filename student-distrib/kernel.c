@@ -178,34 +178,34 @@ void entry(unsigned long magic, unsigned long addr) {
         idt[0x80].dpl = 3;
 
         /* Set all exception handlers in the IDT*/
-    SET_IDT_ENTRY(idt[0x0], divide_zero_linkage);
-    SET_IDT_ENTRY(idt[0x1], debug_linkage);
-    SET_IDT_ENTRY(idt[0x2], nmi_linkage);
-    SET_IDT_ENTRY(idt[0x3], breakpoint_linkage);
-    SET_IDT_ENTRY(idt[0x4], overflow_linkage);
-    SET_IDT_ENTRY(idt[0x5], bnd_rng_exceed_linkage);
-    SET_IDT_ENTRY(idt[0x6], invalid_opcode_linkage);
-    SET_IDT_ENTRY(idt[0x7], device_na_linkage);
-    SET_IDT_ENTRY(idt[0x8], double_fault_linkage);
-    SET_IDT_ENTRY(idt[0x9], seg_overrun_linkage);
-    SET_IDT_ENTRY(idt[0xA], invalid_tss_linkage);
-    SET_IDT_ENTRY(idt[0xB], seg_nopres_linkage);
-    SET_IDT_ENTRY(idt[0xC], stack_segfault_linkage);
-    SET_IDT_ENTRY(idt[0xD], gen_protect_flt_linkage);
-    SET_IDT_ENTRY(idt[0xE], pg_fault_linkage);
-    SET_IDT_ENTRY(idt[0x10], x87_fpe_linkage);
-    SET_IDT_ENTRY(idt[0x11], align_check_linkage);
-    SET_IDT_ENTRY(idt[0x12], machine_check_linkage);
-    SET_IDT_ENTRY(idt[0x13], simd_fpe_linkage);
-    SET_IDT_ENTRY(idt[0x14], virt_linkage);
-    SET_IDT_ENTRY(idt[0x15], ctl_protect_linkage);
-    SET_IDT_ENTRY(idt[0x1C], hpi_linkage);
-    SET_IDT_ENTRY(idt[0x1D], vmm_comm_linkage);
-    SET_IDT_ENTRY(idt[0x1E], security_linkage);
+        SET_IDT_ENTRY(idt[0x0], divide_zero_linkage);
+        SET_IDT_ENTRY(idt[0x1], debug_linkage);
+        SET_IDT_ENTRY(idt[0x2], nmi_linkage);
+        SET_IDT_ENTRY(idt[0x3], breakpoint_linkage);
+        SET_IDT_ENTRY(idt[0x4], overflow_linkage);
+        SET_IDT_ENTRY(idt[0x5], bnd_rng_exceed_linkage);
+        SET_IDT_ENTRY(idt[0x6], invalid_opcode_linkage);
+        SET_IDT_ENTRY(idt[0x7], device_na_linkage);
+        SET_IDT_ENTRY(idt[0x8], double_fault_linkage);
+        SET_IDT_ENTRY(idt[0x9], seg_overrun_linkage);
+        SET_IDT_ENTRY(idt[0xA], invalid_tss_linkage);
+        SET_IDT_ENTRY(idt[0xB], seg_nopres_linkage);
+        SET_IDT_ENTRY(idt[0xC], stack_segfault_linkage);
+        SET_IDT_ENTRY(idt[0xD], gen_protect_flt_linkage);
+        SET_IDT_ENTRY(idt[0xE], pg_fault_linkage);
+        SET_IDT_ENTRY(idt[0x10], x87_fpe_linkage);
+        SET_IDT_ENTRY(idt[0x11], align_check_linkage);
+        SET_IDT_ENTRY(idt[0x12], machine_check_linkage);
+        SET_IDT_ENTRY(idt[0x13], simd_fpe_linkage);
+        SET_IDT_ENTRY(idt[0x14], virt_linkage);
+        SET_IDT_ENTRY(idt[0x15], ctl_protect_linkage);
+        SET_IDT_ENTRY(idt[0x1C], hpi_linkage);
+        SET_IDT_ENTRY(idt[0x1D], vmm_comm_linkage);
+        SET_IDT_ENTRY(idt[0x1E], security_linkage);
 
-    /* Set all interrupt handlers in the IDT*/
-    SET_IDT_ENTRY(idt[0x21], kbd_linkage);
-    SET_IDT_ENTRY(idt[0x28], rtc_linkage);
+        /* Set all interrupt handlers in the IDT*/
+        SET_IDT_ENTRY(idt[0x21], kbd_linkage);
+        SET_IDT_ENTRY(idt[0x28], rtc_linkage);
 
         //===============================================
 
@@ -218,7 +218,7 @@ void entry(unsigned long magic, unsigned long addr) {
     /* initialize devices. Turn on IRQs for these devices */
     /*IRQ2 is enabled to account for scondary PIC*/
     enable_irq(2);
-    // init_rtc();
+    init_rtc();
     init_kbd();
 
     // clear();

@@ -74,8 +74,18 @@ int ovverflow() {
 // Expected return value: PASS
 int kernelexist() {
 	TEST_HEADER;
-	int* location0 = (int*)0x400000; //physical address where kernel starts
-	int testing0;
+	char* location0 = (char*)0x400000; //physical address where kernel starts
+	char testing0;
+	testing0 = *location0;
+	return PASS;
+}
+
+// Test to see if we can access the kernel memory at its location
+// Expected return value: PASS
+int kernelexistdone() {
+	TEST_HEADER;
+	char* location0 = (char*)0x7FFFFF; //physical address where kernel ends
+	char testing0;
 	testing0 = *location0;
 	return PASS;
 }
@@ -84,8 +94,18 @@ int kernelexist() {
 // Expected return value: PASS
 int videomemexist() {
 	TEST_HEADER;
-	int* location1 = (int*)0xB8000; //physical address where video memory starts
-	int testing1;
+	char* location1 = (char*)0xB8000; //physical address where video memory starts
+	char testing1;
+	testing1 = *location1;
+	return PASS;
+}
+
+// Test to see if we can access the video memory at its location
+// Expected return value: PASS
+int videomemexistdone() {
+	TEST_HEADER;
+	char* location1 = (char*)0xB8FFF; //physical address where video memory starts
+	char testing1;
 	testing1 = *location1;
 	return PASS;
 }
@@ -94,8 +114,8 @@ int videomemexist() {
 // Expected return value: FAIL
 int kernelexistlower() {
 	TEST_HEADER;
-	int* location0 = (int*)0x3FFFFF; //physical address where kernel starts
-	int testing0;
+	char* location0 = (char*)0x3FFFFF; //physical address where kernel starts
+	char testing0;
 	testing0 = *location0;
 	return FAIL;
 }
@@ -104,8 +124,8 @@ int kernelexistlower() {
 // Expected return value: FAIL
 int kernelexisthigher() {
 	TEST_HEADER;
-	int* location0 = (int*)0x800001; //physical address one above kernel ending
-	int testing0;
+	char* location0 = (char*)0x800000; //physical address one above kernel ending
+	char testing0;
 	testing0 = *location0;
 	return FAIL;
 }
@@ -114,8 +134,8 @@ int kernelexisthigher() {
 // Expected return value: FAIL
 int videomemexistlower() {
 	TEST_HEADER;
-	int* location2 = (int*)0xB7FFF;//physical address one below video memory start
-	int testing2;
+	char* location2 = (char*)0xB7FFF;//physical address one below video memory start
+	char testing2;
 	testing2 = *location2;
 	return FAIL;
 }
@@ -124,8 +144,8 @@ int videomemexistlower() {
 // Expected return value: FAIL
 int videomemexisthigher() {
 	TEST_HEADER;
-	int* location3 = (int*)0xB9001;//physical address one above video memory ending
-	int testing3;
+	char* location3 = (char*)0xB9000;//physical address one above video memory ending
+	char testing3;
 	testing3 = *location3;
 	return FAIL;
 }
@@ -134,8 +154,8 @@ int videomemexisthigher() {
 // // Expected return value: FAIL
 // int zero() {
 // 	TEST_HEADER;
-// 	int* location3 = (int*)0x0;//physical address of 0
-// 	int testing3;
+// 	char* location3 = (char*)0x0;//physical address of 0
+// 	char testing3;
 // 	testing3 = *location3;
 // 	return FAIL;
 // }
@@ -144,8 +164,8 @@ int videomemexisthigher() {
 // // Expected return value: FAIL
 // int max() {
 // 	TEST_HEADER;
-// 	int* location3 = (int*)0x100000000;//physical address one above 4 GiB bound
-// 	int testing3;
+// 	char* location3 = (char*)0x100000000;//physical address one above 4 GiB bound
+// 	char testing3;
 // 	testing3 = *location3;
 // 	return FAIL;
 // }
@@ -155,8 +175,8 @@ int videomemexisthigher() {
 // Expected return value: FAIL
 int imaginemem() {
 	TEST_HEADER;
-	int* location4 = (int*)0x30000;//physical address of random spot
-	int testing4;
+	char* location4 = (char*)0x30000;//physical address of random spot
+	char testing4;
 	testing4 = *location4;
 	return FAIL;
 }
@@ -197,8 +217,10 @@ int assertion_failure2(){
 /* Test suite entry point */
 void launch_tests() {
 	TEST_OUTPUT("idt_test: ", idt_test());
-	TEST_OUTPUT("kernel test: ", kernelexist());
-	TEST_OUTPUT("videomemexist test: ", videomemexist());
+	TEST_OUTPUT("kernel starting: ", kernelexist());
+	TEST_OUTPUT("kernel ending: ", kernelexistdone());
+	TEST_OUTPUT("videomemexist starting: ", videomemexist());
+	TEST_OUTPUT("videomemexist ending: ", videomemexistdone());
 	// TEST_OUTPUT("kernel test lower: ", kernelexistlower());
 	// TEST_OUTPUT("kernel test higher: ", kernelexisthigher());
 	// TEST_OUTPUT("videomemexist test lower: ", videomemexistlower());
