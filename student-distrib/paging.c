@@ -90,6 +90,6 @@ void paging_init()
 
     // assembly stuff
     load_page_directory((unsigned int*)pd);
-    enable_paging();
     allow_mixed_pages();
+    enable_paging();
 }
