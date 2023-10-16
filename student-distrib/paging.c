@@ -61,7 +61,7 @@ void paging_init()
      * Note: all entries in pd and pt0 are set to 0 in x86_desc.S
      */
     for (j = 0; j < 2; j++) {
-	/* first 4MB block in physical mem. Uses 4KB pages */
+	/* first 4MB block in physical mem. Uses 4KB pages */ 
         if (j == 0) {
 	    ZERO_PAGEDIR_KB(pd[j].kb);
             pd[j].kb.present = 1;
