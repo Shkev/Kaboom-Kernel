@@ -1,5 +1,7 @@
 #include "paging.h"
 
+// not using these macros for now...
+
 #define ZERO_PAGEDIR_KB(name)     \
     name.present = 0       ;\
     name.rw = 0            ;\
@@ -77,13 +79,13 @@ void paging_init()
     // initializing page table 0
     for (j = 0; j < PAGETABLE_SIZE; j++)
     {
-	    /* if page not for video memory */
+        /* if page not for video memory */
         if (j != (VIDEO >> 12)) {
+	    pt0[j].rw = 1;
             pt0[j].page_baseaddr = j;
         } else { // for video mem
             pt0[j].page_baseaddr = VIDEO >> 12;
             pt0[j].rw = 1;
-	        pt0[j].us = 1;
             pt0[j].present = 1;
         }
     }
