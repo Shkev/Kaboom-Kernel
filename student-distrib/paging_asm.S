@@ -34,6 +34,6 @@ enable_paging:
     movl %cr0, %eax
     orl $0x80000001, %eax
     movl %eax, %cr0
-	leave
-	
+//    addl $2, %eax
+    leave	
     ret

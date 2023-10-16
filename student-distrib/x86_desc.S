@@ -14,7 +14,7 @@
 .globl idt_desc_ptr, idt
 .globl pd, pt0
 
-.align PAGE_SIZE
+.align PAGE_SIZE_4KB
 
 # initialize page directory and page table 0
 pd:
@@ -24,6 +24,8 @@ _pd:
     .endr
 pd_bottom:
 
+.align PAGE_SIZE_4KB
+	
 pt0:
 _pt0:
     .rept PAGETABLE_SIZE
