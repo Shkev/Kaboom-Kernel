@@ -1,6 +1,7 @@
 #include "tests.h"
 #include "x86_desc.h"
 #include "lib.h"
+#include "paging.h"
 
 #define PASS 1
 #define FAIL 0
@@ -57,6 +58,36 @@ int idt_div_zero_trigger_test() {
     return b;
 }
 
+// Test to see if we can access the kernel memory at its location
+// Expected return value: PASS
+int kernelexist() {
+	TEST_HEADER;
+	int* location0 = (int*)0x400000;
+	int testing0;
+	testing0 = *location0;
+	return PASS;
+}
+
+// Test to see if we can access the video memory at its location
+// Expected return value: PASS
+int videomemexist() {
+	TEST_HEADER;
+	int* location1 = (int*)0xb8000;
+	int testing1;
+	testing1 = *location1;
+	return PASS;
+}
+
+// Test to see if we can access a page which does not exist yet
+// Expected return value: FAIL
+int imaginemem() {
+	TEST_HEADER;
+	int* location2 = (int*)0x200000;
+	int testing2;
+	testing2 = *location2;
+	return FAIL;
+}
+
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -65,7 +96,10 @@ int idt_div_zero_trigger_test() {
 
 /* Test suite entry point */
 void launch_tests() {
-	TEST_OUTPUT("idt_test", idt_test());
+	TEST_OUTPUT("idt_test: ", idt_test());
+	TEST_OUTPUT("kernel test: ", kernelexist());
+	TEST_OUTPUT("videomemexist test: ", videomemexist());
+	TEST_OUTPUT("imaginemem test: ", imaginemem());
 	// launch your tests here
 //	TEST_OUTPUT("idt_div_zero_trigger_test", idt_div_zero_trigger_test());
 }
