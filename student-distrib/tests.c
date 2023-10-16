@@ -15,7 +15,8 @@
 static inline void assertion_failure(){
 	/* Use exception #15 for assertions, otherwise
 	   reserved by Intel */
-	asm volatile("int $15");
+	   //original value was int $15
+	asm volatile("int $0x80");
 }
 
 
@@ -178,6 +179,14 @@ int assertion_failure2(){
 	return 1;
 }
 
+//Test system call 0x80
+// int system_call_fail(){
+// 	/* Use exception 0x80 for assertions, otherwise
+// 	   reserved by Intel */
+// 	asm volatile("int $0x80"); //raise stack_segfault exception
+// 	return 1;
+// }
+
 
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
@@ -202,4 +211,6 @@ void launch_tests() {
 	// launch your tests here
 	// TEST_OUTPUT("idt_div_zero_trigger_test", idt_div_zero_trigger_test());
 	// TEST_OUTPUT("overflow test: ", ovverflow());
+	//TEST_OUTPUT("System call:", system_call_fail());
+
 }

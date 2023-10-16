@@ -1,12 +1,21 @@
+# Macro to link c handler functiona to assembly above
+
+# Pushes Registers on Stack
+# Pushes Flags on stack
+# Calls the C function
+# Pops the Flags of stack
+# Pops the registers off stack
+# returns
+
 #define INTR_LINK(link_name, handler) \
-    .globl link_name, handler        ;\
-    link_name:                       ;\
+    .globl link_name, handler    ;\
+    link_name:                   ;\
 	pushal                       ;\
 	pushfl                       ;\
 	call handler                 ;\
 	popfl                        ;\
 	popal                        ;\
-	iret                 
+	iret                 		
 	
 .text
 

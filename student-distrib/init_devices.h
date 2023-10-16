@@ -10,6 +10,7 @@
 /* initialize the RTC enabling periodic interrupts */
 extern void init_rtc();
 
+/* initializing the keyboard device to allow of keyboard interrupts*/
 extern void init_kbd();
 
 #endif
