@@ -66,12 +66,12 @@ void paging_init()
 	    ZERO_PAGEDIR_KB(pd[j].kb);
             pd[j].kb.present = 1;
             pd[j].kb.pt_baseaddr = ((unsigned int)pt0) >> 12;
-	    pd[j].kb.rw = 1;
+	        pd[j].kb.rw = 1;
         } else if (j == 1) { // 4MB physical mem block for kernel
 	    ZERO_PAGEDIR_MB(pd[j].mb);
             pd[j].mb.present = 1;
             pd[j].mb.ps1 = 1;
-	    pd[j].mb.rw = 1;
+	        pd[j].mb.rw = 1;
             pd[j].mb.global = 1;
             pd[j].mb.page_baseaddr_bit31_22 = KERNEL_ADDR >> 22;
         } else { // eveything else allocated as needed by programs

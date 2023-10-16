@@ -154,7 +154,7 @@ int videomemexisthigher() {
 // Expected return value: FAIL
 int imaginemem() {
 	TEST_HEADER;
-	int* location4 = (int*)0xB9000;//physical address of random spot
+	int* location4 = (int*)0x30000;//physical address of random spot
 	int testing4;
 	testing4 = *location4;
 	return FAIL;
@@ -189,9 +189,9 @@ int assertion_failure2(){
 void launch_tests() {
 	TEST_OUTPUT("idt_test: ", idt_test());
 	TEST_OUTPUT("kernel test: ", kernelexist());
+	TEST_OUTPUT("videomemexist test: ", videomemexist());
 	// TEST_OUTPUT("kernel test lower: ", kernelexistlower());
 	// TEST_OUTPUT("kernel test higher: ", kernelexisthigher());
-	TEST_OUTPUT("videomemexist test: ", videomemexist());
 	// TEST_OUTPUT("videomemexist test lower: ", videomemexistlower());
 	// TEST_OUTPUT("videomemexist test higher: ", videomemexisthigher());
 	// TEST_OUTPUT("imaginemem test: ", imaginemem());
