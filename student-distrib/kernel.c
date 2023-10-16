@@ -219,7 +219,6 @@ void entry(unsigned long magic, unsigned long addr) {
     
     clear();
 
-
     paging_init();
 
     /* Enable interrupts */
