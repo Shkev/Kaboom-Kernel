@@ -43,26 +43,26 @@ typedef struct __attribute__ ((packed, aligned(4))) pagedirectKB_t {
 ////////////////////////////////////////////////// PAGE DIRECTORY 4MB STRUCT /////////////////////////////////////////////////////
 /* note these don't point to a page table; point directly to a page */
 typedef struct __attribute__ ((packed, aligned(4))) pagedirmb_entry_t {
-    uint32_t present            : 1;
-    uint32_t rw                 : 1;
-    uint32_t us                 : 1;
-    uint32_t pwt                : 1;
-    uint32_t pcd                : 1;
-    uint32_t accessed           : 1;
-    uint32_t dirty              : 1;
-    uint32_t ps1                : 1; /* page size for entry. Always 1 for 4MB entries */
-    uint32_t global             : 1; /* tells processor to not invalidate TLB entry on reload of CR3 */
-    uint32_t avl                : 3;
-    uint32_t pat                : 1; /* page attribute table (set to 0 for now...) */
-    uint32_t bit39_32           : 8; /* used for metadata */
-    uint32_t rsvd               : 1; /* reserved for CPU use (set to 0) */
-    uint32_t page_baseaddr      : 10; /* addr to start of 4MB page */
+    uint32_t present                : 1;
+    uint32_t rw                     : 1;
+    uint32_t us                     : 1;
+    uint32_t pwt                    : 1;
+    uint32_t pcd                    : 1;
+    uint32_t accessed               : 1;
+    uint32_t d                      : 1;
+    uint32_t ps1                    : 1; /* page size for entry. Always 1 for 4MB entries */
+    uint32_t global                 : 1; /* tells processor to not invalidate TLB entry on reload of CR3 */
+    uint32_t avl                    : 3;
+    uint32_t pat                    : 1; /* page attribute table (set to 0 for now...) */
+    uint32_t page_baseaddr_bit39_32  : 8; /* used for metadata */
+    uint32_t rsvd                   : 1; /* reserved for CPU use (set to 0) */
+    uint32_t page_baseaddr_bit31_22 : 10; /* addr to start of 4MB page */
 } pagedirmb_entry_t;
 
 ////////////////////////////////////////////////// UNION THE TWO PAGE DIRECTORY STRUCTS /////////////////////////////////////////////
 typedef union pagedir_entry_t {
-    struct pagedirkb_entry_t kb;
-    struct pagedirmb_entry_t mb;
+    pagedirkb_entry_t kb;
+    pagedirmb_entry_t mb;
 } pagedir_entry_t;
 
 ////////////////////////////////////////////////// PAGE TABLE STRUCT /////////////////////////////////////////////////////
@@ -83,6 +83,6 @@ typedef struct __attribute__ ((packed,  aligned(4))) page_table_entry_t {
 /* only has 1 page directory. All memory can be accessed through it */
 pagedir_entry_t pd[PAGEDIR_SIZE] __attribute__((aligned (PAGE_SIZE)));
 /* one page table for now for first 4MB in mem. Add more as needed by programs */
-page_table_entry_t pt0[PAGETABLE_SIZE] __attribute__((aligned (PAGE_SIZE));
+page_table_entry_t pt0[PAGETABLE_SIZE] __attribute__((aligned (PAGE_SIZE)));
 
 #endif
