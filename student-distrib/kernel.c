@@ -217,7 +217,7 @@ void entry(unsigned long magic, unsigned long addr) {
     // init_rtc();
     init_kbd();
     
-    clear();
+    // clear();
 
     paging_init();
 
