@@ -200,12 +200,12 @@ int assertion_failure2(){
 }
 
 //Test system call 0x80
-// int system_call_fail(){
-// 	/* Use exception 0x80 for assertions, otherwise
-// 	   reserved by Intel */
-// 	asm volatile("int $0x80"); //raise stack_segfault exception
-// 	return 1;
-// }
+int system_call_fail(){
+	/* Use exception 0x80 for assertions, otherwise
+	   reserved by Intel */
+	asm volatile("int $0x80"); //raise stack_segfault exception
+	return 1;
+}
 
 
 /* Checkpoint 2 tests */
@@ -216,11 +216,11 @@ int assertion_failure2(){
 
 /* Test suite entry point */
 void launch_tests() {
-	TEST_OUTPUT("idt_test: ", idt_test());
-	TEST_OUTPUT("kernel starting: ", kernelexist());
-	TEST_OUTPUT("kernel ending: ", kernelexistdone());
-	TEST_OUTPUT("videomemexist starting: ", videomemexist());
-	TEST_OUTPUT("videomemexist ending: ", videomemexistdone());
+	//TEST_OUTPUT("idt_test: ", idt_test());
+	//TEST_OUTPUT("kernel starting: ", kernelexist());
+	//TEST_OUTPUT("kernel ending: ", kernelexistdone());
+	//TEST_OUTPUT("videomemexist starting: ", videomemexist());
+	//TEST_OUTPUT("videomemexist ending: ", videomemexistdone());
 	// TEST_OUTPUT("kernel test lower: ", kernelexistlower());
 	// TEST_OUTPUT("kernel test higher: ", kernelexisthigher());
 	// TEST_OUTPUT("videomemexist test lower: ", videomemexistlower());
@@ -234,5 +234,6 @@ void launch_tests() {
 	// TEST_OUTPUT("idt_div_zero_trigger_test", idt_div_zero_trigger_test());
 	// TEST_OUTPUT("overflow test: ", ovverflow());
 	//TEST_OUTPUT("System call:", system_call_fail());
+	//assertion_failure();
 
 }

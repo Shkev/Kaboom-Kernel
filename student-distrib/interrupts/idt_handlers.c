@@ -316,6 +316,11 @@ void rtc_handler() {
     sti();
 }
 
+void system_call_handler() {
+    PRINT_HANDLER("system call");
+    while(1);
+}
+
 /*kbd_handler()
 * DESCRIPTION: processes keyboard interrupts
 * INPUTS: none

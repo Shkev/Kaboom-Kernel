@@ -207,6 +207,8 @@ void entry(unsigned long magic, unsigned long addr) {
         SET_IDT_ENTRY(idt[0x21], kbd_linkage);
         SET_IDT_ENTRY(idt[0x28], rtc_linkage);
 
+        SET_IDT_ENTRY(idt[0x80], system_call_handler);
+
         //===============================================
 
     }
@@ -218,7 +220,7 @@ void entry(unsigned long magic, unsigned long addr) {
     /* initialize devices. Turn on IRQs for these devices */
     /*IRQ2 is enabled to account for scondary PIC*/
     enable_irq(2);
-    init_rtc();
+    //init_rtc();
     init_kbd();
 
     // clear();

@@ -89,6 +89,8 @@ extern void rtc_handler(); //RTC
 
 extern void kbd_handler(); //Keyboard handler
 
+extern void system_call_handler(); //system call
+
 /* ----------------------------------------------------------------- */
 
 /* Exception functions. Assembly wrappers around interrupt handlers.
@@ -174,5 +176,7 @@ extern void security_linkage();
 extern void rtc_linkage(); //RTC
 
 extern void kbd_linkage(); //Keyboard 
+
+extern void system_call_linkage(); //system call
 
 #endif // IDT_FNCS_H
