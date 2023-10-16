@@ -60,18 +60,18 @@ void paging_init()
     /* initialize page directory entries 
      * Note: all entries in pd and pt0 are set to 0 in x86_desc.S
      */
-    for (j = 0; j < PAGEDIR_SIZE; j++) {
+    for (j = 0; j < 2; j++) {
 	    /* first 4MB block in physical mem. Uses 4KB pages */
         if (j == 0) {
             pd[j].kb.present = 1;
             pd[j].kb.rw = 1;
-            pd[j].kb.pt_baseaddr = (((uint32_t)pt0) >> 12) & 0x3FF;
+            pd[j].kb.pt_baseaddr = (((unsigned int)pt0) >> 12) & 0x3FF;
         } else if (j == 1) { // 4MB physical mem block for kernel
             pd[j].mb.present = 1;
             pd[j].mb.rw = 1;
             pd[j].mb.ps1 = 1;
             pd[j].mb.global = 1;
-            pd[j].mb.page_baseaddr_bit31_22 = KERNEL_ADDR >> 22;
+            pd[j].mb.page_baseaddr_bit31_22 = (0x00001) << 10;
         }
         // everything else; initialized as needed by programs
     }

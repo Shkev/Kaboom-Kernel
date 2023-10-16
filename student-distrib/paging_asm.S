@@ -16,18 +16,7 @@ load_page_directory:
     movl %esp, %ebp
     movl 8(%ebp), %eax
     movl %eax, %cr3
-    movl %ebp, %esp
-    popl %ebp
-    ret
-
-enable_paging:
-    pushl %ebp
-    movl %esp, %ebp
-    movl %cr0, %eax
-    orl $0x80000001, %eax
-    movl %eax, %cr0
-    movl %ebp, %esp
-    popl %ebp
+    leave	
     ret
 
 allow_mixed_pages:
@@ -36,6 +25,15 @@ allow_mixed_pages:
     movl %cr4, %eax
     orl $0x00000010, %eax
     movl %eax, %cr4
-    movl %ebp, %esp
-    popl %ebp
+    leave	
+    ret
+	
+enable_paging:
+    pushl %ebp
+    movl %esp, %ebp
+    movl %cr0, %eax
+    orl $0x80000001, %eax
+    movl %eax, %cr0
+	leave
+	
     ret
