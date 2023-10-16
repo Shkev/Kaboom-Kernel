@@ -16,7 +16,7 @@ static inline void assertion_failure(){
 	/* Use exception #15 for assertions, otherwise
 	   reserved by Intel */
 	   //original value was int $15
-	asm volatile("int $0x80");
+	asm volatile("int $15");
 }
 
 
@@ -67,7 +67,7 @@ int ovverflow() {
     int one;
 	one = 1;
     a = a + one;
-    return a;
+    return FAIL;
 }
 
 // Test to see if we can access the kernel memory at its location
