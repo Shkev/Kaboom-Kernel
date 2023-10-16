@@ -62,7 +62,7 @@ void paging_init()
         if (j == 0) {
 	    ZERO_PAGEDIR_KB(pd[j].kb);
 	    pd[j].kb.rw = 1;
-	    pd[j].kb.pt_baseaddr = ((uint32_t)pt0) >> 12;
+	    pd[j].kb.pt_baseaddr = ((int)pt0) >> 12;
         } else if (j == 1) { // 4MB physical mem block for kernel
 	    ZERO_PAGEDIR_MB(pd[j].mb);
 	    pd[j].mb.present = 1;
@@ -92,7 +92,7 @@ void paging_init()
     }
 
     // assembly stuff
-    load_page_directory((uint32_t)pd);
+    load_page_directory((unsigned int*)pd);
     enable_paging();
     allow_mixed_pages();
 }

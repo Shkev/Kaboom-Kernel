@@ -16,7 +16,7 @@ extern void paging_init();
 // Functions implemented in paging_asm.S //
 
 /* load address of page directory array into registers */
-extern void load_page_directory(uint32_t);
+extern void load_page_directory(unsigned int*);
 
 /* enable paging in x86 */
 extern void enable_paging();
@@ -54,7 +54,7 @@ typedef struct __attribute__ ((packed, aligned(4))) pagedirmb_entry_t {
     uint32_t global                 : 1; /* tells processor to not invalidate TLB entry on reload of CR3 */
     uint32_t avl                    : 3;
     uint32_t pat                    : 1; /* page attribute table (set to 0 for now...) */
-    uint32_t page_baseaddr_bit39_32  : 8; /* used for metadata */
+    uint32_t page_baseaddr_bit39_32 : 8; /* used for metadata */
     uint32_t rsvd                   : 1; /* reserved for CPU use (set to 0) */
     uint32_t page_baseaddr_bit31_22 : 10; /* addr to start of 4MB page */
 } pagedirmb_entry_t;

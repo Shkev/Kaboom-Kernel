@@ -20,7 +20,6 @@ load_page_directory:
     popl %ebp
     ret
 
-
 enable_paging:
     pushl %ebp
     movl %esp, %ebp
