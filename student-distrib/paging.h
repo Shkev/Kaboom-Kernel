@@ -29,7 +29,7 @@ extern void allow_mixed_pages();
 
 // Data structures for page directory entries and page table entries //
 
-////////////////////////////////////////////////// PAGE DIRECTORY NON 4MB STRUCT /////////////////////////////////////////////////////
+////////////////////////////////////////////////// PAGE DIRECTORY 4KB STRUCT /////////////////////////////////////////////////////
 typedef union pagedirkb_entry_t {
     uint32_t val;
     struct {
@@ -68,13 +68,13 @@ typedef union pagedirmb_entry_t {
     } __attribute__ ((packed));
 } pagedirmb_entry_t;
 
-////////////////////////////////////////////////// UNION THE TWO PAGE DIRECTORY STRUCTS /////////////////////////////////////////////
+////////////////////////////////////////////////// GENERAL PAGE DIR ENTRY TYPE /////////////////////////////////////////////
 typedef union pagedir_entry_t {
     pagedirkb_entry_t kb;
     pagedirmb_entry_t mb;
 } pagedir_entry_t;
 
-////////////////////////////////////////////////// PAGE TABLE STRUCT /////////////////////////////////////////////////////
+////////////////////////////////////////////////// PAGE TABLE ENTRY STRUCT /////////////////////////////////////////////////////
 typedef union page_table_entry_t {
     uint32_t val;
     struct {
@@ -92,7 +92,7 @@ typedef union page_table_entry_t {
     } __attribute__ ((packed));
 } page_table_entry_t;
 
-/* only has 1 page directory. All memory can be accessed through it */
+/* only 1 page directory. All memory can be accessed through it */
 extern pagedir_entry_t pd[PAGEDIR_SIZE] __attribute__((aligned (PAGE_SIZE_4KB)));
 /* one page table for now for first 4MB in mem. Add more as needed by programs */
 extern page_table_entry_t pt0[PAGETABLE_SIZE] __attribute__((aligned (PAGE_SIZE_4KB)));

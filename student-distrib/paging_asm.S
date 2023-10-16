@@ -19,6 +19,13 @@ load_page_directory:
     leave	
     ret
 
+/*
+ * allow_mixed_pages()
+ * Allow mixed pages for paging
+ * INPUTS       : none
+ * OUTPUTS      : none
+ * SIDE EFFECTS : modify cr4
+ */
 allow_mixed_pages:
     pushl %ebp
     movl %esp, %ebp
@@ -27,13 +34,19 @@ allow_mixed_pages:
     movl %eax, %cr4
     leave	
     ret
-	
+
+/*
+ * enable_paging()
+ * Enable paging on device
+ * INPUTS       : none
+ * OUTPUTS      : none
+ * SIDE EFFECTS : modify cr0
+ */
 enable_paging:
     pushl %ebp
     movl %esp, %ebp
     movl %cr0, %eax
     orl $0x80000001, %eax
     movl %eax, %cr0
-//    addl $2, %eax
     leave	
     ret
