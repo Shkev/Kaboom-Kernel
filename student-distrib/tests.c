@@ -58,6 +58,17 @@ int idt_div_zero_trigger_test() {
     return b;
 }
 
+int ovverflow() {
+    TEST_HEADER;
+
+    int a;
+    a = 0xFFFFFFFF;
+    int one;
+	one = 1;
+    a = a + one;
+    return a;
+}
+
 // Test to see if we can access the kernel memory at its location
 // Expected return value: PASS
 int kernelexist() {
@@ -189,5 +200,6 @@ void launch_tests() {
 	// TEST_OUTPUT("idt exception device_na: ", assertion_failure1());
 	// TEST_OUTPUT("idt exception stack_segfault: ", assertion_failure2());
 	// launch your tests here
-//	TEST_OUTPUT("idt_div_zero_trigger_test", idt_div_zero_trigger_test());
+	// TEST_OUTPUT("idt_div_zero_trigger_test", idt_div_zero_trigger_test());
+	// TEST_OUTPUT("overflow test: ", ovverflow());
 }
