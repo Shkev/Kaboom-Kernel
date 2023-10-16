@@ -55,38 +55,35 @@ void paging_init()
 {
     unsigned int j;
 
-    // initialize page directory entries
-    for (j = 0; j < PAGEDIR_SIZE; j++)
-    {
-	/* first 4MB block in physical mem. Uses 4KB pages */
+    /* initialize page directory entries 
+     * Note: all entries in pd and pt0 are set to 0 in x86_desc.S
+     */
+    for (j = 0; j < PAGEDIR_SIZE; j++) {
+	    /* first 4MB block in physical mem. Uses 4KB pages */
         if (j == 0) {
-	    ZERO_PAGEDIR_KB(pd[j].kb);
-	    pd[j].kb.rw = 1;
-	    pd[j].kb.pt_baseaddr = ((int)pt0) >> 12;
+            pd[j].kb.present = 1;
+            pd[j].kb.rw = 1;
+            pd[j].kb.pt_baseaddr = (((uint32_t)pt0) >> 12) & 0x3FF;
         } else if (j == 1) { // 4MB physical mem block for kernel
-	    ZERO_PAGEDIR_MB(pd[j].mb);
-	    pd[j].mb.present = 1;
-	    pd[j].mb.rw = 1;
-	    pd[j].mb.ps1 = 1;
-	    pd[j].mb.global = 1;
-	    pd[j].mb.page_baseaddr_bit31_22 = KERNEL_ADDR >> 22;
-        } else { // everything else; initialized as needed by programs
-	    ZERO_PAGEDIR_KB(pd[j].kb);
+            pd[j].mb.present = 1;
+            pd[j].mb.rw = 1;
+            pd[j].mb.ps1 = 1;
+            pd[j].mb.global = 1;
+            pd[j].mb.page_baseaddr_bit31_22 = KERNEL_ADDR >> 22;
         }
+        // everything else; initialized as needed by programs
     }
     
     // initializing page table 0
     for (j = 0; j < PAGETABLE_SIZE; j++)
     {
-	ZERO_PAGETAB_ENTRY(pt0[j]);
-
-	/* if page not for video memory */
+	    /* if page not for video memory */
         if (j != (VIDEO >> 12)) {
             pt0[j].page_baseaddr = j;
         } else { // for video mem
             pt0[j].page_baseaddr = VIDEO >> 12;
             pt0[j].rw = 1;
-	    pt0[j].us = 1;
+	        pt0[j].us = 1;
             pt0[j].present = 1;
         }
     }

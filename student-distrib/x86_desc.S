@@ -3,6 +3,7 @@
 
 #define ASM     1
 #include "x86_desc.h"
+#include "paging.h"
 
 .text
 
@@ -11,7 +12,24 @@
 .globl tss, tss_desc_ptr, ldt, ldt_desc_ptr
 .globl gdt_ptr
 .globl idt_desc_ptr, idt
+.globl pd, pt0
 
+.align PAGE_SIZE
+
+# initialize page directory and page table 0
+pd:
+_pd:
+    .rept PAGEDIR_SIZE
+    .long 0
+    .endr
+pd_bottom:
+
+pt0:
+_pt0:
+    .rept PAGETABLE_SIZE
+    .long 0
+    .endr
+pt0_bottom:
 
 .align 4
 

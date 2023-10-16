@@ -2,7 +2,7 @@
 
 .text
 
-.globl load_page_directory, enable_paging, allow_mixed_pages
+.globl init_paging_structs, load_page_directory, enable_paging, allow_mixed_pages
 
 /*
  * load_page_directory(pagedir_entry_t* pd)

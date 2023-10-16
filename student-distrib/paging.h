@@ -1,12 +1,15 @@
 #ifndef PAGING_H
 #define PAGING_H
-#include "types.h"
-#include "lib.h"
 
 #define PAGEDIR_SIZE 1024	/* size of the non 4 mb page directory */
 #define PAGETABLE_SIZE 1024	/* size of the page table */
 #define PAGE_SIZE 4096		/* size of an individual page */
 #define KERNEL_ADDR 0x400000
+
+#ifndef ASM
+
+#include "types.h"
+#include "lib.h"
 
 // Implemented in paging.c //
 
@@ -27,7 +30,7 @@ extern void allow_mixed_pages();
 // Data structures for page directory entries and page table entries //
 
 ////////////////////////////////////////////////// PAGE DIRECTORY NON 4MB STRUCT /////////////////////////////////////////////////////
-typedef struct __attribute__ ((packed, aligned(4))) pagedirectKB_t {
+typedef struct __attribute__ ((packed)) pagedirkb_entry_t {
     uint32_t present             : 1; /* whether page tables/pages present for this entry */
     uint32_t rw                  : 1; /* read/write permissions flags */
     uint32_t us                  : 1; /* User/supervisor access control bit */
@@ -42,7 +45,7 @@ typedef struct __attribute__ ((packed, aligned(4))) pagedirectKB_t {
 
 ////////////////////////////////////////////////// PAGE DIRECTORY 4MB STRUCT /////////////////////////////////////////////////////
 /* note these don't point to a page table; point directly to a page */
-typedef struct __attribute__ ((packed, aligned(4))) pagedirmb_entry_t {
+typedef struct __attribute__ ((packed)) pagedirmb_entry_t {
     uint32_t present                : 1;
     uint32_t rw                     : 1;
     uint32_t us                     : 1;
@@ -66,7 +69,7 @@ typedef union pagedir_entry_t {
 } pagedir_entry_t;
 
 ////////////////////////////////////////////////// PAGE TABLE STRUCT /////////////////////////////////////////////////////
-typedef struct __attribute__ ((packed,  aligned(4))) page_table_entry_t {
+typedef struct __attribute__ ((packed)) page_table_entry_t {
     uint32_t present         : 1;
     uint32_t rw              : 1;
     uint32_t us              : 1;
@@ -85,4 +88,6 @@ pagedir_entry_t pd[PAGEDIR_SIZE] __attribute__((aligned (PAGE_SIZE)));
 /* one page table for now for first 4MB in mem. Add more as needed by programs */
 page_table_entry_t pt0[PAGETABLE_SIZE] __attribute__((aligned (PAGE_SIZE)));
 
-#endif
+#endif // ASM
+
+#endif // PAGING_H
