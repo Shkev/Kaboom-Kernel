@@ -3,7 +3,7 @@
 
 #define ASM     1
 #include "x86_desc.h"
-#include "paging.h"
+#include "paging/paging.h"
 
 .text
 

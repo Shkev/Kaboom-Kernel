@@ -10,7 +10,7 @@
 #include "init_devices.h"
 #include "debug.h"
 #include "tests.h"
-#include "paging.h"
+#include "paging/paging.h"
 
 #define RUN_TESTS
 

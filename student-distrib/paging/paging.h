@@ -8,8 +8,8 @@
 
 #ifndef ASM
 
-#include "types.h"
-#include "lib.h"
+#include "../types.h"
+#include "../lib.h"
 
 // Implemented in paging.c //
 
