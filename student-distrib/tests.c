@@ -59,7 +59,7 @@ int idt_div_zero_trigger_test() {
     return b;
 }
 
-int ovverflow() {
+int overflow_test() {
     TEST_HEADER;
 
     int a;
@@ -72,7 +72,7 @@ int ovverflow() {
 
 // Test to see if we can access the kernel memory at its location
 // Expected return value: PASS
-int kernelexist() {
+int kernelexist_test() {
 	TEST_HEADER;
 	char* location0 = (char*)0x400000; //physical address where kernel starts
 	char testing0;
@@ -82,7 +82,7 @@ int kernelexist() {
 
 // Test to see if we can access the kernel memory at its location
 // Expected return value: PASS
-int kernelexistdone() {
+int kernelexistdone_test() {
 	TEST_HEADER;
 	char* location0 = (char*)0x7FFFFF; //physical address where kernel ends
 	char testing0;
@@ -92,7 +92,7 @@ int kernelexistdone() {
 
 // Test to see if we can access the video memory at its location
 // Expected return value: PASS
-int videomemexist() {
+int videomemexist_test() {
 	TEST_HEADER;
 	char* location1 = (char*)0xB8000; //physical address where video memory starts
 	char testing1;
@@ -102,7 +102,7 @@ int videomemexist() {
 
 // Test to see if we can access the video memory at its location
 // Expected return value: PASS
-int videomemexistdone() {
+int videomemexistdone_test() {
 	TEST_HEADER;
 	char* location1 = (char*)0xB8FFF; //physical address where video memory starts
 	char testing1;
@@ -112,7 +112,7 @@ int videomemexistdone() {
 
 // Test to see if we can access the one below the lower bound of kernel memory address
 // Expected return value: FAIL
-int kernelexistlower() {
+int kernelexistlower_test() {
 	TEST_HEADER;
 	char* location0 = (char*)0x3FFFFF; //physical address where kernel starts
 	char testing0;
@@ -122,7 +122,7 @@ int kernelexistlower() {
 
 // Test to see if we can access the one above the higher bound of kernel memory address
 // Expected return value: FAIL
-int kernelexisthigher() {
+int kernelexisthigher_test() {
 	TEST_HEADER;
 	char* location0 = (char*)0x800000; //physical address one above kernel ending
 	char testing0;
@@ -132,7 +132,7 @@ int kernelexisthigher() {
 
 // Test lowerbound of videomemory
 // Expected return value: FAIL
-int videomemexistlower() {
+int videomemexistlower_test() {
 	TEST_HEADER;
 	char* location2 = (char*)0xB7FFF;//physical address one below video memory start
 	char testing2;
@@ -142,7 +142,7 @@ int videomemexistlower() {
 
 // Test upperbound of videomemory
 // Expected return value: FAIL
-int videomemexisthigher() {
+int videomemexisthigher_test() {
 	TEST_HEADER;
 	char* location3 = (char*)0xB9000;//physical address one above video memory ending
 	char testing3;
@@ -172,8 +172,8 @@ int videomemexisthigher() {
 
 
 // Test to see if we can access a page which does not exist yet
-// Expected return value: FAIL
-int imaginemem() {
+// will FAIL if page fault not thrown
+int imaginemem_test() {
 	TEST_HEADER;
 	char* location4 = (char*)0x30000;//physical address of random spot
 	char testing4;
@@ -183,26 +183,20 @@ int imaginemem() {
 
 // Test random exception on IDT
 // Expected return value: raise exception
-int assertion_failure1(){
-	/* Use exception #7 for assertions, otherwise
-	   reserved by Intel */
-	asm volatile("int $7"); //raise device_na exception
+int assertion_failure1_test() {
+	asm volatile("int $7"); // raise device_na exception
 	return 1;
 }
 
 // Test random exception on IDT
 // Expected return value: raise exception
-int assertion_failure2(){
-	/* Use exception #7 for assertions, otherwise
-	   reserved by Intel */
+int assertion_failure2_test(){
 	asm volatile("int $12"); //raise stack_segfault exception
 	return 1;
 }
 
-//Test system call 0x80
-int system_call_fail(){
-	/* Use exception 0x80 for assertions, otherwise
-	   reserved by Intel */
+// Test system call 0x80
+int system_call_fail_test(){
 	asm volatile("int $0x80"); //raise stack_segfault exception
 	return 1;
 }
@@ -216,24 +210,22 @@ int system_call_fail(){
 
 /* Test suite entry point */
 void launch_tests() {
-	//TEST_OUTPUT("idt_test: ", idt_test());
-	//TEST_OUTPUT("kernel starting: ", kernelexist());
-	//TEST_OUTPUT("kernel ending: ", kernelexistdone());
-	//TEST_OUTPUT("videomemexist starting: ", videomemexist());
-	//TEST_OUTPUT("videomemexist ending: ", videomemexistdone());
-	// TEST_OUTPUT("kernel test lower: ", kernelexistlower());
-	// TEST_OUTPUT("kernel test higher: ", kernelexisthigher());
-	// TEST_OUTPUT("videomemexist test lower: ", videomemexistlower());
-	// TEST_OUTPUT("videomemexist test higher: ", videomemexisthigher());
-	// TEST_OUTPUT("imaginemem test: ", imaginemem());
-	// TEST_OUTPUT("zero test: ", zero());
-	// TEST_OUTPUT("max test: ", max());
-	// TEST_OUTPUT("idt exception device_na: ", assertion_failure1());
-	// TEST_OUTPUT("idt exception stack_segfault: ", assertion_failure2());
-	// launch your tests here
-	// TEST_OUTPUT("idt_div_zero_trigger_test", idt_div_zero_trigger_test());
-	// TEST_OUTPUT("overflow test: ", ovverflow());
-	//TEST_OUTPUT("System call:", system_call_fail());
-	//assertion_failure();
+	TEST_OUTPUT("idt_test: ", idt_test());
+	TEST_OUTPUT("kernel starting: ", kernelexist_test());
+	TEST_OUTPUT("kernel ending: ", kernelexistdone_test());
+	TEST_OUTPUT("videomemexist starting: ", videomemexist_test());
+	TEST_OUTPUT("videomemexist ending: ", videomemexistdone_test());
+	TEST_OUTPUT("kernel test lower: ", kernelexistlower_test());
+	TEST_OUTPUT("kernel test higher: ", kernelexisthigher_test());
+	TEST_OUTPUT("videomemexist test lower: ", videomemexistlower_test());
+	TEST_OUTPUT("videomemexist test higher: ", videomemexisthigher_test());
+	TEST_OUTPUT("imaginemem test: ", imaginemem_test());
+	TEST_OUTPUT("idt exception device_na: ", assertion_failure1_test());
+	TEST_OUTPUT("idt exception stack_segfault: ", assertion_failure2_test());
+	TEST_OUTPUT("idt_div_zero_trigger_test", idt_div_zero_trigger_test());
+	TEST_OUTPUT("overflow test: ", overflow_test());
+	TEST_OUTPUT("System call:", system_call_fail_test());
 
+	//TEST_OUTPUT("zero test: ", zero());
+	//TEST_OUTPUT("max test: ", max());
 }
