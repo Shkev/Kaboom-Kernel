@@ -207,6 +207,7 @@ void entry(unsigned long magic, unsigned long addr) {
         SET_IDT_ENTRY(idt[0x21], kbd_linkage);
         SET_IDT_ENTRY(idt[0x28], rtc_linkage);
 
+        /* System Call handler*/
         SET_IDT_ENTRY(idt[0x80], system_call_handler);
 
         //===============================================
@@ -225,6 +226,11 @@ void entry(unsigned long magic, unsigned long addr) {
 
     // clear();
     paging_init();
+
+    module_t* ext2_filesys = (module_t*) ((mbi->mods_addr)+1024);
+    uint32_t* ext2_file_addr = (uint32_t*)(ext2_filesys->mod_start);
+    init_ext2_filesys(ext2_filesys);
+    // ==============================================================
 
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your

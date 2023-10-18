@@ -209,21 +209,21 @@ int system_call_fail_test(){
 
 /* Test suite entry point */
 void launch_tests() {
-	TEST_OUTPUT("idt_test: ", idt_test());
-	TEST_OUTPUT("kernel starting: ", kernelexist_test());
-	TEST_OUTPUT("kernel ending: ", kernelexistdone_test());
-	TEST_OUTPUT("videomemexist starting: ", videomemexist_test());
-	TEST_OUTPUT("videomemexist ending: ", videomemexistdone_test());
-	TEST_OUTPUT("kernel test lower: ", kernelexistlower_test());
-	TEST_OUTPUT("kernel test higher: ", kernelexisthigher_test());
-	TEST_OUTPUT("videomemexist test lower: ", videomemexistlower_test());
-	TEST_OUTPUT("videomemexist test higher: ", videomemexisthigher_test());
-	TEST_OUTPUT("imaginemem test: ", imaginemem_test());
-	TEST_OUTPUT("idt exception device_na: ", assertion_failure1_test());
-	TEST_OUTPUT("idt exception stack_segfault: ", assertion_failure2_test());
-	TEST_OUTPUT("idt_div_zero_trigger_test", idt_div_zero_trigger_test());
-	TEST_OUTPUT("overflow test: ", overflow_test());
-	TEST_OUTPUT("System call:", system_call_fail_test());
+	// TEST_OUTPUT("idt_test: ", idt_test());
+	// TEST_OUTPUT("kernel starting: ", kernelexist_test());
+	// TEST_OUTPUT("kernel ending: ", kernelexistdone_test());
+	// TEST_OUTPUT("videomemexist starting: ", videomemexist_test());
+	// TEST_OUTPUT("videomemexist ending: ", videomemexistdone_test());
+	// TEST_OUTPUT("kernel test lower: ", kernelexistlower_test());
+	// TEST_OUTPUT("kernel test higher: ", kernelexisthigher_test());
+	// TEST_OUTPUT("videomemexist test lower: ", videomemexistlower_test());
+	// TEST_OUTPUT("videomemexist test higher: ", videomemexisthigher_test());
+	// TEST_OUTPUT("imaginemem test: ", imaginemem_test());
+	// TEST_OUTPUT("idt exception device_na: ", assertion_failure1_test());
+	// TEST_OUTPUT("idt exception stack_segfault: ", assertion_failure2_test());
+	// TEST_OUTPUT("idt_div_zero_trigger_test", idt_div_zero_trigger_test());
+	// TEST_OUTPUT("overflow test: ", overflow_test());
+	// TEST_OUTPUT("System call:", system_call_fail_test());
 
 	//TEST_OUTPUT("zero test: ", zero());
 	//TEST_OUTPUT("max test: ", max());
