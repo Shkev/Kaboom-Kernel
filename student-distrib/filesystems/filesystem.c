@@ -2,7 +2,7 @@
 #include "../ece391support.h"
 #include "../ece391syscall.h"
 
-boot_block_t super_block;
+boot_block_t* fs_boot_block;
 
 
 // typedef struct boot_block_t{
@@ -14,9 +14,8 @@ boot_block_t super_block;
 // } boot_block_t;
 
 
-void init_ext2_filesys(uint32_t* ext2_addr){
-    super_block.dir_count = (uint32_t) *ext2_addr;
-    super_block.inode_count = (uint32_t) *(ext2_addr+4);
-    super_block.data_count = (uint32_t) *(ext2_addr+8);
+void init_ext2_filesys(uint32_t boot_block_start){
+
+    fs_boot_block = (boot_block_t*) boot_block_start;
 
 }

@@ -225,11 +225,10 @@ void entry(unsigned long magic, unsigned long addr) {
     init_kbd();
 
     // clear();
-    paging_init();
+    module_t* ext2_filesys = (module_t*)(mbi->mods_addr);
+    init_ext2_filesys(ext2_filesys->mod_start);
 
-    module_t* ext2_filesys = (module_t*) ((mbi->mods_addr)+1024);
-    uint32_t* ext2_file_addr = (uint32_t*)(ext2_filesys->mod_start);
-    init_ext2_filesys(ext2_filesys);
+    paging_init();
     // ==============================================================
 
     /* Enable interrupts */
