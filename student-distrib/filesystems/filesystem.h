@@ -36,4 +36,16 @@ extern int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t
 
 extern void init_ext2_filesys(uint32_t boot_block_start);
 
+/*System call functions for directories*/
+extern int32_t directory_open();
+extern int32_t directory_read();
+extern int32_t directory_write();
+extern int32_t directory_close();
+
+/*System call functions for files*/
+extern int32_t file_open();
+extern int32_t file_read();
+extern int32_t file_write();
+extern int32_t file_close();
+
 #endif  //FILESYS_H

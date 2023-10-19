@@ -55,13 +55,16 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry) {
     return 0;
 }
 
+
 /* read_data
-* DESCRIPTION:  
-* INPUTS:      
-*               
-* OUTPUTS:       
-* RETURN VALUE: 
-* SIDE EFFECTS: 
+* DESCRIPTION:  reads the data in each file by parsing through the data blocks.
+* INPUTS:       uint32_t inode - inode number of the file to read from
+*               uint32_t offset - offset into data to start reading from
+*               uint8_t* buf - buffer to store data read
+*               uint32_t length - length of data being read
+* OUTPUTS:      integer that determines validity of data read
+* RETURN VALUE: -1 if bad data block, 0 if end of file, or length of bytes read by the function
+* SIDE EFFECTS: none
 */
 int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf,uint32_t length){
     uint32_t length_curr_file = fs_inode_arr[inode].length;
@@ -81,3 +84,55 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf,uint32_t length)
 
     return length;      //returns number of bytes copied into buffer
 }
+
+
+/* directory_open
+* DESCRIPTION:  opens a directory file based on the name
+* INPUTS:       const uint8_t fname - name of the directory to open
+*               dentry_t* dentry - local directory entry to populate
+* OUTPUTS:      returns whether or not open was successful
+* RETURN VALUE: 0 if successful, -1 otherwise
+* SIDE EFFECTS: calls read_dentry_by_name() to populate directory entry
+*/
+extern int32_t directory_open(const uint8_t* fname, dentry_t* dentry){
+    return read_dentry_by_name(fname,dentry);
+}
+extern int32_t directory_read();
+
+/* directory_write
+* DESCRIPTION:  write function for directories in file system, does nothing in our OS
+* INPUTS:       none
+* OUTPUTS:      returns whether or not write was successful
+* RETURN VALUE: -1
+* SIDE EFFECTS: none
+*/
+extern int32_t directory_write(){
+    return -1;
+}
+
+/* directory_close
+* DESCRIPTION:  closes the directory, does nothing in our OS
+* INPUTS:       none
+* OUTPUTS:      returns whether or close was successful
+* RETURN VALUE: 0
+* SIDE EFFECTS: none
+*/
+extern int32_t directory_close(){
+    return 0;
+}
+
+extern int32_t file_open();
+extern int32_t file_read();
+
+/* file_write
+* DESCRIPTION:  write function for files in file system, does nothing
+* INPUTS:       none
+* OUTPUTS:      returns whether or not write was successful
+* RETURN VALUE: -1
+* SIDE EFFECTS: none
+*/
+extern int32_t file_write(){
+    return -1;
+}
+
+extern int32_t file_close();
