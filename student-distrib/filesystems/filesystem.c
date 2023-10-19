@@ -1,6 +1,6 @@
 #include "filesystem.h"
-#include "../ece391support.h"
-#include "../ece391syscall.h"
+// #include "../ece391support.h"
+// #include "../ece391syscall.h"
 #include "../lib.h"
 
 boot_block_t* fs_boot_block;
@@ -97,7 +97,18 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf,uint32_t length)
 extern int32_t directory_open(const uint8_t* fname, dentry_t* dentry){
     return read_dentry_by_name(fname,dentry);
 }
-extern int32_t directory_read();
+
+
+
+extern int32_t directory_read(dentry_t *dentry){
+    int i;
+    
+    for(i = 0; i <  fs_boot_block->dir_count; i++){
+        dentry_t curr_dentry = *dentry[i];
+        read_dentry_by_index(i,curr_dentry);
+    }
+}
+
 
 /* directory_write
 * DESCRIPTION:  write function for directories in file system, does nothing in our OS
