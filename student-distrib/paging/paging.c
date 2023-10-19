@@ -44,7 +44,7 @@
 
 
 /*
- * paging_init:
+ * void paging_init(void):
  *    DESCRIPTION: initalize page directory and page table entries and enable in x86
  *    INPUTS: none
  *    OUTPUTS: none
