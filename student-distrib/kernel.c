@@ -226,8 +226,11 @@ void entry(unsigned long magic, unsigned long addr) {
 
     // clear();
     module_t* ext2_filesys = (module_t*)(mbi->mods_addr);
-    init_ext2_filesys(ext2_filesys->mod_start);
-
+    
+    if (ext2_filesys->mod_start != NULL) {
+        init_ext2_filesys(ext2_filesys->mod_start);
+    }
+    
     paging_init();
     // ==============================================================
 

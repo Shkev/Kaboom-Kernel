@@ -24,7 +24,7 @@ typedef struct dentry {
 } dentry_t;
 
 typedef struct inode __attribute__((packed)) {
-    uint32_t len_data_blocks;               //len of data blocks that make up file
+    uint32_t length;                         //len of inode
     uint32_t data_blocks[NUM_DATA_BLOCKS];  //pointers to the data blocks
 } inode_t;
 
@@ -32,7 +32,7 @@ extern int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry);
 
 extern int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry);
 
-extern int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf,uint32_t length);
+extern int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
 
 extern void init_ext2_filesys(uint32_t boot_block_start);
 
