@@ -9,14 +9,15 @@ boot_block_t* fs_boot_block;
 inode_t* fs_inode_arr;
 
 /* pointer to the start of data blocks in memory. i-th block can be accessed by data_blocks[i]*/
-uint32_t* fs_data_blocks;
+uint32_t fs_data_blocks;
 
 
 void init_ext2_filesys(uint32_t boot_block_start){
     fs_boot_block = (boot_block_t*) boot_block_start;     //cast boot block pointer to struct pointer
     fs_inode_arr = fs_boot_block + sizeof(boot_block_t); // start of inode array in memory after boot block
-    fs_data_blocks = fs_inode_arr + (sizeof(boot_block_t) * fs_boot_block->inode_count);   //start of data blocks in memory
+    fs_data_blocks = fs_inode_arr + (sizeof(inode_t) * fs_boot_block->inode_count);   //start of data blocks in memory
 }
+
 
 /* read_dentry_by_name(uint8_t* fname, dentry_t dentry)
  * DESCRIPTION: Search through the directory's files for a file with the given name.
@@ -94,13 +95,13 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf,uint32_t length)
 * RETURN VALUE: 0 if successful, -1 otherwise
 * SIDE EFFECTS: calls read_dentry_by_name() to populate directory entry
 */
-extern int32_t directory_open(const uint8_t* fname, dentry_t* dentry){
+int32_t directory_open(const uint8_t* fname, dentry_t* dentry){
     return read_dentry_by_name(fname,dentry);
 }
 
 
 
-extern int32_t directory_read(dentry_t *dentry){
+int32_t directory_read(dentry_t *dentry){
     int i;
     
     for(i = 0; i <  fs_boot_block->dir_count; i++){
@@ -117,7 +118,7 @@ extern int32_t directory_read(dentry_t *dentry){
 * RETURN VALUE: -1
 * SIDE EFFECTS: none
 */
-extern int32_t directory_write(){
+int32_t directory_write(){
     return -1;
 }
 
@@ -128,12 +129,12 @@ extern int32_t directory_write(){
 * RETURN VALUE: 0
 * SIDE EFFECTS: none
 */
-extern int32_t directory_close(){
+int32_t directory_close(){
     return 0;
 }
 
-extern int32_t file_open();
-extern int32_t file_read();
+int32_t file_open();
+int32_t file_read();
 
 /* file_write
 * DESCRIPTION:  write function for files in file system, does nothing
@@ -142,8 +143,8 @@ extern int32_t file_read();
 * RETURN VALUE: -1
 * SIDE EFFECTS: none
 */
-extern int32_t file_write(){
+int32_t file_write(){
     return -1;
 }
 
-extern int32_t file_close();
+int32_t file_close();
