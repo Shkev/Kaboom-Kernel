@@ -155,10 +155,15 @@ int32_t directory_close(int32_t fd) {
 }
 
 int32_t file_open(const uint8_t* fname) {
-    return 0;
+    dentry_t* dentry;//MAKE GLOBAL
+    return read_dentry_by_name(fname,dentry);
+    //read_dentry_by_name
+    //initialize local variables
+    //return 0;
 }
 
 int32_t file_read(int32_t fd, void* buf, int32_t nbytes) {
+    read_data(inode,offset,buf,nbytes);
     return 0;
 }
 
