@@ -11,6 +11,10 @@
 #define MAXFILES_PER_TASK 8
 
 
+#define FD_FLAG_INUSE(flag) ((flag & 0x1) == 1)
+#define SET_FD_FLAG_INUSE(flag) flag |= 0x1
+
+
 typedef struct boot_block __attribute__((packed)) {
     uint32_t dir_count; //number of directory entires
     uint32_t inode_count; //number of inodes
@@ -19,12 +23,21 @@ typedef struct boot_block __attribute__((packed)) {
     dentry_t dir_entries[FILES_IN_DIR]; //supports up to 63 files
 } boot_block_t;
 
+
+enum filetype {
+    DEVICE = 0,
+    DIRECTORY = 1,
+    FILE = 2
+};
+
+
 typedef struct dentry {
     uint8_t filename[FILENAME_LEN];         /* supports up to 32 character length file names */
-    uint32_t filetype;                      /* defined file type */
+    enum filetype filetype;                      /* defined file type */
     uint32_t inode_num;                     /* specific inode number (i.e., index of associated inode) for the file */
     uint8_t reserved[DIR_ENTRY_RESERVED];   /* reserved bytes for dentry */
 } dentry_t;
+
 
 
 /* each file has its own inode associated with it */
@@ -33,12 +46,15 @@ typedef struct inode __attribute__((packed)) {
     uint32_t data_blocks[NUM_DATA_BLOCKS];   /* indices into data blocks */
 } inode_t;
 
-/* Stores info about a file in the file descriptor array */
+
+/* Stores info about a file in the file descriptor array
+ * Note that read_pos is interpretted differently for each file type.
+ * For directories it indicates 1 + the number of directory entrie that have been read so far. */
 typedef struct fd_arr_entry {
     uint32_t ops_jtab;		/* ptr to jmp table containing type-specific open,read,write,close fncs */
     uint32_t inode_num;		/* inode number for the file */
     uint32_t read_pos;		/* offset (in bytes) from start of file to start reading from */
-    uint32_t flags;
+    uint32_t flags;		/* first bit 1 indicates in use, 0 indicates not in use. */
 } fd_arr_entry_t;
 
 
@@ -60,7 +76,6 @@ extern uint32_t fs_data_blocks;
 
 
 /////////// Functions for filesystem API ///////////////
-
 
 extern int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry);
 

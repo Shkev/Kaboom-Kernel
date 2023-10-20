@@ -3,6 +3,8 @@
 // #include "../ece391syscall.h"
 #include "../lib.h"
 
+static int32_t find_file_index(const uint8_t* fname);
+static int32_t find_open_fd();
 
 void init_ext2_filesys(uint32_t boot_block_start){
     fs_boot_block = (boot_block_t*) boot_block_start;     // cast boot block pointer to struct pointer
@@ -21,16 +23,13 @@ void init_ext2_filesys(uint32_t boot_block_start){
  * RETURNS 0 on successfully finding and reading file, -1 otherwise.
  * SIDE EFFECTS: Writes to dentry pointed to by input dentry 
  */
- 
 int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry){
     if (fname == NULL || dentry == NULL) return -1;
-    int dir;           // loop counter
-    for (dir = 0; dir < fs_boot_block->dir_count; dir++) {
-        if (strings_equal(fname, fs_boot_block->dir_entries[dir].filename) && dentry != NULL) {
-            return read_dentry_by_index(dir, dentry);
-        }
+    int32_t dir = find_file_index(fname);
+    if (dir < 0) {
+	return dir
     }
-    return -1;
+    return read_dentry_by_index(dir, dentry);
 }
 
 /* read_dentry_by_index
@@ -106,27 +105,41 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 }
 
 
-/* directory_open
+/* int32_t directory_open(uint32_t)
 * DESCRIPTION:  opens a directory file based on the name
 * INPUTS:       const uint8_t fname - name of the directory to open
-*               dentry_t* dentry - local directory entry to populate
-* OUTPUTS:      returns whether or not open was successful
+* OUTPUTS:      none
 * RETURN VALUE: 0 if successful, -1 otherwise
-* SIDE EFFECTS: calls read_dentry_by_name() to populate directory entry
+* SIDE EFFECTS: 
 */
-int32_t directory_open(const uint8_t* fname, dentry_t* dentry){
-    return read_dentry_by_name(fname,dentry);
+int32_t directory_open(const uint8_t* fname) {
+    if (name == NULL) {
+	return -1;
+    }
+    int32_t idx = find_file_index(fname);
+    if (idx < 0) {
+	return idx;
+    }
+    int32_t fd_idx = find_open_fd();
+    if (fd_idx < 0) { // can't open; no available file descriptors
+	return -1;
+    }
+    // open directory to use the open fd
+    SET_FD_FLAG_INUSE(fd_arr[fd_idx].flags);
+    // later initialize other fields of array entry...
 }
 
 
-
-int32_t directory_read(dentry_t *dentry){
+/* int32_t directory_read(uint8_t*)
+* DESCRIPTION:  opens a directory file based on the name
+* INPUTS:       const uint8_t fname - name of the directory to open
+* OUTPUTS:      none
+* RETURN VALUE: 0 if successful, -1 otherwise
+* SIDE EFFECTS: 
+*/
+int32_t directory_read(const uint8_t* fname){
     int i;
     
-    for(i = 0; i <  fs_boot_block->dir_count; i++){
-        dentry_t curr_dentry = *dentry[i];
-        read_dentry_by_index(i,curr_dentry);
-    }
 }
 
 
@@ -172,5 +185,41 @@ int32_t file_write() {
 }
 
 int32_t file_close() {
+    return -1;
+}
+
+
+/* find_file_index(uint8_t* fname)
+ * DESCRIPTION: Find the index of file with given name in filesystem.
+ * INPUTS:      fname  - name of the file to search for
+ * OUTPUTS:     none
+ * RETURNS:     0 on successfully finding file, -1 otherwise.
+ * SIDE EFFECTS: none
+ */
+int32_t find_file_index(const uint8_t* fname) {
+    uint32_t dir;
+    for (dir = 0; dir < fs_boot_block->dir_count; dir++) {
+        if (strings_equal(fname, fs_boot_block->dir_entries[dir].filename) && dentry != NULL) {
+            return dir;
+        }
+    }
+    return -1;
+}
+
+
+/* int32_t find_open_fd(void)
+ * DESCRIPTION: Find an available file descripter (int) if one exists.
+ * INPUTS: none
+ * OUTPUTS: none
+ * RETURNS: An available fd if one is avaiable, otherwise -1.
+ * SIDE EFFECTS: none
+ */
+int32_t find_open_fd() {
+    int i;
+    for (i = 0; i < MAXFILES_PER_TASK; ++i) {
+	if (!FD_FLAG_INUSE(fd_arr[i].flags)) {
+	    return i;
+	}
+    }
     return -1;
 }
