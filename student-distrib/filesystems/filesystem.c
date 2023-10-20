@@ -10,6 +10,8 @@ boot_block_t* fs_boot_block;
 inode_t* fs_inode_arr;
 uint32_t fs_data_blocks;
 
+uint32_t directory_index = 0;   //index to iterate through subsequent directory_read calls
+
 void init_ext2_filesys(uint32_t boot_block_start){
     fs_boot_block = (boot_block_t*) boot_block_start;     // cast boot block pointer to struct pointer
     fs_inode_arr = (inode_t*)(fs_boot_block + sizeof(boot_block_t));  // start of inode array in memory after boot block
@@ -132,7 +134,16 @@ int32_t directory_open(const uint8_t* fname) {
 * SIDE EFFECTS: 
 */
 int32_t directory_read(int32_t fd, void* buf, int32_t nbytes){
-    return 0;
+    dentry_t* directory_file; 
+    if(directory_index == fs_boot_block->dir_entries){
+        directory_index = 0;
+        return 0;
+    }
+    if(read_dentry_by_index(0,directory_file) == 0){
+        strncpy(buf,directory_file->filename,32);
+    }
+    directory_index++;
+    return strlen(buf);
 }
 
 
@@ -182,7 +193,7 @@ int32_t file_write(int32_t fd, const void* buf, int32_t nbytes) {
 int32_t file_close(int32_t fd) {
     if (fd == 0 || fd == 1) return -1;
     strcpy((int8_t*)open_file->filename," ");
-    open_file->filetype = 2;
+    open_file->filetype = 0;
     open_file->inode_num = 0;
     return 0;
 }

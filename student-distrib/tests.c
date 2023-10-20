@@ -205,29 +205,13 @@ int system_call_fail_test(){
 //====================================================================
 /* Checkpoint 2 tests */
 //====================================================================
-// void test_dir_read(){
-// 	char fname[1] = ".";
-// 	return directory_read(fname)
-// }
-// void test_dir_open(){
-// 	char fname[1] = ".";
-// 	return directory_open(fname);
-// }
 
-// /*these functions don't really do anything for directories*/
-// int test_dir_write(){
-// 	return directory_write();
-// }
-// int test_dir_close(){
-// 	return directory_close();
-// }
-
-
-// void test_file_read();
-// void test_file_write();
-// void test_file_close();
-// void test_file_open();
-
+int test_file_open() {
+	int test_ret;
+	void* buf;
+	test_ret = directory_read(0,buf,0);
+	return test_ret;
+}
 //=====================================================================
 
 /* Checkpoint 3 tests */
@@ -252,7 +236,7 @@ void launch_tests() {
 	// TEST_OUTPUT("idt_div_zero_trigger_test", idt_div_zero_trigger_test());
 	// TEST_OUTPUT("overflow test: ", overflow_test());
 	// TEST_OUTPUT("System call:", system_call_fail_test());
-
 	//TEST_OUTPUT("zero test: ", zero());
 	//TEST_OUTPUT("max test: ", max());
+	TEST_OUTPUT("test file open:%d",test_file_open());
 }
