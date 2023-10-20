@@ -4,12 +4,16 @@
 #include "../lib.h"
 
 static int32_t find_file_index(const uint8_t* fname);
-static int32_t find_open_fd();
+//static int32_t find_open_fd();
+dentry_t* open_file;
+boot_block_t* fs_boot_block;
+inode_t* fs_inode_arr;
+uint32_t fs_data_blocks;
 
 void init_ext2_filesys(uint32_t boot_block_start){
     fs_boot_block = (boot_block_t*) boot_block_start;     // cast boot block pointer to struct pointer
-    fs_inode_arr = fs_boot_block + sizeof(boot_block_t);  // start of inode array in memory after boot block
-    fs_data_blocks = fs_inode_arr + (sizeof(inode_t) * fs_boot_block->inode_count);  // start of data blocks in memory
+    fs_inode_arr = (inode_t*)(fs_boot_block + sizeof(boot_block_t));  // start of inode array in memory after boot block
+    fs_data_blocks = (uint32_t*)(fs_inode_arr + (sizeof(inode_t) * fs_boot_block->inode_count));  // start of data blocks in memory
     // initialize fd_arr?? (jump table, etc.)
 }
 
@@ -27,7 +31,7 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry){
     if (fname == NULL || dentry == NULL) return -1;
     int32_t dir = find_file_index(fname);
     if (dir < 0) {
-	return dir
+	return dir;
     }
     return read_dentry_by_index(dir, dentry);
 }
@@ -64,7 +68,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
     uint32_t curr_block;                                    /* curr block to read from in inode */
     uint32_t curr_byte;                                     /* curr byte to read from in data block */
     uint32_t block_number;				    /* block number where data is stored for given inode */
-    uint32_t curr_block_ptr;				    /* pointer to start of current data block */
+    //uint32_t curr_block_ptr;				    /* pointer to start of current data block */
     int32_t curr_read;					    /* pointer to start of where we want to read */
     uint32_t nblock;					    /* number of blocks read covers */
     uint32_t write_pos;					    /* curr position to start writing in buffer (number of bytes written so far) */
@@ -77,29 +81,29 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
     curr_block = offset / 4096;
     curr_byte = offset % 4096;
     write_pos = 0;
-    block_number = fs_inode_arr[inode].data_block[curr_block];
-    curr_read = fs_data_blocks + (block_number * DATABLOCK_SIZE) + curr_byte;
+    block_number = fs_inode_arr[inode].data_blocks[curr_block];
+    curr_read = (int32_t)fs_data_blocks + (block_number * DATABLOCK_SIZE) + curr_byte;
     // handle reading first block where we may not be reading the entire thing
     if (DATABLOCK_SIZE - curr_byte > length) {
-	memcpy(buf, curr_read, length);
+	memcpy(buf, (uint32_t*)curr_read, length);
 	return length;
     }
-    memcpy(buf, curr_read, DATABLOCK_SIZE - curr_byte); // read till end of first datablock
+    memcpy(buf, (uint32_t*)curr_read, DATABLOCK_SIZE - curr_byte); // read till end of first datablock
     write_pos = DATABLOCK_SIZE - curr_byte;
     curr_byte = 0; // at start of next block
     curr_block++;
-    block_number = fs_inode_arr[inode].data_block[curr_block];
-    curr_read = fd_data_blocks + (block_number * DATABLOCK_SIZE);
+    block_number = fs_inode_arr[inode].data_blocks[curr_block]; //get curr block num
+    curr_read = (int32_t)fs_data_blocks + (block_number * DATABLOCK_SIZE);
     for (i = 1; i < nblock-1; i++) {
 	// read intermediary blocks in their entirety
-	memcpy(buf + write_pos, curr_read, DATABLOCK_SIZE);
+	memcpy(buf + write_pos, (uint32_t*)curr_read, DATABLOCK_SIZE);
 	write_pos += DATABLOCK_SIZE;
 	curr_block++;
-	block_number = fs_inode_arr[inode].data_block[curr_block];
-	curr_read = fd_data_blocks + (block_number * DATABLOCK_SIZE);
+	block_number = fs_inode_arr[inode].data_blocks[curr_block];
+	curr_read = fs_data_blocks + (block_number * DATABLOCK_SIZE);
     }
     // handle reading last block where we may not be reading the entire thing (like the first one)
-    memcpy(buf + write_pos, curr_read, length - write_pos); 
+    memcpy(buf + write_pos, (uint32_t*)curr_read, length - write_pos); 
     
     return length;      //returns number of bytes copied into buffer
 }
@@ -155,16 +159,13 @@ int32_t directory_close(int32_t fd) {
 }
 
 int32_t file_open(const uint8_t* fname) {
-    dentry_t* dentry;//MAKE GLOBAL
-    return read_dentry_by_name(fname,dentry);
-    //read_dentry_by_name
-    //initialize local variables
-    //return 0;
+    return read_dentry_by_name(fname,open_file);
 }
 
 int32_t file_read(int32_t fd, void* buf, int32_t nbytes) {
-    read_data(inode,offset,buf,nbytes);
-    return 0;
+    uint32_t inode = open_file->inode_num;
+    uint32_t file_pos = 0;  //this is offset, zero for now
+    return read_data(inode,file_pos,buf,nbytes);
 }
 
 /* file_write
@@ -179,7 +180,11 @@ int32_t file_write(int32_t fd, const void* buf, int32_t nbytes) {
 }
 
 int32_t file_close(int32_t fd) {
-    return -1;
+    if (fd == 0 || fd == 1) return -1;
+    strcpy((int8_t*)open_file->filename," ");
+    open_file->filetype = 2;
+    open_file->inode_num = 0;
+    return 0;
 }
 
 
@@ -193,7 +198,7 @@ int32_t file_close(int32_t fd) {
 int32_t find_file_index(const uint8_t* fname) {
     uint32_t dir;
     for (dir = 0; dir < fs_boot_block->direntry_count; dir++) {
-        if (strings_equal(fname, fs_boot_block->dir_entries[dir].filename) && dentry != NULL) {
+        if (strings_equal((const int8_t*)fname, (const int8_t*)fs_boot_block->dir_entries[dir].filename) && open_file != NULL) {
             return dir;
         }
     }
@@ -208,12 +213,12 @@ int32_t find_file_index(const uint8_t* fname) {
  * RETURNS: An available fd if one is avaiable, otherwise -1.
  * SIDE EFFECTS: none
  */
-int32_t find_open_fd() {
-    int i;
-    for (i = 0; i < MAXFILES_PER_TASK; ++i) {
-	if (!FD_FLAG_INUSE(fd_arr[i].flags)) {
-	    return i;
-	}
-    }
-    return -1;
-}
+// int32_t find_open_fd() {
+//     int i;
+//     for (i = 0; i < MAXFILES_PER_TASK; ++i) {
+// 	if (!FD_FLAG_INUSE(fd_arr[i].flags)) {
+// 	    return i;
+// 	}
+//     }
+//     return -1;
+// }

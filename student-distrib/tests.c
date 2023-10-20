@@ -205,28 +205,28 @@ int system_call_fail_test(){
 //====================================================================
 /* Checkpoint 2 tests */
 //====================================================================
-void test_dir_read(){
-	char fname[1] = ".";
-	return directory_read(fname)
-}
-void test_dir_open(){
-	char fname[1] = ".";
-	return directory_open(fname);
-}
+// void test_dir_read(){
+// 	char fname[1] = ".";
+// 	return directory_read(fname)
+// }
+// void test_dir_open(){
+// 	char fname[1] = ".";
+// 	return directory_open(fname);
+// }
 
-/*these functions don't really do anything for directories*/
-int test_dir_write(){
-	return directory_write();
-}
-int test_dir_close(){
-	return directory_close();
-}
+// /*these functions don't really do anything for directories*/
+// int test_dir_write(){
+// 	return directory_write();
+// }
+// int test_dir_close(){
+// 	return directory_close();
+// }
 
 
-void test_file_read();
-void test_file_write();
-void test_file_close();
-void test_file_open();
+// void test_file_read();
+// void test_file_write();
+// void test_file_close();
+// void test_file_open();
 
 //=====================================================================
 

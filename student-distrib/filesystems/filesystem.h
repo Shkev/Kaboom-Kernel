@@ -2,6 +2,7 @@
 #define FILESYS_H
 
 #include "../types.h"
+#include "../lib.h"
 #define BOOT_BLOCK_RESERVED 52
 #define DIR_ENTRY_RESERVED  24
 #define FILES_IN_DIR    63
@@ -13,16 +14,6 @@
 
 #define FD_FLAG_INUSE(flag) ((flag & 0x1) == 1)
 #define SET_FD_FLAG_INUSE(flag) flag |= 0x1
-
-
-typedef struct boot_block __attribute__((packed)) {
-    uint32_t direntry_count;			   /* number of directory entries */
-    uint32_t inode_count;		   /* number of inodes */
-    uint32_t data_count;		   /* number of data blocks */
-    uint8_t reserved[BOOT_BLOCK_RESERVED]; /* reserved bytes for struct */
-    dentry_t dir_entries[FILES_IN_DIR];	   /* supports up to 63 files */
-} boot_block_t;
-
 
 enum filetype {
     DEVICE = 0,
@@ -38,12 +29,22 @@ typedef struct dentry {
     uint8_t reserved[DIR_ENTRY_RESERVED];   /* reserved bytes for dentry */
 } dentry_t;
 
+#pragma pack(1)
+typedef struct boot_block_t {
+    uint32_t direntry_count;			   /* number of directory entries */
+    uint32_t inode_count;		   /* number of inodes */
+    uint32_t data_count;		   /* number of data blocks */
+    uint8_t reserved[BOOT_BLOCK_RESERVED]; /* reserved bytes for struct */
+    dentry_t dir_entries[FILES_IN_DIR];	   /* supports up to 63 files */
+}boot_block_t; //__attribute__((packed));
+#pragma pack()
 
-typedef struct inode __attribute__((packed)) {
+#pragma pack(1)
+typedef struct inode {
     uint32_t length;			     /* length of file in bytes */
     uint32_t data_blocks[NUM_DATA_BLOCKS];   /* indices into data blocks */
-} inode_t;
-
+} inode_t; // __attribute__((packed));
+#pragma pack()
 
 /* Stores info about a file in the file descriptor array
  * Note that read_pos is interpretted differently for each file type.
@@ -84,15 +85,15 @@ extern int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t
 extern void init_ext2_filesys(uint32_t boot_block_start);
 
 /*System call functions for directories*/
-extern int32_t directory_open();
-extern int32_t directory_read();
-extern int32_t directory_write();
-extern int32_t directory_close();
+extern int32_t directory_open(const uint8_t* fname);
+extern int32_t directory_read(int32_t fd, void* buf, int32_t nbytes);
+extern int32_t directory_write(int32_t fd, const void* buf, int32_t nbytes);
+extern int32_t directory_close(int32_t fd);
 
 /*System call functions for files*/
-extern int32_t file_open();
-extern int32_t file_read();
-extern int32_t file_write();
-extern int32_t file_close();
+extern int32_t file_open(const uint8_t* fname);
+extern int32_t file_read(int32_t fd, void* buf, int32_t nbytes);
+extern int32_t file_write(int32_t fd, const void* buf, int32_t nbytes);
+extern int32_t file_close(int32_t fd);
 
 #endif  //FILESYS_H
