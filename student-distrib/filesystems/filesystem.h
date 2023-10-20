@@ -16,11 +16,11 @@
 
 
 typedef struct boot_block __attribute__((packed)) {
-    uint32_t dir_count; //number of directory entires
-    uint32_t inode_count; //number of inodes
-    uint32_t data_count; //number of data blocks
-    uint8_t reserved[BOOT_BLOCK_RESERVED];   //reserved bytes for struct
-    dentry_t dir_entries[FILES_IN_DIR]; //supports up to 63 files
+    uint32_t direntry_count;			   /* number of directory entries */
+    uint32_t inode_count;		   /* number of inodes */
+    uint32_t data_count;		   /* number of data blocks */
+    uint8_t reserved[BOOT_BLOCK_RESERVED]; /* reserved bytes for struct */
+    dentry_t dir_entries[FILES_IN_DIR];	   /* supports up to 63 files */
 } boot_block_t;
 
 
@@ -39,8 +39,6 @@ typedef struct dentry {
 } dentry_t;
 
 
-
-/* each file has its own inode associated with it */
 typedef struct inode __attribute__((packed)) {
     uint32_t length;			     /* length of file in bytes */
     uint32_t data_blocks[NUM_DATA_BLOCKS];   /* indices into data blocks */

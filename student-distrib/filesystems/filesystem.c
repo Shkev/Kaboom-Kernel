@@ -130,16 +130,20 @@ int32_t directory_open(const uint8_t* fname) {
 }
 
 
-/* int32_t directory_read(uint8_t*)
-* DESCRIPTION:  opens a directory file based on the name
-* INPUTS:       const uint8_t fname - name of the directory to open
+/* int32_t directory_read(uint8_t*, uint8_t*, uint32_t)
+* DESCRIPTION:  Read next entry in the current directory.
+* INPUTS:       fname   - name of the directory to open
+*               buf     - the buffer to write contents to
+*               buf_len - The max len of the input buffer
+*               
 * OUTPUTS:      none
 * RETURN VALUE: 0 if successful, -1 otherwise
 * SIDE EFFECTS: 
 */
-int32_t directory_read(const uint8_t* fname){
-    int i;
-    
+int32_t directory_read(const uint8_t* fname, uint8_t* buf, uint32_t buf_len){
+    dentry d;
+    read_dentry_by_name(fname, &d);
+    return -1;
 }
 
 
@@ -198,7 +202,7 @@ int32_t file_close() {
  */
 int32_t find_file_index(const uint8_t* fname) {
     uint32_t dir;
-    for (dir = 0; dir < fs_boot_block->dir_count; dir++) {
+    for (dir = 0; dir < fs_boot_block->direntry_count; dir++) {
         if (strings_equal(fname, fs_boot_block->dir_entries[dir].filename) && dentry != NULL) {
             return dir;
         }
