@@ -486,3 +486,16 @@ void test_interrupts(void) {
         video_mem[i << 1]++;
     }
 }
+
+/* uint32_t max(uint32_t, uint32_t)
+ * DESCRIPTION: Get minimum of two values
+ * INPUTS: a, b - values to find min of
+ * OUTPUTS: none
+ * RETURNS: min of a and b
+ * SIDE EFFECTS: none
+ */
+uint32_t min(uint32_t a, uint32_t b) {
+    return a < b ? a : b;
+}
+
+

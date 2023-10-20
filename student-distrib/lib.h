@@ -34,6 +34,8 @@ int32_t safe_strncpy(int8_t* dest, const int8_t* src, int32_t n);
 
 void test_interrupts(void);
 
+uint32_t min(uint32_t a, uint32_t b);
+
 /* Port read functions */
 /* Inb reads a byte and returns its value as a zero-extended 32-bit
  * unsigned int */

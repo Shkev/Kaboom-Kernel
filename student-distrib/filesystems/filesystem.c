@@ -62,27 +62,53 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry) {
 * INPUTS:       uint32_t inode - inode number of the file to read from
 *               uint32_t offset - offset into data to start reading from
 *               uint8_t* buf - buffer to store data read
-*               uint32_t length - length of data being read
-* OUTPUTS:      integer that determines validity of data read
+*               uint32_t length - number of bytes of data being read
+* OUTPUTS:      none
 * RETURN VALUE: -1 if bad data block, 0 if end of file, or length of bytes read by the function
 * SIDE EFFECTS: none
 */
-int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf,uint32_t length){
-    uint32_t length_curr_file = fs_inode_arr[inode].length;
-    int i;
-    for(i = 0; i < length; i++){
-        uint32_t curr_block = (offset+i) / 4096;    //curr block to read from in inode
-        uint32_t curr_byte = (offset+i) % 4096;     //curr byte to read from in data block
-        uint32_t block_number = fs_inode_arr[inode].data_block[curr_block]; //find the block number where data is stored for given inode
-        
-        if((fs_data_blocks + (block_number * 4096)) == NULL) return -1;     //checks if bad data block number is found in inode
-        
-        uint32_t* curr_read = fs_data_blocks + (block_number * 4096) + curr_byte;   //pointer to the index of the actual data in data blocks array
-        memcpy(buf[i],curr_read,1);     //copy character from data to buffer
+int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
+    uint32_t length_curr_file = fs_inode_arr[inode].length; /* num bytes of file */
+    uint32_t curr_block;                                    /* curr block to read from in inode */
+    uint32_t curr_byte;                                     /* curr byte to read from in data block */
+    uint32_t block_number;				    /* block number where data is stored for given inode */
+    uint32_t curr_block_ptr;				    /* pointer to start of current data block */
+    int32_t curr_read;					    /* pointer to start of where we want to read */
+    uint32_t nblock;					    /* number of blocks read covers */
+    uint32_t write_pos;					    /* curr position to start writing in buffer (number of bytes written so far) */
+    int i;						    /* loop counter */
 
-        if((i+offset) >= length_curr_file) return 0; //if you have reached the end of the file return 0
+    if (length > length_curr_file) { // can't read more than the file contains
+	length = length_curr_file;
     }
-
+    nblock = (length+offset) / DATABLOCK_SIZE + 1;
+    curr_block = offset / 4096;
+    curr_byte = offset % 4096;
+    write_pos = 0;
+    block_number = fs_inode_arr[inode].data_block[curr_block];
+    curr_read = fs_data_blocks + (block_number * DATABLOCK_SIZE) + curr_byte;
+    // handle reading first block where we may not be reading the entire thing
+    if (DATABLOCK_SIZE - curr_byte > length) {
+	memcpy(buf, curr_read, length);
+	return length;
+    }
+    memcpy(buf, curr_read, DATABLOCK_SIZE - curr_byte); // read till end of first datablock
+    write_pos = DATABLOCK_SIZE - curr_byte;
+    curr_byte = 0; // at start of next block
+    curr_block++;
+    block_number = fs_inode_arr[inode].data_block[curr_block];
+    curr_read = fd_data_blocks + (block_number * DATABLOCK_SIZE);
+    for (i = 1; i < nblock-1; i++) {
+	// read intermediary blocks in their entirety
+	memcpy(buf + write_pos, curr_read, DATABLOCK_SIZE);
+	write_pos += DATABLOCK_SIZE;
+	curr_block++;
+	block_number = fs_inode_arr[inode].data_block[curr_block];
+	curr_read = fd_data_blocks + (block_number * DATABLOCK_SIZE);
+    }
+    // handle reading last block where we may not be reading the entire thing (like the first one)
+    memcpy(buff + write_pos, curr_read, length - write_pos); 
+    
     return length;      //returns number of bytes copied into buffer
 }
 
