@@ -3,19 +3,12 @@
 // #include "../ece391syscall.h"
 #include "../lib.h"
 
-boot_block_t* fs_boot_block;
-
-/* pointer to start of inodes in memory. i-th inode can be accessed by fs_inode_arr[i] */
-inode_t* fs_inode_arr;
-
-/* pointer to the start of data blocks in memory. i-th block can be accessed by data_blocks[i]*/
-uint32_t fs_data_blocks;
-
 
 void init_ext2_filesys(uint32_t boot_block_start){
-    fs_boot_block = (boot_block_t*) boot_block_start;     //cast boot block pointer to struct pointer
-    fs_inode_arr = fs_boot_block + sizeof(boot_block_t); // start of inode array in memory after boot block
-    fs_data_blocks = fs_inode_arr + (sizeof(inode_t) * fs_boot_block->inode_count);   //start of data blocks in memory
+    fs_boot_block = (boot_block_t*) boot_block_start;     // cast boot block pointer to struct pointer
+    fs_inode_arr = fs_boot_block + sizeof(boot_block_t);  // start of inode array in memory after boot block
+    fs_data_blocks = fs_inode_arr + (sizeof(inode_t) * fs_boot_block->inode_count);  // start of data blocks in memory
+    // initialize fd_arr?? (jump table, etc.)
 }
 
 
@@ -144,7 +137,7 @@ int32_t directory_read(dentry_t *dentry){
 * RETURN VALUE: -1
 * SIDE EFFECTS: none
 */
-int32_t directory_write(){
+int32_t directory_write() {
     return -1;
 }
 
@@ -155,12 +148,17 @@ int32_t directory_write(){
 * RETURN VALUE: 0
 * SIDE EFFECTS: none
 */
-int32_t directory_close(){
+int32_t directory_close() {
     return 0;
 }
 
-int32_t file_open();
-int32_t file_read();
+int32_t file_open() {
+    return 0;
+}
+
+int32_t file_read() {
+    return 0;
+}
 
 /* file_write
 * DESCRIPTION:  write function for files in file system, does nothing
@@ -169,8 +167,10 @@ int32_t file_read();
 * RETURN VALUE: -1
 * SIDE EFFECTS: none
 */
-int32_t file_write(){
+int32_t file_write() {
     return -1;
 }
 
-int32_t file_close();
+int32_t file_close() {
+    return -1;
+}

@@ -8,6 +8,8 @@
 #define NUM_DATA_BLOCKS 1023
 #define FILENAME_LEN    32
 #define DATABLOCK_SIZE 4096	/* size of file data blocks in memory */
+#define MAXFILES_PER_TASK 8
+
 
 typedef struct boot_block __attribute__((packed)) {
     uint32_t dir_count; //number of directory entires
@@ -24,10 +26,41 @@ typedef struct dentry {
     uint8_t reserved[DIR_ENTRY_RESERVED];   /* reserved bytes for dentry */
 } dentry_t;
 
+
+/* each file has its own inode associated with it */
 typedef struct inode __attribute__((packed)) {
     uint32_t length;			     /* length of file in bytes */
     uint32_t data_blocks[NUM_DATA_BLOCKS];   /* indices into data blocks */
 } inode_t;
+
+/* Stores info about a file in the file descriptor array */
+typedef struct fd_arr_entry {
+    uint32_t ops_jtab;		/* ptr to jmp table containing type-specific open,read,write,close fncs */
+    uint32_t inode_num;		/* inode number for the file */
+    uint32_t read_pos;		/* offset (in bytes) from start of file to start reading from */
+    uint32_t flags;
+} fd_arr_entry_t;
+
+
+/* file descriptor array. A given file descriptor indexes into this array to get info about the file */
+extern fd_arr_entry_t fd_arr[MAXFILES_PER_TASK];
+
+
+///////////// Pointers to fileystem data in memory /////////
+
+    
+extern boot_block_t* fs_boot_block;
+
+/* pointer to start of inodes in memory. i-th inode can be accessed by fs_inode_arr[i] */
+extern inode_t* fs_inode_arr;
+
+/* pointer to the start of data blocks in memory. i-th block can be accessed by data_blocks[i]*/
+extern uint32_t fs_data_blocks;
+
+
+
+/////////// Functions for filesystem API ///////////////
+
 
 extern int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry);
 
