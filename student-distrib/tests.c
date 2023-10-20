@@ -1,6 +1,7 @@
 #include "tests.h"
 #include "x86_desc.h"
 #include "lib.h"
+#include "filesystems/filesystem.h"
 
 #define PASS 1
 #define FAIL 0
@@ -18,9 +19,9 @@ static inline void assertion_failure(){
 	asm volatile("int $15");
 }
 
-
+//=================================================================================
 /* Checkpoint 1 tests */
-
+//=================================================================================
 /* IDT Test - Example
  * 
  * Asserts that first 10 IDT entries are not NULL
@@ -199,9 +200,36 @@ int system_call_fail_test(){
 	asm volatile("int $0x80"); //raise stack_segfault exception
 	return 1;
 }
+//====================================================================
 
-
+//====================================================================
 /* Checkpoint 2 tests */
+//====================================================================
+void test_dir_read(){
+	char fname[1] = ".";
+	return directory_read(fname)
+}
+void test_dir_open(){
+	char fname[1] = ".";
+	return directory_open(fname);
+}
+
+/*these functions don't really do anything for directories*/
+int test_dir_write(){
+	return directory_write();
+}
+int test_dir_close(){
+	return directory_close();
+}
+
+
+void test_file_read();
+void test_file_write();
+void test_file_close();
+void test_file_open();
+
+//=====================================================================
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */

@@ -99,7 +99,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 	curr_read = fd_data_blocks + (block_number * DATABLOCK_SIZE);
     }
     // handle reading last block where we may not be reading the entire thing (like the first one)
-    memcpy(buff + write_pos, curr_read, length - write_pos); 
+    memcpy(buf + write_pos, curr_read, length - write_pos); 
     
     return length;      //returns number of bytes copied into buffer
 }
@@ -109,41 +109,26 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 * DESCRIPTION:  opens a directory file based on the name
 * INPUTS:       const uint8_t fname - name of the directory to open
 * OUTPUTS:      none
-* RETURN VALUE: 0 if successful, -1 otherwise
-* SIDE EFFECTS: 
+* RETURN VALUE: returns 0, already in directory
+* SIDE EFFECTS: none
 */
 int32_t directory_open(const uint8_t* fname) {
-    if (name == NULL) {
-	return -1;
-    }
-    int32_t idx = find_file_index(fname);
-    if (idx < 0) {
-	return idx;
-    }
-    int32_t fd_idx = find_open_fd();
-    if (fd_idx < 0) { // can't open; no available file descriptors
-	return -1;
-    }
-    // open directory to use the open fd
-    SET_FD_FLAG_INUSE(fd_arr[fd_idx].flags);
-    // later initialize other fields of array entry...
+    return 0;
 }
 
 
 /* int32_t directory_read(uint8_t*, uint8_t*, uint32_t)
 * DESCRIPTION:  Read next entry in the current directory.
-* INPUTS:       fname   - name of the directory to open
+* INPUTS:       fd      - name of the directory to open
 *               buf     - the buffer to write contents to
-*               buf_len - The max len of the input buffer
+*               nbytes  - number of bytes to read
 *               
 * OUTPUTS:      none
-* RETURN VALUE: 0 if successful, -1 otherwise
+* RETURN VALUE: return 0, don't need to read directory
 * SIDE EFFECTS: 
 */
-int32_t directory_read(const uint8_t* fname, uint8_t* buf, uint32_t buf_len){
-    dentry d;
-    read_dentry_by_name(fname, &d);
-    return -1;
+int32_t directory_read(int32_t fd, void* buf, int32_t nbytes){
+    return 0;
 }
 
 
@@ -154,7 +139,7 @@ int32_t directory_read(const uint8_t* fname, uint8_t* buf, uint32_t buf_len){
 * RETURN VALUE: -1
 * SIDE EFFECTS: none
 */
-int32_t directory_write() {
+int32_t directory_write(int32_t fd, const void* buf, int32_t nbytes) {
     return -1;
 }
 
@@ -165,15 +150,15 @@ int32_t directory_write() {
 * RETURN VALUE: 0
 * SIDE EFFECTS: none
 */
-int32_t directory_close() {
+int32_t directory_close(int32_t fd) {
     return 0;
 }
 
-int32_t file_open() {
+int32_t file_open(const uint8_t* fname) {
     return 0;
 }
 
-int32_t file_read() {
+int32_t file_read(int32_t fd, void* buf, int32_t nbytes) {
     return 0;
 }
 
@@ -184,11 +169,11 @@ int32_t file_read() {
 * RETURN VALUE: -1
 * SIDE EFFECTS: none
 */
-int32_t file_write() {
+int32_t file_write(int32_t fd, const void* buf, int32_t nbytes) {
     return -1;
 }
 
-int32_t file_close() {
+int32_t file_close(int32_t fd) {
     return -1;
 }
 
