@@ -220,13 +220,12 @@ void entry(unsigned long magic, unsigned long addr) {
     i8259_init();
 
     /* initialize devices. Turn on IRQs for these devices */
-    /*IRQ2 is enabled to account for scondary PIC*/
+    /*IRQ2 is enabled to account for secondary PIC*/
     enable_irq(2);
-    //init_rtc();
     clear();
+    init_rtc();
     init_kbd();
 
-    //clear();
     module_t* ext2_filesys = (module_t*)(mbi->mods_addr);
     init_ext2_filesys(ext2_filesys->mod_start);
     

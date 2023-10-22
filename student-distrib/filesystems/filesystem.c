@@ -281,14 +281,17 @@ int32_t file_close(int32_t fd) {
 /* find_file_index(int8_t* fname)
  * DESCRIPTION: Find the index of file with given name in filesystem.
  * INPUTS:      fname  - name of the file to search for
- * OUTPUTS:     none
  * RETURNS:     0 on successfully finding file, -1 otherwise.
- * SIDE EFFECTS: none
- */
 int32_t find_file_index(const int8_t* fname) {
     uint32_t dir;
     for (dir = 0; dir < fs_boot_block->direntry_count; dir++) {
         if (filenames_equal(fname, fs_boot_block->dir_entries[dir].filename)) {
+=======
+int32_t find_file_index(const uint8_t* fname) {
+    uint32_t dir;
+    for (dir = 0; dir < fs_boot_block->direntry_count; dir++) {
+        if (strings_equal((const int8_t*)fname, (const int8_t*)fs_boot_block->dir_entries[dir].filename) && open_file != NULL) {
+>>>>>>> rtc_driver
             return dir;
         }
     }

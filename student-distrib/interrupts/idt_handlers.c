@@ -1,10 +1,13 @@
-#include "idt_handlers.h"
 #include "../lib.h"
 #include "../i8259.h"
+#include "idt_handlers.h"
 
 #define PRINT_HANDLER(task) printf("EXCEPTION: " task "error")
 
 static void fill_buffer(int8_t* buf, int8_t val, uint32_t nbytes);
+
+uint32_t RTC_FLAG = 0;
+
 
 /*divide_zero_handler()
 * DESCRIPTION: Prints the divide by zero exception and emulates blue screen of death by infinitly looping
@@ -311,10 +314,10 @@ void rtc_handler() {
     outb(0x0C, RTC_INDEX);
     // throw away info about interrupt. Change this later to do something
     (void)inb(RTC_DATA);
-    test_interrupts();
+    //test_interrupts();
     // send end of interrupt for IRQ8
     send_eoi(RTC_IRQ);
-    
+    RTC_FLAG = 1;   //raise RTC flag when interrupt signal is recieved
     sti();
 }
 

@@ -16,6 +16,8 @@ int enterflag;
 int keybuffbackup;
 
 
+extern uint32_t RTC_FLAG;
+
 /* Exception handlers. These are the functions that are called when an
 * exception occurs in kernel */
 

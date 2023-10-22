@@ -4,10 +4,11 @@
 #include "filesystems/filesystem.h"
 #include "terminaldriver.h"
 #include "./interrupts/idt_handlers.h"
+#include "init_devices.h"
+#include "rtcdrivers/rtcdrivers.h"
 
 /* set GRAPHICS to 1 to include print statements for large files/images (i.e., frame1) in test cases */
 #define GRAPHICS 0
-
 
 #define PASS 1
 #define FAIL 0
@@ -516,6 +517,46 @@ int terminaltest()
 	return PASS;
 }
 
+int test_rtc_write() {
+	clear();
+	rtc_open(NULL);
+	int i = 0;
+	uint32_t freq = 2;
+	for (i = 0; i < 10; i++){
+		int j = 0;
+		for (j = 0; j < 10; j++) {
+			rtc_read(NULL, NULL, NULL);
+			printf("%d", j);
+		}
+		putc('\n');
+		freq = freq << 1; 
+		rtc_write(NULL, (void*)freq, NULL);	
+	}
+	
+	rtc_close(NULL);
+
+	return PASS;
+}
+
+int test_rtc_not_power_2() {
+	clear();
+	rtc_open(NULL);
+	int32_t rt_val = rtc_write(NULL, (void *)5, NULL);	
+	rtc_close(NULL);
+
+	return rt_val = -1 ? PASS : FAIL;
+}
+
+int test_rtc_greater_1024() {
+	clear();
+	rtc_open(NULL);
+	int32_t rt_val = rtc_write(NULL, (void *)1030, NULL);	
+	rtc_close(NULL);
+
+	return rt_val = -1 ? PASS : FAIL;
+}
+
+//=====================================================================
 
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -559,5 +600,10 @@ void launch_tests() {
 	//TEST_OUTPUT("test writing to file: ", test_file_write());
 	// TEST_OUTPUT("zero test: ", zero());
 	// TEST_OUTPUT("max test: ", max());
+	//TEST_OUTPUT("test file open:%d",test_file_open());
+	//TEST_OUTPUT("test rtc open: ", test_rtc_open());
+	//TEST_OUTPUT("test rtc write: ", test_rtc_write());
+	//TEST_OUTPUT("test rtc not power 2: ", test_rtc_not_power_2());
+	//TEST_OUTPUT("test rtc greater 1024: ", test_rtc_greater_1024());
 	terminaltest();
 }
