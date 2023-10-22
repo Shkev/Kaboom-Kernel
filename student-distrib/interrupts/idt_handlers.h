@@ -5,7 +5,7 @@
 
 #define KBD_PORT 0x60
 
-uint32_t RTC_FLAG;
+extern uint32_t RTC_FLAG;
 
 /* Exception handlers. These are the functions that are called when an
 * exception occurs in kernel */
