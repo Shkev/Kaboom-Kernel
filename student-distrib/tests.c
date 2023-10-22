@@ -1,6 +1,8 @@
 #include "tests.h"
 #include "x86_desc.h"
 #include "lib.h"
+#include "terminaldriver.h"
+#include "./interrupts/idt_handlers.h"
 
 #define PASS 1
 #define FAIL 0
@@ -202,6 +204,23 @@ int system_call_fail_test(){
 
 
 /* Checkpoint 2 tests */
+int terminaltest()
+{
+	char buf[128];
+	while(1)
+	{
+		uint32_t reading = terminal_read(1,buf,128);
+		(void)terminal_write(1,buf,reading);
+		if (reading > 0)
+		{
+			putc('\n');
+		}
+	}
+
+	return PASS;
+}
+
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -209,22 +228,22 @@ int system_call_fail_test(){
 
 /* Test suite entry point */
 void launch_tests() {
-	TEST_OUTPUT("idt_test: ", idt_test());
-	TEST_OUTPUT("kernel starting: ", kernelexist_test());
-	TEST_OUTPUT("kernel ending: ", kernelexistdone_test());
-	TEST_OUTPUT("videomemexist starting: ", videomemexist_test());
-	TEST_OUTPUT("videomemexist ending: ", videomemexistdone_test());
-	TEST_OUTPUT("kernel test lower: ", kernelexistlower_test());
-	TEST_OUTPUT("kernel test higher: ", kernelexisthigher_test());
-	TEST_OUTPUT("videomemexist test lower: ", videomemexistlower_test());
-	TEST_OUTPUT("videomemexist test higher: ", videomemexisthigher_test());
-	TEST_OUTPUT("imaginemem test: ", imaginemem_test());
-	TEST_OUTPUT("idt exception device_na: ", assertion_failure1_test());
-	TEST_OUTPUT("idt exception stack_segfault: ", assertion_failure2_test());
-	TEST_OUTPUT("idt_div_zero_trigger_test", idt_div_zero_trigger_test());
-	TEST_OUTPUT("overflow test: ", overflow_test());
-	TEST_OUTPUT("System call:", system_call_fail_test());
-
-	//TEST_OUTPUT("zero test: ", zero());
-	//TEST_OUTPUT("max test: ", max());
+	// TEST_OUTPUT("idt_test: ", idt_test());
+	// TEST_OUTPUT("kernel starting: ", kernelexist_test());
+	// TEST_OUTPUT("kernel ending: ", kernelexistdone_test());
+	// TEST_OUTPUT("videomemexist starting: ", videomemexist_test());
+	// TEST_OUTPUT("videomemexist ending: ", videomemexistdone_test());
+	// TEST_OUTPUT("kernel test lower: ", kernelexistlower_test());
+	// TEST_OUTPUT("kernel test higher: ", kernelexisthigher_test());
+	// TEST_OUTPUT("videomemexist test lower: ", videomemexistlower_test());
+	// TEST_OUTPUT("videomemexist test higher: ", videomemexisthigher_test());
+	// TEST_OUTPUT("imaginemem test: ", imaginemem_test());
+	// TEST_OUTPUT("idt exception device_na: ", assertion_failure1_test());
+	// TEST_OUTPUT("idt exception stack_segfault: ", assertion_failure2_test());
+	// TEST_OUTPUT("idt_div_zero_trigger_test", idt_div_zero_trigger_test());
+	// TEST_OUTPUT("overflow test: ", overflow_test());
+	// TEST_OUTPUT("System call:", system_call_fail_test());
+	// TEST_OUTPUT("zero test: ", zero());
+	// TEST_OUTPUT("max test: ", max());
+	terminaltest();
 }
