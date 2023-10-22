@@ -2,7 +2,9 @@
 #define _RTCDRIVER_H
 
 #include "../types.h"
-#include "../lib.h"
+#include "../interrupts/idt_handlers.h"
+
+#define RTC_MAGIC_RATENUM 32768
 
 extern int32_t rtc_open(const uint8_t* fname);
 extern int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes);
