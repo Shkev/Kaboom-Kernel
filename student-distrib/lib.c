@@ -463,6 +463,23 @@ int8_t* strncpy(int8_t* dest, const int8_t* src, uint32_t n) {
     return dest;
 }
 
+
+uint32_t min(uint32_t a, uint32_t b) {
+    return a < b ? a : b;
+}
+
+/* int8_t strings_equal(uint8_t* a, uint8_t* b)
+ * Inputs:        a = destination of string a
+ *                b = destination of string b
+ * Return Value:  Nonzero value if the two strings are equal, otherwise 0.
+*/
+int8_t strings_equal(const int8_t* a, const int8_t* b) {
+    uint32_t a_len = strlen(a);
+    uint32_t b_len = strlen(b);
+    return (a_len == b_len) && (strncmp(a, b, a_len) == 0);
+}
+
+
 /* void test_interrupts(void)
  * Inputs: void
  * Return Value: void
