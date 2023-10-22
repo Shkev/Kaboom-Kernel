@@ -2,9 +2,12 @@
 #include "x86_desc.h"
 #include "lib.h"
 #include "filesystems/filesystem.h"
+#include "terminaldriver.h"
+#include "./interrupts/idt_handlers.h"
 
 /* set GRAPHICS to 1 to include print statements for large files/images (i.e., frame1) in test cases */
 #define GRAPHICS 0
+
 
 #define PASS 1
 #define FAIL 0
@@ -497,6 +500,23 @@ int test_file_write() {
 
 //=====================================================================
 
+int terminaltest()
+{
+	char buf[128];
+	while(1)
+	{
+		uint32_t reading = terminal_read(1,buf,128);
+		(void)terminal_write(1,buf,reading);
+		if (reading > 0)
+		{
+			putc('\n');
+		}
+	}
+
+	return PASS;
+}
+
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -537,4 +557,7 @@ void launch_tests() {
 	//TEST_OUTPUT("test reading 0 bytes from file: ", test_read_nothing());
 	//TEST_OUTPUT("test part of file from start: ", test_read_file_partial_start());
 	//TEST_OUTPUT("test writing to file: ", test_file_write());
+	// TEST_OUTPUT("zero test: ", zero());
+	// TEST_OUTPUT("max test: ", max());
+	terminaltest();
 }

@@ -36,6 +36,9 @@ void test_interrupts(void);
 
 uint32_t min(uint32_t a, uint32_t b);
 
+void update_cursor(int screen_x, int screen_y);
+void scrolling();
+
 /* Port read functions */
 /* Inb reads a byte and returns its value as a zero-extended 32-bit
  * unsigned int */
