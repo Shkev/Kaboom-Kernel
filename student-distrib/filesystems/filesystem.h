@@ -21,13 +21,14 @@ enum filetype {
     FILE = 2
 };
 
-
+#pragma pack(1)
 typedef struct dentry {
     int8_t filename[FILENAME_LEN];         /* supports up to 32 character length file names */
     enum filetype filetype;                 /* defined file type */
     uint32_t inode_num;                     /* specific inode number (i.e., index of associated inode) for the file */
     int8_t reserved[DIR_ENTRY_RESERVED];   /* reserved bytes for dentry */
 } dentry_t;
+#pragma pack()
 
 #pragma pack(1)
 typedef struct boot_block {
