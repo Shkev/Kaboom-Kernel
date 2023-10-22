@@ -41,13 +41,13 @@ int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes) {
 }
 
 
-/* rtc_open(int32_t, const void*, int32_t)
+/* rtc_write(int32_t, const void*, int32_t)
  * 
  * DESCRIPTION:   Set rate of periodic interrupts for RTC
  * INPUTS:        fd     - ignore(?)
                   buf    - interrupt rate in Hz to set RTC to
  * OUTPUTS:       none
- * RETURNS:       0 on succeess, -1 on failure
+ * RETURNS:       0 on succeess, -1 if frequency is not a power of two or greater than 1024
  * SIDE EFFECTS:  Changes RTC rate (value in register A)
  */
 int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes) {

@@ -313,7 +313,7 @@ void rtc_handler() {
     outb(0x0C, RTC_INDEX);
     // throw away info about interrupt. Change this later to do something
     (void)inb(RTC_DATA);
-    test_interrupts();
+    //test_interrupts();
     // send end of interrupt for IRQ8
     send_eoi(RTC_IRQ);
     RTC_FLAG = 1;   //raise RTC flag when interrupt signal is recieved
