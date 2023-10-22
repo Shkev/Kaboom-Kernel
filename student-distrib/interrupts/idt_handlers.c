@@ -312,7 +312,7 @@ void rtc_handler() {
     test_interrupts();
     // send end of interrupt for IRQ8
     send_eoi(RTC_IRQ);
-    
+    RTC_FLAG = 1;   //raise RTC flag when interrupt signal is recieved
     sti();
 }
 
