@@ -4,6 +4,8 @@
 
 #define PRINT_HANDLER(task) printf("EXCEPTION: " task "error")
 
+static void fill_buffer(int8_t* buf, int8_t val, uint32_t nbytes);
+
 /*divide_zero_handler()
 * DESCRIPTION: Prints the divide by zero exception and emulates blue screen of death by infinitly looping
 * INPUTS: none
@@ -321,6 +323,14 @@ void system_call_handler() {
     while(1);
 }
 
+
+int shift = 0;
+int capslock = 0;
+int backspace = 0;
+int tab = 0;
+int ctrl = 0;
+int keybuffcount = 0;
+
 /*kbd_handler()
 * DESCRIPTION: processes keyboard interrupts
 * INPUTS: none
@@ -330,28 +340,276 @@ void system_call_handler() {
 */
 void kbd_handler() {
     cli();
-
+    
+    enterflag = 0;
     /* array of characters corresponding to the scancode as the index */
     /* only characters in the scancode 1 are included for checkpoint 1 purposes*/
-    char key_code_value[] = {'\0', '\0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 
+    char lower_case[] = {'\0', '\0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 
     '\0', '\0', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', '\0', 'a', 's',
     'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', '\0', '\\', 'z', 'x', 'c', 'v', 'b', 'n', 
     'm', ',', '.', '/', '\0', '*', '\0', ' ', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', 
     '\0', '\0', '\0', '\0', '\0', '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', 
     '.', '\0', '\0', '\0', '\0', '\0'};
 
+    char upper_case[] = {'\0', '\0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 
+    '\0', '\0', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']', '\n', '\0', 'A', 'S',
+    'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', '\'', '`', '\0', '\\', 'Z', 'X', 'C', 'V', 'B', 'N', 
+    'M', ',', '.', '/', '\0', '*', '\0', ' ', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', 
+    '\0', '\0', '\0', '\0', '\0', '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', 
+    '.', '\0', '\0', '\0', '\0', '\0'};
+
+    char schar[] = {'\0', '\0', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', 
+    '\0', '\0', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n', '\0', 'A', 'S',
+    'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '\"', '~', '\0', '|', 'Z', 'X', 'C', 'V', 'B', 'N', 
+    'M', '<', '>', '?', '\0', '*', '\0', ' ', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', 
+    '\0', '\0', '\0', '\0', '\0', '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', 
+    '.', '\0', '\0', '\0', '\0', '\0'};
+
+    // char schar[] = {'\0', '\0', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', 
+    // '\0', '\0', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n', '\0', 'A', 'S',
+    // 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '\"', '~', '\0', '|', 'Z', 'X', 'C', 'V', 'B', 'N', 
+    // 'M', '<', '>', '?', '\0', '*', '\0', ' ', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', 
+    // '\0', '\0', '\0', '\0', '\0', '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', 
+    // '.', '\0', '\0', '\0', '\0', '\0'};
+
     /* saves the scancode from the keyboard port*/
     uint8_t scan_code;
     scan_code = inb(KBD_PORT);
     
     /* If scancode is within our defined character values in the array, then it is printed*/
-    if (scan_code <= 0x59) {
-         uint8_t key_value = key_code_value[scan_code];
-         printf("%c", key_value);
+    uint8_t lower_case_key = lower_case[scan_code];
+    uint8_t upper_case_key = upper_case[scan_code];
+    uint8_t schar_case_key = schar[scan_code];
+
+    //SHIFT RELEASE LOGIC
+    if (((scan_code == LSHIFT_RELEASE) || (scan_code == RSHIFT_RELEASE)) && (shift == 1))
+    {
+        shift = 0;
+    }
+
+    //BACKSPACE LOGIC
+    if (scan_code == 0x0E)
+    {
+        backspace = 1;
+    } else if (scan_code == 0x8E)
+    {
+        // release
+        backspace = 0;
+    }
+
+    //TAB LOGIC
+    if (scan_code == 0x0F)
+    {
+        tab = 1;
+    } else if (scan_code == 0x8F)
+    {
+        // release
+        tab = 0;
+    }
+
+    //ENTER LOGIC
+    if (scan_code == 0x1C)
+    {
+        enterflag = 1;
+    } else if (scan_code == 0x9C)
+    {
+        // release
+        fill_buffer(keybuff, '\0', KEYBUF_MAX_SIZE);
+        enterflag = 0;
+    }
+
+    //CTRL LOGIC
+    if (scan_code == 0x1D)
+    {
+        ctrl = 1;
+    } else if (scan_code == 0x9D)
+    {
+        // release
+        ctrl = 0;
+    }
+
+    //PRESSING LOGIC
+    if (keybuffcount >= KEYBUF_MAX_SIZE-1)
+    {
+        if(enterflag == 1) 
+        {
+            putc('\n');
+            // keybuff[keybuffcount] = '\n';
+            keybuffbackup = keybuffcount;
+            keybuffcount = 0; 
+        } else if (backspace == 1)
+        {
+            putc('\b');
+            keybuff[--keybuffcount] = '\0';
+        } else if ((ctrl == 1) && (scan_code == 0x26)) {
+            clear();
+            keybuffcount = 0;
+            fill_buffer(keybuff, '\0', KEYBUF_MAX_SIZE);
+        } 
+    }
+    else
+    {
+        if (backspace == 1)
+        {
+            if(keybuffcount != 0)
+            {
+                putc('\b');
+                keybuff[--keybuffcount] = '\0';
+            }
+        } else if (tab == 1)
+        {
+            if (keybuffcount < KEYBUF_MAX_SIZE - TABSIZE - 1)
+            {
+                putc('\t');
+                keybuff[keybuffcount++] = ' ';
+                keybuff[keybuffcount++] = ' ';
+                keybuff[keybuffcount++] = ' ';
+                keybuff[keybuffcount++] = ' ';
+            }
+        } else if (enterflag == 1) {
+            putc('\n');
+            keybuffbackup = keybuffcount;
+            keybuffcount = 0;   
+        } else {
+            if (scan_code <= 0x58) {
+                if(scan_code == 0x3A && capslock == 0)
+                {
+                    capslock = 1;
+                } else if (scan_code == 0x3A && capslock == 1)
+                {
+                    capslock = 0;
+                } else if (((scan_code == 0x2A) || (scan_code == 0x36)) && (shift == 0)){
+                    shift = 1;
+                } else if ((ctrl == 1) && (scan_code == 0x26)) {
+                    clear();
+                    fill_buffer(keybuff, '\0', KEYBUF_MAX_SIZE);
+                    keybuffcount = 0;
+                } else {
+                    // num pad support... does nothing for now but adds a long list of ifs :)
+                    if (scan_code == 0x38) {
+                        // left alt press
+                    } else if (scan_code == 0x1D) {
+                        // left control press
+                    } else if (scan_code == 0x2A) {
+                        // left shift press
+                    } else if (scan_code == 0x36) {
+                        // right shift press
+                    } else if (scan_code == 0x3A) {
+                        // caps lock press
+                    } else if (scan_code == 0xB8) {
+                        // left alt release
+                    } else if (scan_code == 0x9D) {
+                        // left control release
+                    } else if (scan_code == 0xAA) {
+                        // left shift release
+                    } else if (scan_code == 0xB6) {
+                        // right shift release
+                    } else if (scan_code == 0xBA) {
+                        // caps lock release
+                    } else if (scan_code == 0x01) {
+
+                    } else if (scan_code == 0x3B) {
+                    
+                    } else if (scan_code == 0xFC) {
+                    
+                    } else if (scan_code == 0x37) {
+
+                    } else if (scan_code == 0x3D) {
+                    
+                    } else if (scan_code == 0x3E) {
+                    
+                    } else if (scan_code == 0x3F) {
+
+                    } else if (scan_code == 0x40) {
+
+                    } else if (scan_code == 0x41) {
+
+                    } else if (scan_code == 0x42) {
+
+                    } else if (scan_code == 0x43) {
+
+                    } else if (scan_code == 0x44) {
+
+                    } else if (scan_code == 0x45) {
+
+                    } else if (scan_code == 0x46) {
+                    
+                    } else if (scan_code == 0x47) {
+
+                    } else if (scan_code == 0x48) {
+                    
+                    } else if (scan_code == 0x49) {
+
+                    } else if (scan_code == 0x4A) {
+
+                    } else if (scan_code == 0x4B) {
+                    
+                    } else if (scan_code == 0x4C) {
+
+                    } else if (scan_code == 0x4D) {
+                    
+                    } else if (scan_code == 0x4E) {
+                    
+                    } else if (scan_code == 0x4F) {
+
+                    } else if (scan_code == 0x50) {
+
+                    } else if (scan_code == 0x51) {
+
+                    } else if (scan_code == 0x52) {
+                    
+                    } else if (scan_code == 0x53) {
+                    
+                    } else if (scan_code == 0x57) {
+                    
+                    } else if (scan_code == 0x58) {
+                        
+                    } else {
+                        if ((capslock == 1 || shift == 1) && ctrl == 0)
+                        {
+                            if (capslock == 1 && shift == 1)
+                            {
+                                // caps lock pressed and want special char
+                                if ((scan_code == 0x29) || (scan_code == 0x02) || (scan_code == 0x03) || (scan_code == 0x04) || (scan_code == 0x05) || (scan_code == 0x06) || (scan_code == 0x07) || (scan_code == 0x08) || (scan_code == 0x09) || (scan_code == 0x0A) || (scan_code == 0x0B) || (scan_code == 0x0C) || (scan_code == 0x0D) || (scan_code == 0x1A) || (scan_code == 0x1B) || (scan_code == 0x2B) || (scan_code == 0x27) || (scan_code == 0x28) || (scan_code == 0x33) || (scan_code == 0x34) || (scan_code == 0x35))
+                                {
+                                    printf("%c", schar_case_key);
+                                    keybuff[keybuffcount] = schar_case_key;
+                                    keybuffcount++;
+                                } else {
+                                    printf("%c", lower_case_key);
+                                    keybuff[keybuffcount] = lower_case_key;
+                                    keybuffcount++;
+                                }
+                            } else if (shift == 1) {
+                                printf("%c", schar_case_key);
+                                keybuff[keybuffcount] = schar_case_key;
+                                keybuffcount++;
+                            } else {
+                                printf("%c", upper_case_key);
+                                keybuff[keybuffcount] = upper_case_key;
+                                keybuffcount++;
+                            }
+                        } else {
+                            printf("%c", lower_case_key);
+                            keybuff[keybuffcount] = lower_case_key;
+                            keybuffcount++;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /*Sends en of interrupt signal for IRQ1*/
     send_eoi(1);
 
     sti();
+}
+
+
+static void fill_buffer(int8_t* buf, int8_t val, uint32_t nbytes) {
+    int i;
+    for (i = 0; i < nbytes; ++i) {
+        buf[i] = val;
+    }
 }
