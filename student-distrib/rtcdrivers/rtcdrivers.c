@@ -35,8 +35,8 @@ int32_t rtc_open(const uint8_t* fname) {
  */
 int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes) {
     // some basic synchronization
-    while (RTC_FLAG == 0);   /* wait for rtc interrupt */
-    RTC_FLAG = 0;	     /* reset RTC flag to 0 */
+    while (rtc_flag == 0);   /* wait for rtc interrupt */
+    rtc_flag = 0;	     /* reset RTC flag to 0 */
     return 0;		     /* return 0 when rtc interrupt received */
 }
 

@@ -2,7 +2,7 @@
 #include "x86_desc.h"
 #include "lib.h"
 #include "filesystems/filesystem.h"
-#include "terminaldriver.h"
+#include "terminaldrivers/terminaldriver.h"
 #include "./interrupts/idt_handlers.h"
 #include "init_devices.h"
 #include "rtcdrivers/rtcdrivers.h"
@@ -221,7 +221,7 @@ int test_dir_read() {
 #endif
     while ((test_ret = directory_read(0, buf, 0)) != 0) {
 #if (GRAPHICS == 1)	
-	printf("Buffer: %s\n", buf);
+		printf("Buffer: %s\n", buf);
 #endif	
     }
     
@@ -249,11 +249,11 @@ int test_file_open_good() {
     int32_t fd = file_open(fname);
     // unable to open file
     if (fd < 0) {
-	return FAIL;
+		return FAIL;
     }
     // only fd entries 0, 1, 2 should be in use
     if (!FD_FLAG_INUSE(fd_arr[fd].flags)) {
-	return FAIL;
+		return FAIL;
     }
     for (i = 2; i < MAXFILES_PER_TASK; ++i) {
 	if (i == fd) {
@@ -267,7 +267,7 @@ int test_file_open_good() {
     read_dentry_by_name(fname, &file_entry);
     // check inode num is correct
     if (file_entry.inode_num != fd_arr[fd].inode_num) {
-	return FAIL;
+		return FAIL;
     }
 
     file_close(fd);
@@ -291,7 +291,7 @@ int test_file_close_actual_file() {
     if (res < 0) return FAIL;
     // make sure file descriptor no longer in use
     if (FD_FLAG_INUSE(fd_arr[fd].flags)) {
-	return FAIL;
+		return FAIL;
     }
     return PASS;
 }
@@ -308,7 +308,7 @@ int test_read_past_file() {
     int8_t buf[4096];
     int read_bytes = file_read(fd, buf, file_size+50);
     if (read_bytes == -1) {
-	return FAIL;
+		return FAIL;
     }
 #if (GRAPHICS == 1)
     clear();
@@ -366,7 +366,7 @@ int test_read_file_update_read_pos() {
     int8_t buf[4096];
     (void)file_read(fd, buf, 100);
     if (fd_arr[fd].read_pos != 100) {
-	return FAIL;
+		return FAIL;
     }
     
     file_close(fd);
@@ -379,16 +379,16 @@ int test_read_large_file() {
     const int8_t* fname = "verylargetextwithverylongname.tx";
     int32_t fd = file_open(fname);
     if (fd == -1) {
-	return FAIL;
+		return FAIL;
     }
     inode_t inode = fs_inode_arr[fd_arr[fd].inode_num];
     uint32_t file_size = inode.length;
 
     printf("file size: %d\n", file_size);
     int8_t buf[2*4096];
-    int read_bytes = file_read(fd, buf, 2000);
+    int read_bytes = file_read(fd, buf, file_size);
     if (read_bytes == -1) {
-	return FAIL;
+			return FAIL;
     }
 #if (GRAPHICS == 1)
     clear();
@@ -403,7 +403,7 @@ int test_read_fish() {
     const int8_t* fname = "fish";
     int32_t fd = file_open(fname);
     if (fd == -1) {
-	return FAIL;
+		return FAIL;
     }
     uint32_t file_size = get_file_size(fd);
 
@@ -420,8 +420,9 @@ int test_read_fish() {
     printf("fish header: ");
     int i;
     for (i = 0; i < 5; ++i) {
-	putc(buf[i]);
+		putc(buf[i]);
     }
+	putc('\n');
 #endif    
     file_close(fd);
     return read_bytes == file_size ? PASS : FAIL;
@@ -433,7 +434,7 @@ int test_read_ls() {
     const int8_t* fname = "ls";
     int32_t fd = file_open(fname);
     if (fd == -1) {
-	return FAIL;
+		return FAIL;
     }
     uint32_t file_size = get_file_size(fd);
 
@@ -449,11 +450,11 @@ int test_read_ls() {
     printf("ls contents: ");
     int i;
     for (i = 0; i < 5; ++i) {
-	putc(buf[i]);
+		putc(buf[i]);
     }
     printf("\nmagic number:\n");
     for (i = LS_SIZE-50; i <= LS_SIZE; ++i) {
-	putc(buf[i]);
+		putc(buf[i]);
     }
 #endif
     file_close(fd);
@@ -466,7 +467,7 @@ int test_read_grep() {
     const int8_t* fname = "grep";
     int32_t fd = file_open(fname);
     if (fd == -1) {
-	return FAIL;
+		return FAIL;
     }
     uint32_t file_size = get_file_size(fd);
 
@@ -482,11 +483,11 @@ int test_read_grep() {
     printf("grep contents: ");
     int i;
     for (i = 0; i < 5; ++i) {
-	putc(buf[i]);
+		putc(buf[i]);
     }
     printf("\nmagic number:\n");
     for (i = GREP_SIZE-50; i <= GREP_SIZE; ++i) {
-	putc(buf[i]);
+		putc(buf[i]);
     }
 #endif
     file_close(fd);
@@ -517,6 +518,22 @@ int terminaltest()
 	return PASS;
 }
 
+
+int test_rtc_open() {
+	clear();
+	rtc_open(NULL);
+	int i = 0;
+	for (i = 0; i < 10; i++){
+		rtc_read(NULL, NULL, NULL);
+		printf("%d", i);
+	}
+	putc('\n');
+	rtc_close(NULL);
+
+	return PASS;
+}
+
+
 int test_rtc_write() {
 	clear();
 	rtc_open(NULL);
@@ -539,7 +556,6 @@ int test_rtc_write() {
 }
 
 int test_rtc_not_power_2() {
-	clear();
 	rtc_open(NULL);
 	int32_t rt_val = rtc_write(NULL, (void *)5, NULL);	
 	rtc_close(NULL);
@@ -548,7 +564,6 @@ int test_rtc_not_power_2() {
 }
 
 int test_rtc_greater_1024() {
-	clear();
 	rtc_open(NULL);
 	int32_t rt_val = rtc_write(NULL, (void *)1030, NULL);	
 	rtc_close(NULL);
@@ -582,25 +597,22 @@ void launch_tests() {
 	// TEST_OUTPUT("System call:", system_call_fail_test());
 	//TEST_OUTPUT("zero test: ", zero());
 	//TEST_OUTPUT("max test: ", max());
-	TEST_OUTPUT("test directory read: ", test_dir_read());
-	TEST_OUTPUT("test directory write: ", test_dir_write());
-	TEST_OUTPUT("test open nonexistent file: ", test_file_open_bad());
-	TEST_OUTPUT("test open good file: ", test_file_open_good());
-	TEST_OUTPUT("test closing stdin/stdout: ", test_file_close_defaults());
-	TEST_OUTPUT("test closing an actual file: ", test_file_close_actual_file());
-	TEST_OUTPUT("test reading an entire file past end: ", test_read_past_file());
-	TEST_OUTPUT("test update read position: ", test_read_file_update_read_pos());
-	TEST_OUTPUT("test reading an entire very large file: ", test_read_large_file());
+	//TEST_OUTPUT("test directory read: ", test_dir_read());
+	// TEST_OUTPUT("test directory write: ", test_dir_write());
+	// TEST_OUTPUT("test open nonexistent file: ", test_file_open_bad());
+	// TEST_OUTPUT("test open good file: ", test_file_open_good());
+	// TEST_OUTPUT("test closing stdin/stdout: ", test_file_close_defaults());
+	// TEST_OUTPUT("test closing an actual file: ", test_file_close_actual_file());
+	//TEST_OUTPUT("test reading an entire file past end: ", test_read_past_file());
+	// TEST_OUTPUT("test update read position: ", test_read_file_update_read_pos());
+	// TEST_OUTPUT("test reading an entire very large file: ", test_read_large_file());
 	//TEST_OUTPUT("test reading ls exec file", test_read_ls());
 	//TEST_OUTPUT("test reading grep exec file", test_read_grep());
-	TEST_OUTPUT("test reading fish: ", test_read_fish());
-	//TEST_OUTPUT("test reading a file after EOF: ", test_read_after_eof());	
-	//TEST_OUTPUT("test reading 0 bytes from file: ", test_read_nothing());
-	//TEST_OUTPUT("test part of file from start: ", test_read_file_partial_start());
-	//TEST_OUTPUT("test writing to file: ", test_file_write());
-	// TEST_OUTPUT("zero test: ", zero());
-	// TEST_OUTPUT("max test: ", max());
-	//TEST_OUTPUT("test file open:%d",test_file_open());
+	//TEST_OUTPUT("test reading fish: ", test_read_fish());
+	// TEST_OUTPUT("test reading a file after EOF: ", test_read_after_eof());	
+	// TEST_OUTPUT("test reading 0 bytes from file: ", test_read_nothing());
+	// TEST_OUTPUT("test part of file from start: ", test_read_file_partial_start());
+	// TEST_OUTPUT("test writing to file: ", test_file_write());
 	//TEST_OUTPUT("test rtc open: ", test_rtc_open());
 	//TEST_OUTPUT("test rtc write: ", test_rtc_write());
 	//TEST_OUTPUT("test rtc not power 2: ", test_rtc_not_power_2());

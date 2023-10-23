@@ -2,7 +2,7 @@
 #define IDT_FNCS_H
 
 #include "../init_devices.h"
-// #include "types.h"
+#include "../types.h"
 
 #define KBD_PORT 0x60
 #define KEYBUF_MAX_SIZE 128
@@ -10,13 +10,13 @@
 #define LSHIFT_RELEASE 0xAA
 #define RSHIFT_RELEASE 0XB6
 
-char keybuff[128];
+extern char keybuff[KEYBUF_MAX_SIZE];
+
+extern uint32_t rtc_flag;
 
 int enterflag;
 int keybuffbackup;
 
-
-extern uint32_t RTC_FLAG;
 
 /* Exception handlers. These are the functions that are called when an
 * exception occurs in kernel */

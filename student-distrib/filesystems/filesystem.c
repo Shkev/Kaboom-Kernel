@@ -1,6 +1,4 @@
 #include "filesystem.h"
-// #include "../ece391support.h"
-// #include "../ece391syscall.h"
 #include "../lib.h"
 
 static int32_t find_file_index(const int8_t* fname);
@@ -282,16 +280,11 @@ int32_t file_close(int32_t fd) {
  * DESCRIPTION: Find the index of file with given name in filesystem.
  * INPUTS:      fname  - name of the file to search for
  * RETURNS:     0 on successfully finding file, -1 otherwise.
+ */
 int32_t find_file_index(const int8_t* fname) {
     uint32_t dir;
     for (dir = 0; dir < fs_boot_block->direntry_count; dir++) {
         if (filenames_equal(fname, fs_boot_block->dir_entries[dir].filename)) {
-=======
-int32_t find_file_index(const uint8_t* fname) {
-    uint32_t dir;
-    for (dir = 0; dir < fs_boot_block->direntry_count; dir++) {
-        if (strings_equal((const int8_t*)fname, (const int8_t*)fs_boot_block->dir_entries[dir].filename) && open_file != NULL) {
->>>>>>> rtc_driver
             return dir;
         }
     }
@@ -316,7 +309,7 @@ int32_t find_open_fd() {
     return -1;
 }
 
-/* int8_t strings_equal(uint8_t* a, uint8_t* b)
+/* int8_t filenames_equal(uint8_t* a, uint8_t* b)
  * Inputs:        a = destination of string a
  *                b = destination of string b
  * Return Value:  Nonzero value if the two strings are equal, otherwise 0.
