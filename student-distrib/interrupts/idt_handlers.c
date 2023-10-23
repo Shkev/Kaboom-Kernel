@@ -392,30 +392,30 @@ void kbd_handler() {
     }
 
     //BACKSPACE LOGIC
-    if (scan_code == 0x0E)
+    if (scan_code == BACKSPACE_PRESSED)
     {
         backspace = 1;
-    } else if (scan_code == 0x8E)
+    } else if (scan_code == BACKSPACE_RELEASE)
     {
         // release
         backspace = 0;
     }
 
     //TAB LOGIC
-    if (scan_code == 0x0F)
+    if (scan_code == TAB_PRESSED)
     {
         tab = 1;
-    } else if (scan_code == 0x8F)
+    } else if (scan_code == TAB_RELEASE)
     {
         // release
         tab = 0;
     }
 
     //ENTER LOGIC
-    if (scan_code == 0x1C)
+    if (scan_code == ENTER_PRESSED)
     {
         enterflag = 1;
-    } else if (scan_code == 0x9C)
+    } else if (scan_code == ENTER_RELEASE)
     {
         // release
         fill_buffer(keybuff, '\0', KEYBUF_MAX_SIZE);
@@ -423,10 +423,10 @@ void kbd_handler() {
     }
 
     //CTRL LOGIC
-    if (scan_code == 0x1D)
+    if (scan_code == LEFTCTRL_PRESSED)
     {
         ctrl = 1;
-    } else if (scan_code == 0x9D)
+    } else if (scan_code == LEFTCTRL_RELEASE)
     {
         // release
         ctrl = 0;
@@ -445,7 +445,7 @@ void kbd_handler() {
         {
             putc('\b');
             keybuff[--keybuffcount] = '\0';
-        } else if ((ctrl == 1) && (scan_code == 0x26)) {
+        } else if ((ctrl == 1) && (scan_code == L_PRESS)) {
             clear();
             keybuffcount = 0;
             fill_buffer(keybuff, '\0', KEYBUF_MAX_SIZE);
@@ -475,98 +475,98 @@ void kbd_handler() {
             keybuffbackup = keybuffcount;
             keybuffcount = 0;   
         } else {
-            if (scan_code <= 0x58) {
-                if(scan_code == 0x3A && capslock == 0)
+            if (scan_code <= F12_PRESSED) {
+                if(scan_code == CAPSLOCK_PRESSED && capslock == 0)
                 {
                     capslock = 1;
-                } else if (scan_code == 0x3A && capslock == 1)
+                } else if (scan_code == CAPSLOCK_PRESSED && capslock == 1)
                 {
                     capslock = 0;
-                } else if (((scan_code == 0x2A) || (scan_code == 0x36)) && (shift == 0)){
+                } else if (((scan_code == LEFTSHIFT_PRESSED) || (scan_code == RIGHTSHIFT_PRESSED)) && (shift == 0)){
                     shift = 1;
-                } else if ((ctrl == 1) && (scan_code == 0x26)) {
+                } else if ((ctrl == 1) && (scan_code == L_PRESS)) {
                     clear();
                     fill_buffer(keybuff, '\0', KEYBUF_MAX_SIZE);
                     keybuffcount = 0;
                 } else {
                     // num pad support... does nothing for now but adds a long list of ifs :)
-                    if (scan_code == 0x38) {
+                    if (scan_code == LEFTALT_PRESSED) {
                         // left alt press
-                    } else if (scan_code == 0x1D) {
+                    } else if (scan_code == LEFTCTRL_PRESSED) {
                         // left control press
-                    } else if (scan_code == 0x2A) {
+                    } else if (scan_code == LEFTSHIFT_PRESSED) {
                         // left shift press
-                    } else if (scan_code == 0x36) {
+                    } else if (scan_code == RIGHTSHIFT_PRESSED) {
                         // right shift press
-                    } else if (scan_code == 0x3A) {
+                    } else if (scan_code == CAPSLOCK_PRESSED) {
                         // caps lock press
-                    } else if (scan_code == 0xB8) {
+                    } else if (scan_code == LEFTALT_RELEASE) {
                         // left alt release
-                    } else if (scan_code == 0x9D) {
+                    } else if (scan_code == LEFTCTRL_RELEASE) {
                         // left control release
-                    } else if (scan_code == 0xAA) {
+                    } else if (scan_code == LSHIFT_RELEASE) {
                         // left shift release
-                    } else if (scan_code == 0xB6) {
+                    } else if (scan_code == RSHIFT_RELEASE) {
                         // right shift release
-                    } else if (scan_code == 0xBA) {
+                    } else if (scan_code == CAPSLOCK_RELEASE) {
                         // caps lock release
-                    } else if (scan_code == 0x01) {
+                    } else if (scan_code == ESCAPE_PRESSED) {
 
-                    } else if (scan_code == 0x3B) {
+                    } else if (scan_code == F1_PRESSED) {
                     
-                    } else if (scan_code == 0xFC) {
+                    } else if (scan_code == F2_PRESSED) {
                     
-                    } else if (scan_code == 0x37) {
+                    } else if (scan_code == KEYPADMULT_PRESSED) {
 
-                    } else if (scan_code == 0x3D) {
+                    } else if (scan_code == F3_PRESSED) {
                     
-                    } else if (scan_code == 0x3E) {
+                    } else if (scan_code == F4_PRESSED) {
                     
-                    } else if (scan_code == 0x3F) {
+                    } else if (scan_code == F5_PRESSED) {
 
-                    } else if (scan_code == 0x40) {
+                    } else if (scan_code == F6_PRESSED) {
 
-                    } else if (scan_code == 0x41) {
+                    } else if (scan_code == F7_PRESSED) {
 
-                    } else if (scan_code == 0x42) {
+                    } else if (scan_code == F8_PRESSED) {
 
-                    } else if (scan_code == 0x43) {
+                    } else if (scan_code == F9_PRESSED) {
 
-                    } else if (scan_code == 0x44) {
+                    } else if (scan_code == F10_PRESSED) {
 
-                    } else if (scan_code == 0x45) {
+                    } else if (scan_code == NUMLOCK_PRESSED) {
 
-                    } else if (scan_code == 0x46) {
+                    } else if (scan_code == SCROLLLOCK_PRESSED) {
                     
-                    } else if (scan_code == 0x47) {
+                    } else if (scan_code == KEYPAD7_PRESSED) {
 
-                    } else if (scan_code == 0x48) {
+                    } else if (scan_code == KEYPAD8_PRESSED) {
                     
-                    } else if (scan_code == 0x49) {
+                    } else if (scan_code == KEYPAD9_PRESSED) {
 
-                    } else if (scan_code == 0x4A) {
+                    } else if (scan_code == KEYPADMINUS_PRESSED) {
 
-                    } else if (scan_code == 0x4B) {
+                    } else if (scan_code == KEYPAD4_PRESSED) {
                     
-                    } else if (scan_code == 0x4C) {
+                    } else if (scan_code == KEYPAD5_PRESSED) {
 
-                    } else if (scan_code == 0x4D) {
+                    } else if (scan_code == KEYPAD6_PRESSED) {
                     
-                    } else if (scan_code == 0x4E) {
+                    } else if (scan_code == KEYPADPLUS_PRESSED) {
                     
-                    } else if (scan_code == 0x4F) {
+                    } else if (scan_code == KEYPAD1_PRESSED) {
 
-                    } else if (scan_code == 0x50) {
+                    } else if (scan_code == KEYPAD2_PRESSED) {
 
-                    } else if (scan_code == 0x51) {
+                    } else if (scan_code == KEYPAD3_PRESSED) {
 
-                    } else if (scan_code == 0x52) {
+                    } else if (scan_code == KEYPAD0_PRESSED) {
                     
-                    } else if (scan_code == 0x53) {
+                    } else if (scan_code == KEYPADPERIOD_PRESSED) {
                     
-                    } else if (scan_code == 0x57) {
+                    } else if (scan_code == F11_PRESSED) {
                     
-                    } else if (scan_code == 0x58) {
+                    } else if (scan_code == F12_PRESSED) {
                         
                     } else {
                         if ((capslock == 1 || shift == 1) && ctrl == 0)
@@ -574,7 +574,7 @@ void kbd_handler() {
                             if (capslock == 1 && shift == 1)
                             {
                                 // caps lock pressed and want special char
-                                if ((scan_code == 0x29) || (scan_code == 0x02) || (scan_code == 0x03) || (scan_code == 0x04) || (scan_code == 0x05) || (scan_code == 0x06) || (scan_code == 0x07) || (scan_code == 0x08) || (scan_code == 0x09) || (scan_code == 0x0A) || (scan_code == 0x0B) || (scan_code == 0x0C) || (scan_code == 0x0D) || (scan_code == 0x1A) || (scan_code == 0x1B) || (scan_code == 0x2B) || (scan_code == 0x27) || (scan_code == 0x28) || (scan_code == 0x33) || (scan_code == 0x34) || (scan_code == 0x35))
+                                if ((scan_code == BACKTICK_PRESSED) || (scan_code == ONE_PRESSED) || (scan_code == TWO_PRESSED) || (scan_code == THREE_PRESSED) || (scan_code == FOUR_PRESSED) || (scan_code == FIVE_PRESSED) || (scan_code == SIX_PRESSED) || (scan_code == SEVEN_PRESSED) || (scan_code == EIGHT_PRESSED) || (scan_code == NINE_PRESSED) || (scan_code == ZERO_PRESSED) || (scan_code == MINUS_PRESSED) || (scan_code == EQUAL_PRESSED) || (scan_code == LEFTBRACKET_PRESSED) || (scan_code == RIGHTBRACKET_PRESSED) || (scan_code == BACKSLASH_PRESSED) || (scan_code == SEMICOLON_PRESSED) || (scan_code == SINGLEQUOTE_PRESSED) || (scan_code == COMMA_PRESSED) || (scan_code == PERIOD_PRESSED) || (scan_code == FORWARDSLASH_PRESSED))
                                 {
                                     printf("%c", schar_case_key);
                                     keybuff[keybuffcount] = schar_case_key;

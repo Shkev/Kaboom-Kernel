@@ -175,22 +175,22 @@ void putc(uint8_t c) {
         screen_x = 0;
         if (screen_y >= NUM_ROWS)
         {
-            scrolling();
+            scrolling(); //scroll if at the bottom of the screen
             screen_y = NUM_ROWS - 1;
         }
     } else if (c == '\b') {
         if (screen_x >= 1)
         {
-            screen_x--;
+            screen_x--; //backspace logic
             *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
             *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
         } else if ((screen_x == 0) && (screen_y >= 1)){
             screen_x = 80;
-            screen_y = screen_y - 1;
+            screen_y = screen_y - 1; //go to the back row of the last screen
         } else {
             screen_x = 0;
         }
-    } else if (c == '\t') {
+    } else if (c == '\t') { //tab logic
         screen_x = screen_x + 4;
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
@@ -212,7 +212,7 @@ void putc(uint8_t c) {
             screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
         }
     }
-    update_cursor(screen_x, screen_y);
+    update_cursor(screen_x, screen_y); //update the cursor location
 }
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);
@@ -528,7 +528,7 @@ void test_interrupts(void) {
  * Function: Updates cursor location to where typing */
 void update_cursor(int xloc, int yloc)
 {
-	uint16_t pos = yloc * NUM_COLS + xloc;
+	uint16_t pos = yloc * NUM_COLS + xloc; //find the location and update it by doing math
     outb(0x0F, 0x3D4);
     outb((uint8_t) (pos & 0xFF), 0x3D5);
     outb(0x0E, 0x3D4);
@@ -543,7 +543,7 @@ void scrolling()
     int i;
     int j;
     int k;
-    for (i = 0; i < NUM_ROWS - 1; i++)
+    for (i = 0; i < NUM_ROWS - 1; i++) //loop through rows and columns
     {
         for (j = 0; j < NUM_COLS - 1; j++)
         {
