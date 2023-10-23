@@ -1,8 +1,14 @@
 #include "tests.h"
 #include "x86_desc.h"
 #include "lib.h"
-#include "terminaldriver.h"
+#include "filesystems/filesystem.h"
+#include "terminaldrivers/terminaldriver.h"
 #include "./interrupts/idt_handlers.h"
+#include "init_devices.h"
+#include "rtcdrivers/rtcdrivers.h"
+
+/* set GRAPHICS to 1 to include print statements for large files/images (i.e., frame1) in test cases */
+#define GRAPHICS 1
 
 #define PASS 1
 #define FAIL 0
@@ -20,9 +26,9 @@ static inline void assertion_failure(){
 	asm volatile("int $15");
 }
 
-
+//=================================================================================
 /* Checkpoint 1 tests */
-
+//=================================================================================
 /* IDT Test - Example
  * 
  * Asserts that first 10 IDT entries are not NULL
@@ -48,7 +54,7 @@ int idt_test(){
 	return result;
 }
 
-// add more tests here
+
 
 int idt_div_zero_trigger_test() {
     TEST_HEADER;
@@ -201,9 +207,312 @@ int system_call_fail_test(){
 	asm volatile("int $0x80"); //raise stack_segfault exception
 	return 1;
 }
+//====================================================================
 
-
+//====================================================================
 /* Checkpoint 2 tests */
+//====================================================================
+
+int test_dir_read() {
+    int test_ret;
+    int8_t buf[FILENAME_LEN+1];
+#if (GRAPHICS == 1)
+	int i;
+    clear();
+#endif
+    while ((test_ret = directory_read(0, buf, 0)) != 0) {
+		buf[FILENAME_LEN] = '\0';
+#if (GRAPHICS == 1)
+		dentry_t d;
+		read_dentry_by_name(buf, &d);
+		uint32_t nspace = 35 - strlen(buf);
+		printf("File Name:");
+		for (i = 0; i < nspace; ++i) {
+			putc(' ');
+		}
+		printf("%s, ", buf);
+		printf("File Type: %d, ", d.filetype);
+		printf("File Size: %d\n", fs_inode_arr[d.inode_num].length);
+#endif	
+    }
+    
+    return test_ret == 0 ? PASS : FAIL;
+}
+
+
+int test_dir_write() {
+    int res = directory_write(0, NULL, 0);
+    return res == -1 ? PASS : FAIL;
+}
+
+
+int test_file_open_bad() {
+    // try to open nonexistent file
+    int32_t res = file_open("kaboom.txt");
+    return res == -1 ? PASS : FAIL;
+}
+
+
+int test_file_open_good() {
+    // try to open existing file
+    int i;
+    const int8_t* fname = "created.txt";
+    int32_t fd = file_open(fname);
+    // unable to open file
+    if (fd < 0) {
+		return FAIL;
+    }
+    // only fd entries 0, 1, 2 should be in use
+    if (!FD_FLAG_INUSE(fd_arr[fd].flags)) {
+		return FAIL;
+    }
+    for (i = 2; i < MAXFILES_PER_TASK; ++i) {
+	if (i == fd) {
+	    continue;
+	}
+	if (FD_FLAG_INUSE(fd_arr[i].flags)) {
+	    return FAIL;
+	}
+    }
+    dentry_t file_entry;
+    read_dentry_by_name(fname, &file_entry);
+    // check inode num is correct
+    if (file_entry.inode_num != fd_arr[fd].inode_num) {
+		return FAIL;
+    }
+
+    file_close(fd);
+    
+    return PASS;
+}
+
+
+int test_file_close_defaults() {
+    int32_t res1 = file_close(0);
+    int32_t res2 = file_close(1);
+    return res1 < 0 && res2 < 0;
+}
+
+
+int test_file_close_actual_file() {
+    const int8_t* fname = "created.txt";
+    int32_t fd = file_open(fname);
+    int32_t res = file_close(fd);
+    // close should succeed
+    if (res < 0) return FAIL;
+    // make sure file descriptor no longer in use
+    if (FD_FLAG_INUSE(fd_arr[fd].flags)) {
+		return FAIL;
+    }
+    return PASS;
+}
+
+
+// test reading an entire file with read length greater than file size
+int test_read_past_file() {
+    const int8_t* fname = "frame1.txt";
+    int32_t fd = file_open(fname);
+    inode_t inode = fs_inode_arr[fd_arr[fd].inode_num];
+    uint32_t file_size = inode.length;
+
+    printf("file size: %d\n", file_size);
+    int8_t buf[4096];
+    int read_bytes = file_read(fd, buf, file_size+50);
+    if (read_bytes == -1) {
+		return FAIL;
+    }
+#if (GRAPHICS == 1)
+    clear();
+    printf("File Contents:\n%s\n", buf);
+#endif
+    file_close(fd);
+    return read_bytes == file_size ? PASS : FAIL;
+}
+
+// test reading a file from position after end of file
+int test_read_after_eof() {
+    const int8_t* fname = "frame1.txt";
+    int32_t fd = file_open(fname);
+    inode_t inode = fs_inode_arr[fd_arr[fd].inode_num];
+    uint32_t file_size = inode.length;
+
+    int8_t buf[4096];
+    int read_bytes = file_read(fd, buf, file_size+50);
+    read_bytes = file_read(fd, buf, 1);
+    file_close(fd);
+    return read_bytes == 0 ? PASS : FAIL;
+}
+
+// test reading 0 bytes from file
+int test_read_nothing() {
+    const int8_t* fname = "frame1.txt";
+    int32_t fd = file_open(fname);
+
+    int8_t buf[4096];
+    int read_bytes = file_read(fd, buf, 0);
+    file_close(fd);
+    return read_bytes == 0 ? PASS : FAIL;
+}
+
+// test reading part of file from start
+int test_read_file_partial_start() {
+    const int8_t* fname = "frame1.txt";
+    int32_t fd = file_open(fname);
+
+    int8_t buf[4096];
+    int read_bytes = file_read(fd, buf, 100);
+#if (GRAPHICS == 1)
+    clear();
+    printf("Firt 100 byte of file:\n%s\n", buf);
+#endif
+    file_close(fd);
+    return read_bytes == 100 ? PASS : FAIL;
+}
+
+// test if reading from file updates curr read position
+int test_read_file_update_read_pos() {
+    const int8_t* fname = "frame1.txt";
+    int32_t fd = file_open(fname);
+
+    int8_t buf[4096];
+    (void)file_read(fd, buf, 100);
+    if (fd_arr[fd].read_pos != 100) {
+		return FAIL;
+    }
+    
+    file_close(fd);
+    return PASS;
+}
+
+
+// test reading big file across multiple data blocks in its entirety
+int test_read_large_file() {
+    const int8_t* fname = "verylargetextwithverylongname.tx";
+    int32_t fd = file_open(fname);
+    if (fd == -1) {
+		return FAIL;
+    }
+    inode_t inode = fs_inode_arr[fd_arr[fd].inode_num];
+    uint32_t file_size = inode.length;
+
+    printf("file size: %d\n", file_size);
+    int8_t buf[2*4096];
+    int read_bytes = file_read(fd, buf, file_size);
+    if (read_bytes == -1) {
+			return FAIL;
+    }
+#if (GRAPHICS == 1)
+    clear();
+    printf("File Contents:\n%s\n", buf);
+#endif
+    file_close(fd);
+    return read_bytes == file_size ? PASS : FAIL;
+}
+
+// test reading fish (large file)
+int test_read_fish() {
+    const int8_t* fname = "fish";
+    int32_t fd = file_open(fname);
+    if (fd == -1) {
+		return FAIL;
+    }
+    uint32_t file_size = get_file_size(fd);
+
+    
+#define FISH_SIZE 36164 // fish file is 36164 bytes long
+   
+    int8_t buf[FISH_SIZE + 1];
+    buf[FISH_SIZE] = '\n';
+    int read_bytes = file_read(fd, buf, file_size);
+
+#if (GRAPHICS == 1)
+    clear();
+    printf("fish file size: %d\n", file_size);
+    printf("fish header: ");
+    int i;
+    for (i = 0; i < 5; ++i) {
+		putc(buf[i]);
+    }
+	putc('\n');
+#endif    
+    file_close(fd);
+    return read_bytes == file_size ? PASS : FAIL;
+}
+
+
+// test reading ls
+int test_read_ls() {
+    const int8_t* fname = "ls";
+    int32_t fd = file_open(fname);
+    if (fd == -1) {
+		return FAIL;
+    }
+    uint32_t file_size = get_file_size(fd);
+
+#define LS_SIZE 5350 // ls file is 5350 bytes long
+    
+    int8_t buf[LS_SIZE+1];
+    buf[LS_SIZE] = '\n';
+    int read_bytes = file_read(fd, buf, file_size);
+
+#if (GRAPHICS == 1)
+    clear();
+    printf("ls file size: %d\n", file_size);
+    printf("ls contents: ");
+    int i;
+    for (i = 0; i < 5; ++i) {
+		putc(buf[i]);
+    }
+    printf("\nmagic number:\n");
+    for (i = LS_SIZE-50; i <= LS_SIZE; ++i) {
+		putc(buf[i]);
+    }
+#endif
+    file_close(fd);
+    return read_bytes == file_size ? PASS : FAIL;
+}
+
+
+// test reading grep
+int test_read_grep() {
+    const int8_t* fname = "grep";
+    int32_t fd = file_open(fname);
+    if (fd == -1) {
+		return FAIL;
+    }
+    uint32_t file_size = get_file_size(fd);
+
+#define GREP_SIZE 6150 // ls file is 5350 bytes long
+    
+    int8_t buf[GREP_SIZE+1];
+    buf[GREP_SIZE] = '\n';
+    int read_bytes = file_read(fd, buf, file_size);
+
+#if (GRAPHICS == 1)
+    clear();
+    printf("grep file size: %d\n", file_size);
+    printf("grep contents: ");
+    int i;
+    for (i = 0; i < 5; ++i) {
+		putc(buf[i]);
+    }
+    printf("\nmagic number:\n");
+    for (i = GREP_SIZE-50; i <= GREP_SIZE; ++i) {
+		putc(buf[i]);
+    }
+#endif
+    file_close(fd);
+    return read_bytes == file_size ? PASS : FAIL;
+}
+
+
+int test_file_write() {
+    int res = file_write(0, NULL, 0);
+    return res == -1 ? PASS : FAIL;
+}
+
+//=====================================================================
+
 int terminaltest()
 {
 	char buf[128];
@@ -220,6 +529,60 @@ int terminaltest()
 	return PASS;
 }
 
+
+int test_rtc_open() {
+	clear();
+	rtc_open(NULL);
+	int i = 0;
+	for (i = 0; i < 10; i++){
+		rtc_read(NULL, NULL, NULL);
+		printf("%d", i);
+	}
+	putc('\n');
+	rtc_close(NULL);
+
+	return PASS;
+}
+
+
+int test_rtc_write() {
+	clear();
+	rtc_open(NULL);
+	int i = 0;
+	uint32_t freq = 2;
+	for (i = 0; i < 10; i++){
+		int j = 0;
+		for (j = 0; j < 10; j++) {
+			rtc_read(NULL, NULL, NULL);
+			printf("%d", j);
+		}
+		putc('\n');
+		freq = freq << 1; 
+		rtc_write(NULL, (void*)freq, NULL);	
+	}
+	
+	rtc_close(NULL);
+
+	return PASS;
+}
+
+int test_rtc_not_power_2() {
+	rtc_open(NULL);
+	int32_t rt_val = rtc_write(NULL, (void *)5, NULL);	
+	rtc_close(NULL);
+
+	return rt_val = -1 ? PASS : FAIL;
+}
+
+int test_rtc_greater_1024() {
+	rtc_open(NULL);
+	int32_t rt_val = rtc_write(NULL, (void *)1030, NULL);	
+	rtc_close(NULL);
+
+	return rt_val = -1 ? PASS : FAIL;
+}
+
+//=====================================================================
 
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -243,7 +606,27 @@ void launch_tests() {
 	// TEST_OUTPUT("idt_div_zero_trigger_test", idt_div_zero_trigger_test());
 	// TEST_OUTPUT("overflow test: ", overflow_test());
 	// TEST_OUTPUT("System call:", system_call_fail_test());
-	// TEST_OUTPUT("zero test: ", zero());
-	// TEST_OUTPUT("max test: ", max());
+	//TEST_OUTPUT("zero test: ", zero());
+	//TEST_OUTPUT("max test: ", max());
+	TEST_OUTPUT("test directory read: ", test_dir_read());
+	// TEST_OUTPUT("test directory write: ", test_dir_write());
+	// TEST_OUTPUT("test open nonexistent file: ", test_file_open_bad());
+	// TEST_OUTPUT("test open good file: ", test_file_open_good());
+	// TEST_OUTPUT("test closing stdin/stdout: ", test_file_close_defaults());
+	// TEST_OUTPUT("test closing an actual file: ", test_file_close_actual_file());
+	//TEST_OUTPUT("test reading an entire file past end: ", test_read_past_file());
+	// TEST_OUTPUT("test update read position: ", test_read_file_update_read_pos());
+	// TEST_OUTPUT("test reading an entire very large file: ", test_read_large_file());
+	//TEST_OUTPUT("test reading ls exec file", test_read_ls());
+	//TEST_OUTPUT("test reading grep exec file", test_read_grep());
+	//TEST_OUTPUT("test reading fish: ", test_read_fish());
+	// TEST_OUTPUT("test reading a file after EOF: ", test_read_after_eof());	
+	// TEST_OUTPUT("test reading 0 bytes from file: ", test_read_nothing());
+	// TEST_OUTPUT("test part of file from start: ", test_read_file_partial_start());
+	// TEST_OUTPUT("test writing to file: ", test_file_write());
+	//TEST_OUTPUT("test rtc open: ", test_rtc_open());
+	//TEST_OUTPUT("test rtc write: ", test_rtc_write());
+	//TEST_OUTPUT("test rtc not power 2: ", test_rtc_not_power_2());
+	//TEST_OUTPUT("test rtc greater 1024: ", test_rtc_greater_1024());
 	terminaltest();
 }

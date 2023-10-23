@@ -11,6 +11,7 @@
 #include "debug.h"
 #include "tests.h"
 #include "paging/paging.h"
+#include "filesystems/filesystem.h"
 
 #define RUN_TESTS
 
@@ -207,6 +208,7 @@ void entry(unsigned long magic, unsigned long addr) {
         SET_IDT_ENTRY(idt[0x21], kbd_linkage);
         SET_IDT_ENTRY(idt[0x28], rtc_linkage);
 
+        /* System Call handler*/
         SET_IDT_ENTRY(idt[0x80], system_call_handler);
 
         //===============================================
@@ -218,12 +220,17 @@ void entry(unsigned long magic, unsigned long addr) {
     i8259_init();
 
     /* initialize devices. Turn on IRQs for these devices */
-    /*IRQ2 is enabled to account for scondary PIC*/
+    /*IRQ2 is enabled to account for secondary PIC*/
     enable_irq(2);
-    //init_rtc();
     clear();
+    init_rtc();
     init_kbd();
+
+    module_t* ext2_filesys = (module_t*)(mbi->mods_addr);
+    init_ext2_filesys(ext2_filesys->mod_start);
+    
     paging_init();
+    // ==============================================================
 
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your

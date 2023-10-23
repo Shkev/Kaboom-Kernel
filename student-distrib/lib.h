@@ -26,11 +26,15 @@ int32_t strncmp(const int8_t* s1, const int8_t* s2, uint32_t n);
 int8_t* strcpy(int8_t* dest, const int8_t*src);
 int8_t* strncpy(int8_t* dest, const int8_t*src, uint32_t n);
 
+int8_t strings_equal(const int8_t* a, const int8_t* b);
+
 /* Userspace address-check functions */
 int32_t bad_userspace_addr(const void* addr, int32_t len);
 int32_t safe_strncpy(int8_t* dest, const int8_t* src, int32_t n);
 
 void test_interrupts(void);
+
+uint32_t min(uint32_t a, uint32_t b);
 
 void update_cursor(int screen_x, int screen_y);
 void scrolling();

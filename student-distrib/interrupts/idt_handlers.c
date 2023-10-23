@@ -6,6 +6,10 @@
 
 static void fill_buffer(int8_t* buf, int8_t val, uint32_t nbytes);
 
+uint32_t rtc_flag = 0;
+
+char keybuff[KEYBUF_MAX_SIZE];
+
 /*divide_zero_handler()
 * DESCRIPTION: Prints the divide by zero exception and emulates blue screen of death by infinitly looping
 * INPUTS: none
@@ -311,10 +315,10 @@ void rtc_handler() {
     outb(0x0C, RTC_INDEX);
     // throw away info about interrupt. Change this later to do something
     (void)inb(RTC_DATA);
-    test_interrupts();
+    //test_interrupts();
     // send end of interrupt for IRQ8
     send_eoi(RTC_IRQ);
-    
+    rtc_flag = 1;   //raise RTC flag when interrupt signal is recieved
     sti();
 }
 

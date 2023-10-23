@@ -499,6 +499,18 @@ int8_t* strncpy(int8_t* dest, const int8_t* src, uint32_t n) {
     return dest;
 }
 
+/* int8_t strings_equal(uint8_t* a, uint8_t* b)
+ * Inputs:        a = destination of string a
+ *                b = destination of string b
+ * Return Value:  Nonzero value if the two strings are equal, otherwise 0.
+*/
+int8_t strings_equal(const int8_t* a, const int8_t* b) {
+    uint32_t a_len = strlen(a);
+    uint32_t b_len = strlen(b);
+    return (a_len == b_len) && (strncmp(a, b, a_len) == 0);
+}
+
+
 /* void test_interrupts(void)
  * Inputs: void
  * Return Value: void
@@ -546,3 +558,15 @@ void scrolling()
         *(uint8_t *)(video_mem + ((NUM_COLS * (NUM_ROWS - 1) + k) << 1) + 1) = ATTRIB;
     }
 }
+/* uint32_t max(uint32_t, uint32_t)
+ * DESCRIPTION: Get minimum of two values
+ * INPUTS: a, b - values to find min of
+ * OUTPUTS: none
+ * RETURNS: min of a and b
+ * SIDE EFFECTS: none
+ */
+uint32_t min(uint32_t a, uint32_t b) {
+    return a < b ? a : b;
+}
+
+
