@@ -194,7 +194,13 @@ int32_t directory_close(int32_t fd) {
     return 0;
 }
 
-
+/* file_open
+* DESCRIPTION:  opens the file
+* INPUTS:       const int8_t* fname - file name
+* OUTPUTS:      returns whether or file open was successful
+* RETURN VALUE: 0 if file opened, -1 otherwise.
+* SIDE EFFECTS: none
+*/
 int32_t file_open(const int8_t* fname) {
     int32_t open_fd = find_open_fd();
     if (open_fd < 0) {
@@ -268,6 +274,14 @@ int32_t file_write(int32_t fd, const void* buf, int32_t nbytes) {
     return -1;
 }
 
+
+/* file_close
+* DESCRIPTION:  closes file in file system, does nothing
+* INPUTS:       int32_t fd - file descriptor
+* OUTPUTS:      returns whether or not close was successful
+* RETURN VALUE: 0 if successful, -1 otherwise
+* SIDE EFFECTS: none
+*/
 int32_t file_close(int32_t fd) {
     if (fd == 0 || fd == 1)
 	    return -1;
@@ -321,6 +335,14 @@ int8_t filenames_equal(const int8_t* a, const int8_t* b) {
 }
 
 
+
+/* get_file_size
+* DESCRIPTION:  gets file size
+* INPUTS:       int32_t fd - file descriptor pointing to open file
+* OUTPUTS:      none
+* RETURN VALUE: returns file size
+* SIDE EFFECTS: none
+*/
 uint32_t get_file_size(int32_t fd) {
     return fs_inode_arr[fd_arr[fd].inode_num].length;
 }
