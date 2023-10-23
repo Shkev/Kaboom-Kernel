@@ -8,7 +8,7 @@
 #include "rtcdrivers/rtcdrivers.h"
 
 /* set GRAPHICS to 1 to include print statements for large files/images (i.e., frame1) in test cases */
-#define GRAPHICS 0
+#define GRAPHICS 1
 
 #define PASS 1
 #define FAIL 0
@@ -215,13 +215,24 @@ int system_call_fail_test(){
 
 int test_dir_read() {
     int test_ret;
-    int8_t buf[FILENAME_LEN];
-#if (GRAPHICS == 1)    
+    int8_t buf[FILENAME_LEN+1];
+#if (GRAPHICS == 1)
+	int i;
     clear();
 #endif
     while ((test_ret = directory_read(0, buf, 0)) != 0) {
-#if (GRAPHICS == 1)	
-		printf("Buffer: %s\n", buf);
+		buf[FILENAME_LEN] = '\0';
+#if (GRAPHICS == 1)
+		dentry_t d;
+		read_dentry_by_name(buf, &d);
+		uint32_t nspace = 35 - strlen(buf);
+		printf("File Name:");
+		for (i = 0; i < nspace; ++i) {
+			putc(' ');
+		}
+		printf("%s, ", buf);
+		printf("File Type: %d, ", d.filetype);
+		printf("File Size: %d\n", fs_inode_arr[d.inode_num].length);
 #endif	
     }
     
@@ -597,7 +608,7 @@ void launch_tests() {
 	// TEST_OUTPUT("System call:", system_call_fail_test());
 	//TEST_OUTPUT("zero test: ", zero());
 	//TEST_OUTPUT("max test: ", max());
-	//TEST_OUTPUT("test directory read: ", test_dir_read());
+	TEST_OUTPUT("test directory read: ", test_dir_read());
 	// TEST_OUTPUT("test directory write: ", test_dir_write());
 	// TEST_OUTPUT("test open nonexistent file: ", test_file_open_bad());
 	// TEST_OUTPUT("test open good file: ", test_file_open_good());

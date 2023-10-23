@@ -36,7 +36,7 @@ int32_t read_dentry_by_name(const int8_t* fname, dentry_t* dentry){
     if (fname == NULL || dentry == NULL) return -1;
     int32_t dir = find_file_index(fname);
     if (dir < 0) {
-	return dir;
+	    return dir;
     }
     return read_dentry_by_index(dir, dentry);
 }
@@ -81,14 +81,14 @@ int32_t read_data(uint32_t inode, uint32_t offset, int8_t* buf, int32_t length){
     int i;						    /* loop counter */
 
     if (inode >= fs_boot_block->inode_count) {
-	return -1;
+	    return -1;
     }
     if (offset >= length_curr_file) {
-	// offset it beyond end of file
-	return 0;
+	    // offset it beyond end of file
+	    return 0;
     }
     if (length+offset > length_curr_file) { // can't read more than the file contains
-	length = length_curr_file - offset;
+	    length = length_curr_file - offset;
         return_val = 0;
     } else {
         return_val = length;
@@ -103,7 +103,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, int8_t* buf, int32_t length){
     // handle reading first block where we may not be reading the entire thing
     if (DATABLOCK_SIZE - curr_byte > length) {
         memcpy(buf, (uint32_t*)curr_read, length);
-	return length;
+	    return length;
     }
     memcpy(buf, (uint32_t*)curr_read, DATABLOCK_SIZE - curr_byte); // read till end of first datablock
     write_pos = DATABLOCK_SIZE - curr_byte;
@@ -112,12 +112,12 @@ int32_t read_data(uint32_t inode, uint32_t offset, int8_t* buf, int32_t length){
     block_number = fs_inode_arr[inode].data_blocks[curr_block]; //get curr block num
     curr_read = (int32_t)fs_data_blocks + (block_number * DATABLOCK_SIZE);
     for (i = 1; i < nblock-1; i++) {
-	// read intermediary blocks in their entirety
-	memcpy(buf + write_pos, (uint32_t*)curr_read, DATABLOCK_SIZE);
-	write_pos += DATABLOCK_SIZE;
-	curr_block++;
-	block_number = fs_inode_arr[inode].data_blocks[curr_block];
-	curr_read = (int32_t)fs_data_blocks + (block_number * DATABLOCK_SIZE);
+        // read intermediary blocks in their entirety
+        memcpy(buf + write_pos, (uint32_t*)curr_read, DATABLOCK_SIZE);
+        write_pos += DATABLOCK_SIZE;
+        curr_block++;
+        block_number = fs_inode_arr[inode].data_blocks[curr_block];
+        curr_read = (int32_t)fs_data_blocks + (block_number * DATABLOCK_SIZE);
     }
     // handle reading last block where we may not be reading the entire thing (like the first one)
     memcpy(buf + write_pos, (uint32_t*)curr_read, length - write_pos); 
@@ -198,13 +198,13 @@ int32_t directory_close(int32_t fd) {
 int32_t file_open(const int8_t* fname) {
     int32_t open_fd = find_open_fd();
     if (open_fd < 0) {
-	return -1;
+	    return -1;
     }
 
     dentry_t opened_file;
     int32_t res = read_dentry_by_name(fname, &opened_file);
     if (res < 0) {
-	return -1;
+	    return -1;
     }
 
     // fill entry in fd array
@@ -235,7 +235,7 @@ int32_t file_read(int32_t fd, int8_t* buf, int32_t nbytes) {
     }
     /* if curr read pos beyond end of file return 0 */
     if (fd_arr[fd].read_pos >= file_size) {
-	return 0;
+	    return 0;
     }
     
     /* Reads data and returns number of bytes read if successful */
@@ -246,12 +246,12 @@ int32_t file_read(int32_t fd, int8_t* buf, int32_t nbytes) {
 
     /* Increments the variable that keeps track of the position in the file for subsequent reads*/
     if (read_bytes == 0) {
-	// reached end of file. Set file position past end of file
-	read_bytes = file_size - fd_arr[fd].read_pos;
-	fd_arr[fd].read_pos = file_size+1;
+        // reached end of file. Set file position past end of file
+        read_bytes = file_size - fd_arr[fd].read_pos;
+        fd_arr[fd].read_pos = file_size+1;
     } else {
-	// otherwise move read position forward
-	fd_arr[fd].read_pos += read_bytes;
+        // otherwise move read position forward
+        fd_arr[fd].read_pos += read_bytes;
     }
     return read_bytes;
 }
@@ -270,7 +270,7 @@ int32_t file_write(int32_t fd, const void* buf, int32_t nbytes) {
 
 int32_t file_close(int32_t fd) {
     if (fd == 0 || fd == 1)
-	return -1;
+	    return -1;
     UNSET_FD_FLAG_INUSE(fd_arr[fd].flags);
     return 0;
 }
@@ -302,9 +302,9 @@ int32_t find_file_index(const int8_t* fname) {
 int32_t find_open_fd() {
     int i;
     for (i = 0; i < MAXFILES_PER_TASK; ++i) {
-	if (!FD_FLAG_INUSE(fd_arr[i].flags)) {
- 	    return i;
- 	}
+        if (!FD_FLAG_INUSE(fd_arr[i].flags)) {
+            return i;
+        }
     }
     return -1;
 }

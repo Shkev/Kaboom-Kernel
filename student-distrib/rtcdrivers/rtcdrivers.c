@@ -53,11 +53,11 @@ int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes) {
 int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes) {
     uint32_t write_freq =  (uint32_t)buf;     /* convert write value to integer */
     if (write_freq > 1024 || !is_power_of_2(write_freq)) {
-	return -1;
+	    return -1;
     }
     uint32_t rate = compute_rtc_rate_from_freq(write_freq);
     if (rate == 0 || rate == 1 || rate == 2) {  /* rate faster than 3 causes issues */
-	return -1;
+	    return -1;
     }
     write_rtc_rate(rate);
     return 0;
