@@ -83,6 +83,7 @@ extern uint32_t rtc_flag;
 int enterflag;
 int keybuffbackup;
 
+void fill_buffer(int8_t* buf, int8_t val, uint32_t nbytes);
 
 /* Exception handlers. These are the functions that are called when an
 * exception occurs in kernel */
@@ -248,7 +249,6 @@ extern void vmm_comm_linkage();
 
 /* Security exception linkage */
 extern void security_linkage();
-
 
 /* linkage for interrupts */
 

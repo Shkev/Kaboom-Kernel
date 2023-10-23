@@ -4,7 +4,7 @@
 
 #define PRINT_HANDLER(task) printf("EXCEPTION: " task "error")
 
-static void fill_buffer(int8_t* buf, int8_t val, uint32_t nbytes);
+// static void fill_buffer(int8_t* buf, int8_t val, uint32_t nbytes);
 
 uint32_t rtc_flag = 0;
 
@@ -611,7 +611,15 @@ void kbd_handler() {
 }
 
 
-static void fill_buffer(int8_t* buf, int8_t val, uint32_t nbytes) {
+/* Interrupt Handlers */
+/*rtc_handler()
+* DESCRIPTION: processes rtc interrupts
+* INPUTS: none
+* OUTPUTS: none
+* RETURN VALUE: none
+* SIDE EFFECTS: handles rtc, sends EOI when done
+*/
+void fill_buffer(int8_t* buf, int8_t val, uint32_t nbytes) {
     int i;
     for (i = 0; i < nbytes; ++i) {
         buf[i] = val;

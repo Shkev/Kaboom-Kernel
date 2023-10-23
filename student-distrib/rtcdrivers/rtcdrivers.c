@@ -19,6 +19,7 @@ static uint32_t compute_rtc_rate_from_freq(uint32_t freq);
  * SIDE EFFECTS:  Changes RTC rate (value in register A)
  */
 int32_t rtc_open(const uint8_t* fname) {
+    //if (fname == NULL) return -1;
     const uint8_t init_rate = 0x0F;           /* set frequency rate to 2 */
     write_rtc_rate(init_rate);
     return 0;
@@ -34,6 +35,7 @@ int32_t rtc_open(const uint8_t* fname) {
  * SIDE EFFECTS:  Changes rtc flag
  */
 int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes) {
+    //if (buf == NULL) return -1;
     // some basic synchronization
     while (rtc_flag == 0);   /* wait for rtc interrupt */
     rtc_flag = 0;	     /* reset RTC flag to 0 */
@@ -51,6 +53,7 @@ int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes) {
  * SIDE EFFECTS:  Changes RTC rate (value in register A)
  */
 int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes) {
+    if (buf == NULL) return -1;
     uint32_t write_freq =  (uint32_t)buf;     /* convert write value to integer */
     if (write_freq > 1024 || !is_power_of_2(write_freq)) {
 	    return -1;

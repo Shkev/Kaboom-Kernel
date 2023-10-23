@@ -51,6 +51,7 @@ int32_t read_dentry_by_name(const int8_t* fname, dentry_t* dentry){
 */
 int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry) {
     // do we want to copy contents or just have it point there?
+    if (dentry == NULL) return -1;
     memcpy(dentry->filename, fs_boot_block->dir_entries[index].filename, FILENAME_LEN);
     dentry->filetype = fs_boot_block->dir_entries[index].filetype;
     dentry->inode_num = fs_boot_block->dir_entries[index].inode_num;
@@ -70,6 +71,7 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry) {
 * SIDE EFFECTS: none
 */
 int32_t read_data(uint32_t inode, uint32_t offset, int8_t* buf, int32_t length){
+    if (buf == NULL) return -1;
     uint32_t length_curr_file = fs_inode_arr[inode].length; /* num bytes of file */
     uint32_t curr_block;                                    /* curr block to read from in inode */
     uint32_t curr_byte;                                     /* curr byte to read from in data block */
@@ -134,6 +136,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, int8_t* buf, int32_t length){
 * SIDE EFFECTS: none
 */
 int32_t directory_open(const int8_t* fname) {
+    if (fname == NULL) return -1;
     directory_index = 0;
     return 0;
 }
@@ -150,6 +153,7 @@ int32_t directory_open(const int8_t* fname) {
 * SIDE EFFECTS: 
 */
 int32_t directory_read(int32_t fd, int8_t* buf, int32_t nbytes){
+    if (buf == NULL) return -1;
     dentry_t directory_file; 
     /* Checks if end of directory is reached on read and returns 0*/
     if(directory_index >= fs_boot_block->direntry_count){
@@ -179,6 +183,7 @@ int32_t directory_read(int32_t fd, int8_t* buf, int32_t nbytes){
 * SIDE EFFECTS: none
 */
 int32_t directory_write(int32_t fd, const void* buf, int32_t nbytes) {
+    if (buf == NULL) return -1;
     return -1;
 }
 
@@ -202,6 +207,7 @@ int32_t directory_close(int32_t fd) {
 * SIDE EFFECTS: none
 */
 int32_t file_open(const int8_t* fname) {
+    if (fname == NULL) return -1;
     int32_t open_fd = find_open_fd();
     if (open_fd < 0) {
 	    return -1;
@@ -232,6 +238,7 @@ int32_t file_open(const int8_t* fname) {
  * RETURNS: If the initial read position is past EOF return 0, -1 if read failrs, else the number of bytes read.
  */
 int32_t file_read(int32_t fd, int8_t* buf, int32_t nbytes) {
+    if (buf == NULL) return -1;
     uint32_t inode = fd_arr[fd].inode_num;
     uint32_t file_size = fs_inode_arr[inode].length; // size of file in bytes
     
@@ -296,6 +303,7 @@ int32_t file_close(int32_t fd) {
  * RETURNS:     0 on successfully finding file, -1 otherwise.
  */
 int32_t find_file_index(const int8_t* fname) {
+    if (fname == NULL) return -1;
     uint32_t dir;
     for (dir = 0; dir < fs_boot_block->direntry_count; dir++) {
         if (filenames_equal(fname, fs_boot_block->dir_entries[dir].filename)) {
@@ -329,6 +337,7 @@ int32_t find_open_fd() {
  * Return Value:  Nonzero value if the two strings are equal, otherwise 0.
 */
 int8_t filenames_equal(const int8_t* a, const int8_t* b) {
+    if (a == NULL || b == NULL) return -1;
     uint32_t a_len = min(strlen(a), FILENAME_LEN);
     uint32_t b_len = min(strlen(b), FILENAME_LEN);
     return (a_len == b_len) && (strncmp(a, b, a_len) == 0);
