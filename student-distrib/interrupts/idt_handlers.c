@@ -8,6 +8,9 @@
 
 uint32_t rtc_flag = 0;
 
+
+int enterflag = 0;
+int keybuffbackup = 0;
 char keybuff[KEYBUF_MAX_SIZE];
 
 /*divide_zero_handler()
@@ -328,12 +331,12 @@ void system_call_handler() {
 }
 
 
-int shift = 0;
-int capslock = 0;
-int backspace = 0;
-int tab = 0;
-int ctrl = 0;
-int keybuffcount = 0;
+static int shift = 0;
+static int capslock = 0;
+static int backspace = 0;
+static int tab = 0;
+static int ctrl = 0;
+static int keybuffcount = 0;
 
 /*kbd_handler()
 * DESCRIPTION: processes keyboard interrupts
@@ -438,7 +441,6 @@ void kbd_handler() {
         if(enterflag == 1) 
         {
             putc('\n');
-            // keybuff[keybuffcount] = '\n';
             keybuffbackup = keybuffcount;
             keybuffcount = 0; 
         } else if (backspace == 1)
