@@ -3,6 +3,11 @@
 
 #include "../types.h"
 #include "../lib.h"
+#include "../rtcdrivers/rtcdrivers.h"
+#include "../terminaldrivers/terminaldriver.h"
+
+#define STDIN_FD 0
+#define STDOUT_FD 1
 #define BOOT_BLOCK_RESERVED 52
 #define DIR_ENTRY_RESERVED  24
 #define FILES_IN_DIR    63
@@ -47,19 +52,27 @@ typedef struct inode {
 } inode_t;
 #pragma pack()
 
+/* file operations jump table. Different for each file type */
+struct file_ops {
+	int32_t (*read) (int32_t, const char*, int32_t);
+	int32_t (*write) (int32_t, const char*, int32_t);
+	int32_t (*open) (const int8_t*);
+	int32_t (*close) (int32_t);
+};
+
 /* Stores info about a file in the file descriptor array
  * Note that read_pos is interpretted differently for each file type.
  * For directories it indicates 1 + the number of directory entrie that have been read so far. */
 typedef struct fd_arr_entry {
-    uint32_t ops_jtab;		/* ptr to jmp table containing type-specific open,read,write,close fncs */
-    uint32_t inode_num;		/* inode number for the file */
-    uint32_t read_pos;		/* offset (in bytes) from start of file to start reading from */
-    uint32_t flags;		/* first bit 1 indicates in use, 0 indicates not in use. */
+    struct file_ops ops_jtab;		/* jmp table containing type-specific open,read,write,close fncs */
+    uint32_t inode_num;				/* inode number for the file */
+    uint32_t read_pos;              /* offset (in bytes) from start of file to start reading from */
+    uint32_t flags;	                /* first bit 1 indicates in use, 0 indicates not in use. */
 } fd_arr_entry_t;
 
 
-/* file descriptor array. A given file descriptor indexes into this array to get info about the file */
-//extern fd_arr_entry_t fd_arr[MAXFILES_PER_TASK];
+/* file descriptor array. A given file descriptor indexes into this array to get info about the file. MOVE THIS TO PCB LATER */
+extern fd_arr_entry_t fd_arr[MAXFILES_PER_TASK];
 
 
 ///////////// Pointers to fileystem data in memory /////////
@@ -85,6 +98,14 @@ extern int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry);
 extern int32_t read_data(uint32_t inode, uint32_t offset, int8_t* buf, int32_t length);
 
 extern void init_ext2_filesys(uint32_t boot_block_start);
+
+/* Generic system calls for fileystem */
+extern int32_t fs_open(const int8_t* fname);
+extern int32_t fs_close(int32_t fd);
+extern int32_t fs_read(int32_t fd, const char* buf, int32_t nbytes);
+extern int32_t fs_write(int32_t fd, const char* buf, int32_t nbytes);
+
+extern int32_t badcall(int,...);
 
 /* System call functions for directories */
 extern int32_t directory_open(const int8_t* fname);

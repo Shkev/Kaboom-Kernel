@@ -208,11 +208,10 @@ void entry(unsigned long magic, unsigned long addr) {
         SET_IDT_ENTRY(idt[0x21], kbd_linkage);
         SET_IDT_ENTRY(idt[0x28], rtc_linkage);
 
-        /* System Call handler*/
-        SET_IDT_ENTRY(idt[0x80], system_call_handler);
-
-        //===============================================
-
+        /* System Call handler
+		 * note: argument to linkage passed through EAX by whoever
+		 * initiated system call in user space */
+        SET_IDT_ENTRY(idt[0x80], syscall_linkage);
     }
 
     /* Init the PIC */
