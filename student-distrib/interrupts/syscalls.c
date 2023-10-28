@@ -5,7 +5,7 @@
 /////////////////// SYSTEM EXECUTE HELPERS /////////////////////////////
 
 static int32_t parse_args(const int8_t* arg, int8_t* const buf);
-static int8_t allocate_process_page(uint32_t pid);
+static int8_t setup_process_page(uint32_t pid);
 static pcb_t* create_pcb(uint32_t pid);
 
 ///////////////////////////////////////////////////////////////////////
@@ -21,11 +21,11 @@ int32_t sys_execute(const int8_t* cmd) {
 	return 0;
 }
 
-int32_t sys_read(int32_t fd, const char* buf, int32_t nbytes) {
+int32_t sys_read(int32_t fd, void* buf, int32_t nbytes) {
 	return fs_read(fd, buf, nbytes);
 }
 
-int32_t sys_write(int32_t fd, const char* buf, int32_t nbytes) {
+int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes) {
 	return fs_write(fd, buf, nbytes);
 }
 
@@ -69,4 +69,13 @@ int32_t parse_args(const int8_t* arg, int8_t* const buf) {
 		idx++;
 	}
 	return idx;
+}
+
+
+int8_t setup_process_page(uint32_t pid) {
+	return 0;
+}
+
+pcb_t* create_pcb(uint32_t pid) {
+	return 0;
 }

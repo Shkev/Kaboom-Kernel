@@ -20,15 +20,15 @@
 
 #define FILL_STDIN_OPS(jtab)         \
 	jtab.read = &terminal_read      ;\
-	jtab.write = &badcall           ;\
-	jtab.open = &badcall            ;\
-	jtab.close = &badcall
+	jtab.write = &badcall_write     ;\
+	jtab.open = &badcall_open       ;\
+	jtab.close = &badcall_close
 
 #define FILL_STDOUT_OPS(jtab)         \
-	jtab.read = &badcall             ;\
+	jtab.read = &badcall_read        ;\
 	jtab.write = &terminal_write     ;\
-	jtab.open = &badcall             ;\
-	jtab.close = &badcall
+	jtab.open = &badcall_open        ;\
+	jtab.close = &badcall_close
 
 
 
@@ -36,11 +36,20 @@ static int32_t find_file_index(const int8_t* fname);
 static int32_t find_open_fd(void);
 static int8_t filenames_equal(const int8_t* a, const int8_t* b);
 
+static int32_t badcall_read(int32_t, void*, int32_t);
+static int32_t badcall_write(int32_t, const void*, int32_t);
+static int32_t badcall_open(const int8_t*);
+static int32_t badcall_close(int32_t);
+
+
 boot_block_t* fs_boot_block = NULL;
 inode_t* fs_inode_arr = NULL;
 uint32_t fs_data_blocks = NULL;
 
+fd_arr_entry_t fd_arr[MAXFILES_PER_TASK];
+
 uint32_t directory_index = 0;   //index to iterate through subsequent directory_read calls
+
 
 void init_ext2_filesys(uint32_t boot_block_start) {
     fs_boot_block = (boot_block_t*) boot_block_start;     // cast boot block pointer to struct pointer
@@ -205,24 +214,13 @@ int32_t fs_open(const int8_t* fname) {
 }
 
 
-int32_t fs_read(int32_t fd, const char* buf, int32_t nbytes) {
+int32_t fs_read(int32_t fd, void* buf, int32_t nbytes) {
 	return fd_arr[fd].ops_jtab.read(fd, buf, nbytes);
 }
 
 
-int32_t fs_write(int32_t fd, const char* buf, int32_t nbytes) {
+int32_t fs_write(int32_t fd, const void* buf, int32_t nbytes) {
 	return fd_arr[fd].ops_jtab.write(fd, buf, nbytes);
-}
-
-/* badcall
- * DESCRIPTION: A bad function call.
- * INPUTS:      ignore
- * OUTPUTS:     none
- * RETURNS:     -1
- * SIDE EFFECTS: none
- */
-int32_t badcall(int num,...) {
-	return -1;
 }
 
 
@@ -249,7 +247,7 @@ int32_t directory_open(const int8_t* fname) {
 * RETURN VALUE: return 0, don't need to read directory
 * SIDE EFFECTS: 
 */
-int32_t directory_read(int32_t fd, int8_t* buf, int32_t nbytes){
+int32_t directory_read(int32_t fd, void* buf, int32_t nbytes){
     if (buf == NULL) return -1;
     dentry_t directory_file; 
     /* Checks if end of directory is reached on read and returns 0*/
@@ -318,7 +316,7 @@ int32_t file_open(const int8_t* fname) {
  * OUTPUTS: none
  * RETURNS: If the initial read position is past EOF return 0, -1 if read failrs, else the number of bytes read.
  */
-int32_t file_read(int32_t fd, int8_t* buf, int32_t nbytes) {
+int32_t file_read(int32_t fd, void* buf, int32_t nbytes) {
     if (buf == NULL) return -1;
     uint32_t inode = fd_arr[fd].inode_num;
     uint32_t file_size = fs_inode_arr[inode].length; // size of file in bytes
@@ -432,4 +430,30 @@ int8_t filenames_equal(const int8_t* a, const int8_t* b) {
 */
 uint32_t get_file_size(int32_t fd) {
     return fs_inode_arr[fd_arr[fd].inode_num].length;
+}
+
+
+////////////// BAD CALLS (dummy functions) ////////////////
+
+/* badcall_read
+ * DESCRIPTION: A bad function call.
+ * INPUTS:      ignore
+ * OUTPUTS:     none
+ * RETURNS:     -1
+ * SIDE EFFECTS: none
+ */
+int32_t badcall_read(int32_t fd, void* buf, int32_t nbytes) {
+	return -1;
+}
+
+int32_t badcall_write(int32_t fd, const void* buf, int32_t nbytes) {
+	return -1;
+}
+
+int32_t badcall_open(const int8_t* fname) {
+	return -1;
+}
+
+int32_t badcall_close(int32_t fd) {
+	return -1;
 }

@@ -1,7 +1,7 @@
 #include "terminaldriver.h"
 #include "../interrupts/idt_handlers.h"
 
-uint32_t terminal_read(int32_t fd, void* buf, int32_t nbytes)
+int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes)
 {
     if (buf == NULL) return -1;
     //initialize buf buffer
@@ -24,7 +24,7 @@ uint32_t terminal_read(int32_t fd, void* buf, int32_t nbytes)
     return count;
 }
 
-uint32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes)
+int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes)
 {
     if (buf == NULL) return -1;
     cli();

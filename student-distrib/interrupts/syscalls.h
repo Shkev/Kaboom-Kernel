@@ -5,18 +5,7 @@
 #include "../filesystems/filesystem.h"
 #include "../paging/paging.h"
 
-#define MAXFILES_PER_TASK 8
 #define NUM_PROCCESS 2
-
-/* Stores info about a file in the file descriptor array
- * Note that read_pos is interpretted differently for each file type.
- * For directories it indicates 1 + the number of directory entrie that have been read so far. */
-typedef struct fd_arr_entry {
-    struct file_ops ops_jtab;		/* jmp table containing type-specific open,read,write,close fncs */
-    uint32_t inode_num;				/* inode number for the file */
-    uint32_t read_pos;              /* offset (in bytes) from start of file to start reading from */
-    uint32_t flags;	                /* first bit 1 indicates in use, 0 indicates not in use. */
-} fd_arr_entry_t;
 
 
 /* Current state of a task. UPDATE LATER TO ADD MORE STATES AS NEEDED */
@@ -44,8 +33,8 @@ extern pcb_t pcb_arr[NUM_PROCCESS];
 
 extern int32_t sys_halt(uint8_t status);
 extern int32_t sys_execute(const int8_t* cmd);
-extern int32_t sys_read(int32_t fd, const char* buf, int32_t nbytes);
-extern int32_t sys_write(int32_t fd, const char* buf, int32_t nbytes);
+extern int32_t sys_read(int32_t fd, void* buf, int32_t nbytes);
+extern int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes);
 extern int32_t sys_open(const int8_t* fname);
 extern int32_t sys_close(int32_t fd);
 extern int32_t sys_getargs(int8_t* buf, int32_t nbytes);

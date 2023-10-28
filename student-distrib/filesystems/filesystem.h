@@ -14,6 +14,7 @@
 #define NUM_DATA_BLOCKS 1023
 #define FILENAME_LEN    32
 #define DATABLOCK_SIZE 4096	/* size of file data blocks in memory */
+#define MAXFILES_PER_TASK 8
 
 #define FD_FLAG_INUSE(flag) ((flag & 0x1) == 1)
 #define SET_FD_FLAG_INUSE(flag) flag |= 0x1
@@ -53,11 +54,22 @@ typedef struct inode {
 
 /* file operations jump table. Different for each file type */
 struct file_ops {
-	int32_t (*read) (int32_t, const char*, int32_t);
-	int32_t (*write) (int32_t, const char*, int32_t);
+	int32_t (*read) (int32_t, void*, int32_t);
+	int32_t (*write) (int32_t, const void*, int32_t);
 	int32_t (*open) (const int8_t*);
 	int32_t (*close) (int32_t);
 };
+
+
+/* Stores info about a file in the file descriptor array
+ * Note that read_pos is interpretted differently for each file type.
+ * For directories it indicates 1 + the number of directory entrie that have been read so far. */
+typedef struct fd_arr_entry {
+    struct file_ops ops_jtab;		/* jmp table containing type-specific open,read,write,close fncs */
+    uint32_t inode_num;				/* inode number for the file */
+    uint32_t read_pos;              /* offset (in bytes) from start of file to start reading from */
+    uint32_t flags;	                /* first bit 1 indicates in use, 0 indicates not in use. */
+} fd_arr_entry_t;
 
 
 ///////////// Pointers to fileystem data in memory /////////
@@ -72,6 +84,7 @@ extern inode_t* fs_inode_arr;
 extern uint32_t fs_data_blocks;
 
 /* array containing file info indexed by file descriptor */
+// REMOVE THTIS BITCH
 extern fd_arr_entry_t fd_arr[MAXFILES_PER_TASK];
 
 /////////// Functions for filesystem API ///////////////
@@ -87,20 +100,18 @@ extern void init_ext2_filesys(uint32_t boot_block_start);
 /* Generic system calls for fileystem */
 extern int32_t fs_open(const int8_t* fname);
 extern int32_t fs_close(int32_t fd);
-extern int32_t fs_read(int32_t fd, const char* buf, int32_t nbytes);
-extern int32_t fs_write(int32_t fd, const char* buf, int32_t nbytes);
-
-extern int32_t badcall(int,...);
+extern int32_t fs_read(int32_t fd, void* buf, int32_t nbytes);
+extern int32_t fs_write(int32_t fd, const void* buf, int32_t nbytes);
 
 /* System call functions for directories */
 extern int32_t directory_open(const int8_t* fname);
-extern int32_t directory_read(int32_t fd, int8_t* buf, int32_t nbytes);
+extern int32_t directory_read(int32_t fd, void* buf, int32_t nbytes);
 extern int32_t directory_write(int32_t fd, const void* buf, int32_t nbytes);
 extern int32_t directory_close(int32_t fd);
 
 /* System call functions for files */
-extern int32_t file_open(const int8_t* fname);
-extern int32_t file_read(int32_t fd, int8_t* buf, int32_t nbytes);
+extern int32_t file_open(const int8_t* name);
+extern int32_t file_read(int32_t fd, void* buf, int32_t nbytes);
 extern int32_t file_write(int32_t fd, const void* buf, int32_t nbytes);
 extern int32_t file_close(int32_t fd);
 
