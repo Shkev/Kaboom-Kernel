@@ -3,17 +3,19 @@
 
 #include "../init_devices.h"
 #include "../types.h"
+#include "syscallnums.h"
 #include "kbd_map.h"
+
 
 extern char keybuff[KEYBUF_MAX_SIZE];
 
-extern uint32_t rtc_flag;
+extern volatile uint32_t rtc_flag;
 
 
 extern int enterflag; 			/* has ENTER been pressed on keyboard? */
 extern int keybuffbackup;		/* track how many bytes written to keyboard buffer before new buffer started */
 
-void fill_buffer(int8_t* buf, int8_t val, uint32_t nbytes);
+extern void fill_buffer(int8_t* buf, int8_t val, uint32_t nbytes);
 
 /* Exception handlers. These are the functions that are called when an
 * exception occurs in kernel */
@@ -103,16 +105,17 @@ extern void rtc_handler();
 /* Keyboard handler */
 extern void kbd_handler();
 
-/* system call (implemented in assembly file) */
-extern void system_call_handler();
+
+
+/* SYSTEM CALLS - See syscalls.h/c */
 
 
 /* ----------------------------------------------------------------- */
 
 
-/* Exception functions. Assembly wrappers around interrupt handlers.
+/* Assembly wrappers around handlers.
 * These functions are called within the C code and are implemented in idt_handlers_linkage.S.
-* Push all necessary flag and other registers before calling their corresponding interrupt handler.
+* Push all necessary flags and other registers before calling their corresponding interrupt handler.
 * TODO - Does this generalize to chained handlers? */
 
 /* Divide by zero exception linkage */
@@ -193,6 +196,7 @@ extern void rtc_linkage(); //RTC
 
 extern void kbd_linkage(); //Keyboard 
 
-extern void system_call_linkage(); //system call
+/* acts as dispatcher for system calls */
+extern int32_t __attribute__((fastcall)) syscall_linkage(int32_t syscall_num);
 
 #endif // IDT_FNCS_H

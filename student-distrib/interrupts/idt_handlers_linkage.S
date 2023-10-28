@@ -1,3 +1,5 @@
+#include "syscallnums.h"
+
 # Macro to link c handler functiona to assembly above
 
 # Pushes Registers on Stack
@@ -75,5 +77,36 @@ INTR_LINK(rtc_linkage, rtc_handler)
 
 INTR_LINK(kbd_linkage, kbd_handler)
 
-INTR_LINK(system_call_linkage, system_call_handler)
+#### System Calls
 
+.globl syscall_linkage, syscall_jtab
+.globl sys_halt, sys_execute, sys_read, sys_write, sys_open, sys_close, sys_getargs, sys_vidmap, sys_set_handler, sys_sigreturn
+	
+### jump tables for system calls
+
+# map to all available system call. Called through dispatcher syscall function below
+syscall_jtab:
+	.long sys_halt, sys_execute, sys_read, sys_write, sys_open, sys_close, sys_getargs, sys_vidmap, sys_set_handler, sys_sigreturn
+
+syscall_linkage:
+	# check for valid system call number
+	cmpl $1, %eax
+	jb bad_sysnum
+	cmpl $10, %eax
+	ja bad_sysnum
+
+	# start handling valid system call
+	pushal
+	pushfl
+	pushl %edx
+	pushl %ecx
+	pushl %ebx
+	call *syscall_jtab(, %eax, 4)
+	addl $12, %esp
+	popfl
+	popal
+	iret
+
+bad_sysnum:
+	movl $-1, %eax
+	iret

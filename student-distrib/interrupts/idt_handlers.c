@@ -4,19 +4,19 @@
 
 #define PRINT_HANDLER(task) printf("EXCEPTION: " task "error")
 
-// static void fill_buffer(int8_t* buf, int8_t val, uint32_t nbytes);
-
-uint32_t rtc_flag = 0;
+// keep track of whether RTC has had an interrupt
+volatile uint32_t rtc_flag = 0;
 
 
 int enterflag = 0;
 int keybuffbackup = 0;
 char keybuff[KEYBUF_MAX_SIZE];
 
+
 /*divide_zero_handler()
 * DESCRIPTION: Prints the divide by zero exception and emulates blue screen of death by infinitly looping
 * INPUTS: none
-* OUTPUTS: none
+* OUTPUTS: prints the exception
 * RETURN VALUE: none
 * SIDE EFFECTS: the problem
 */
@@ -277,7 +277,8 @@ void hpi_handler() {
     while(1);
 }
 
-/*vmm_comm_handler()
+
+/* vmm_comm_handler()
 * DESCRIPTION: Prints the exception and emulates blue screen of death by infinitly looping
 * INPUTS: none
 * OUTPUTS: none
@@ -289,7 +290,8 @@ void vmm_comm_handler() {
     while(1);
 }
 
-/*security_handler()
+
+/* security_handler()
 * DESCRIPTION: Prints the security handler exception and emulates blue screen of death by infinitly looping
 * INPUTS: none
 * OUTPUTS: none
@@ -301,8 +303,10 @@ void security_handler() {
     while(1);
 }
 
+
 /* Interrupt Handlers */
-/*rtc_handler()
+
+/* rtc_handler()
 * DESCRIPTION: processes rtc interrupts
 * INPUTS: none
 * OUTPUTS: none
@@ -323,11 +327,6 @@ void rtc_handler() {
     send_eoi(RTC_IRQ);
     rtc_flag = 1;   //raise RTC flag when interrupt signal is recieved
     sti();
-}
-
-void system_call_handler() {
-    PRINT_HANDLER("system call");
-    while(1);
 }
 
 
@@ -613,14 +612,6 @@ void kbd_handler() {
 }
 
 
-/* Interrupt Handlers */
-/*rtc_handler()
-* DESCRIPTION: processes rtc interrupts
-* INPUTS: none
-* OUTPUTS: none
-* RETURN VALUE: none
-* SIDE EFFECTS: handles rtc, sends EOI when done
-*/
 void fill_buffer(int8_t* buf, int8_t val, uint32_t nbytes) {
     int i;
     for (i = 0; i < nbytes; ++i) {

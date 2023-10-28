@@ -248,7 +248,7 @@ int test_dir_write() {
 
 int test_file_open_bad() {
     // try to open nonexistent file
-    int32_t res = file_open("kaboom.txt");
+    int32_t res = fs_open("kaboom.txt");
     return res == -1 ? PASS : FAIL;
 }
 
@@ -257,7 +257,7 @@ int test_file_open_good() {
     // try to open existing file
     int i;
     const int8_t* fname = "created.txt";
-    int32_t fd = file_open(fname);
+    int32_t fd = fs_open(fname);
     // unable to open file
     if (fd < 0) {
 		return FAIL;
@@ -281,23 +281,23 @@ int test_file_open_good() {
 		return FAIL;
     }
 
-    file_close(fd);
+    fs_close(fd);
     
     return PASS;
 }
 
-
+// CHANGE FILE CLOSE TESTS. FUNCTIONS PERFORMS DIFFERENTLY NOW
 int test_file_close_defaults() {
-    int32_t res1 = file_close(0);
-    int32_t res2 = file_close(1);
+    int32_t res1 = fs_close(0);
+    int32_t res2 = fs_close(1);
     return res1 < 0 && res2 < 0;
 }
 
 
 int test_file_close_actual_file() {
     const int8_t* fname = "created.txt";
-    int32_t fd = file_open(fname);
-    int32_t res = file_close(fd);
+    int32_t fd = fs_open(fname);
+    int32_t res = fs_close(fd);
     // close should succeed
     if (res < 0) return FAIL;
     // make sure file descriptor no longer in use
@@ -311,7 +311,7 @@ int test_file_close_actual_file() {
 // test reading an entire file with read length greater than file size
 int test_read_past_file() {
     const int8_t* fname = "frame1.txt";
-    int32_t fd = file_open(fname);
+    int32_t fd = fs_open(fname);
     inode_t inode = fs_inode_arr[fd_arr[fd].inode_num];
     uint32_t file_size = inode.length;
 
@@ -325,39 +325,39 @@ int test_read_past_file() {
     clear();
     printf("File Contents:\n%s\n", buf);
 #endif
-    file_close(fd);
+    fs_close(fd);
     return read_bytes == file_size ? PASS : FAIL;
 }
 
 // test reading a file from position after end of file
 int test_read_after_eof() {
     const int8_t* fname = "frame1.txt";
-    int32_t fd = file_open(fname);
+    int32_t fd = fs_open(fname);
     inode_t inode = fs_inode_arr[fd_arr[fd].inode_num];
     uint32_t file_size = inode.length;
 
     int8_t buf[4096];
     int read_bytes = file_read(fd, buf, file_size+50);
     read_bytes = file_read(fd, buf, 1);
-    file_close(fd);
+    fs_close(fd);
     return read_bytes == 0 ? PASS : FAIL;
 }
 
 // test reading 0 bytes from file
 int test_read_nothing() {
     const int8_t* fname = "frame1.txt";
-    int32_t fd = file_open(fname);
+    int32_t fd = fs_open(fname);
 
     int8_t buf[4096];
     int read_bytes = file_read(fd, buf, 0);
-    file_close(fd);
+    fs_close(fd);
     return read_bytes == 0 ? PASS : FAIL;
 }
 
 // test reading part of file from start
 int test_read_file_partial_start() {
     const int8_t* fname = "frame1.txt";
-    int32_t fd = file_open(fname);
+    int32_t fd = fs_open(fname);
 
     int8_t buf[4096];
     int read_bytes = file_read(fd, buf, 100);
@@ -365,14 +365,14 @@ int test_read_file_partial_start() {
     clear();
     printf("Firt 100 byte of file:\n%s\n", buf);
 #endif
-    file_close(fd);
+    fs_close(fd);
     return read_bytes == 100 ? PASS : FAIL;
 }
 
 // test if reading from file updates curr read position
 int test_read_file_update_read_pos() {
     const int8_t* fname = "frame1.txt";
-    int32_t fd = file_open(fname);
+    int32_t fd = fs_open(fname);
 
     int8_t buf[4096];
     (void)file_read(fd, buf, 100);
@@ -380,7 +380,7 @@ int test_read_file_update_read_pos() {
 		return FAIL;
     }
     
-    file_close(fd);
+    fs_close(fd);
     return PASS;
 }
 
@@ -388,7 +388,7 @@ int test_read_file_update_read_pos() {
 // test reading big file across multiple data blocks in its entirety
 int test_read_large_file() {
     const int8_t* fname = "verylargetextwithverylongname.tx";
-    int32_t fd = file_open(fname);
+    int32_t fd = fs_open(fname);
     if (fd == -1) {
 		return FAIL;
     }
@@ -405,14 +405,14 @@ int test_read_large_file() {
     clear();
     printf("File Contents:\n%s\n", buf);
 #endif
-    file_close(fd);
+    fs_close(fd);
     return read_bytes == file_size ? PASS : FAIL;
 }
 
 // test reading fish (large file)
 int test_read_fish() {
     const int8_t* fname = "fish";
-    int32_t fd = file_open(fname);
+    int32_t fd = fs_open(fname);
     if (fd == -1) {
 		return FAIL;
     }
@@ -435,7 +435,7 @@ int test_read_fish() {
     }
 	putc('\n');
 #endif    
-    file_close(fd);
+    fs_close(fd);
     return read_bytes == file_size ? PASS : FAIL;
 }
 
@@ -443,7 +443,7 @@ int test_read_fish() {
 // test reading ls
 int test_read_ls() {
     const int8_t* fname = "ls";
-    int32_t fd = file_open(fname);
+    int32_t fd = fs_open(fname);
     if (fd == -1) {
 		return FAIL;
     }
@@ -468,7 +468,7 @@ int test_read_ls() {
 		putc(buf[i]);
     }
 #endif
-    file_close(fd);
+    fs_close(fd);
     return read_bytes == file_size ? PASS : FAIL;
 }
 
@@ -476,7 +476,7 @@ int test_read_ls() {
 // test reading grep
 int test_read_grep() {
     const int8_t* fname = "grep";
-    int32_t fd = file_open(fname);
+    int32_t fd = fs_open(fname);
     if (fd == -1) {
 		return FAIL;
     }
@@ -501,7 +501,7 @@ int test_read_grep() {
 		putc(buf[i]);
     }
 #endif
-    file_close(fd);
+    fs_close(fd);
     return read_bytes == file_size ? PASS : FAIL;
 }
 
@@ -608,10 +608,13 @@ void launch_tests() {
 	// TEST_OUTPUT("System call:", system_call_fail_test());
 	// TEST_OUTPUT("zero test: ", zero());
 	// TEST_OUTPUT("max test: ", max());
-	//TEST_OUTPUT("test directory read: ", test_dir_read());
+
+	/* Checkpoint 2 tests */
+  
+    // TEST_OUTPUT("test directory read: ", test_dir_read());
 	// TEST_OUTPUT("test directory write: ", test_dir_write());
 	// TEST_OUTPUT("test open nonexistent file: ", test_file_open_bad());
-	// TEST_OUTPUT("test open good file: ", test_file_open_good());
+  //TEST_OUTPUT("test open good file: ", test_file_open_good());
 	// TEST_OUTPUT("test closing stdin/stdout: ", test_file_close_defaults());
 	// TEST_OUTPUT("test closing an actual file: ", test_file_close_actual_file());
 	//TEST_OUTPUT("test reading an entire file past end: ", test_read_past_file());

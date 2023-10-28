@@ -19,7 +19,6 @@ static uint32_t compute_rtc_rate_from_freq(uint32_t freq);
  * SIDE EFFECTS:  Changes RTC rate (value in register A)
  */
 int32_t rtc_open(const uint8_t* fname) {
-    //if (fname == NULL) return -1;
     const uint8_t init_rate = 0x0F;           /* set frequency rate to 2 */
     write_rtc_rate(init_rate);
     return 0;
