@@ -14,7 +14,6 @@
 #define NUM_DATA_BLOCKS 1023
 #define FILENAME_LEN    32
 #define DATABLOCK_SIZE 4096	/* size of file data blocks in memory */
-#define MAXFILES_PER_TASK 8
 
 #define FD_FLAG_INUSE(flag) ((flag & 0x1) == 1)
 #define SET_FD_FLAG_INUSE(flag) flag |= 0x1
@@ -59,20 +58,6 @@ struct file_ops {
 	int32_t (*open) (const int8_t*);
 	int32_t (*close) (int32_t);
 };
-
-/* Stores info about a file in the file descriptor array
- * Note that read_pos is interpretted differently for each file type.
- * For directories it indicates 1 + the number of directory entrie that have been read so far. */
-typedef struct fd_arr_entry {
-    struct file_ops ops_jtab;		/* jmp table containing type-specific open,read,write,close fncs */
-    uint32_t inode_num;				/* inode number for the file */
-    uint32_t read_pos;              /* offset (in bytes) from start of file to start reading from */
-    uint32_t flags;	                /* first bit 1 indicates in use, 0 indicates not in use. */
-} fd_arr_entry_t;
-
-
-/* file descriptor array. A given file descriptor indexes into this array to get info about the file. MOVE THIS TO PCB LATER */
-extern fd_arr_entry_t fd_arr[MAXFILES_PER_TASK];
 
 
 ///////////// Pointers to fileystem data in memory /////////
