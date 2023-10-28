@@ -5,6 +5,8 @@
 #define PAGETABLE_SIZE 1024	/* size of the page table */
 #define PAGE_SIZE_4KB 4096		/* size of an individual page */
 #define KERNEL_ADDR 0x400000
+#define PROCESS_IMG_ADDR 0x08000000
+#define PROCESS_DIR_IDX (PROCESS_IMG_ADDR >> 22)
 
 #ifndef ASM
 

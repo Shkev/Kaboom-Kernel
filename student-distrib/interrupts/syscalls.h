@@ -3,8 +3,10 @@
 
 #include "../types.h"
 #include "../filesystems/filesystem.h"
+#include "../paging/paging.h"
 
 #define MAXFILES_PER_TASK 8
+#define NUM_PROCCESS 2
 
 /* Stores info about a file in the file descriptor array
  * Note that read_pos is interpretted differently for each file type.
@@ -33,6 +35,10 @@ typedef struct pcb {
     enum task_state state;
 } pcb_t;
 
+/* pid of most recently created process */
+extern uint32_t curr_pid;
+
+extern pcb_t pcb_arr[NUM_PROCCESS];
 
 /* system calls referenced by the system call handler. */
 
@@ -46,5 +52,6 @@ extern int32_t sys_getargs(int8_t* buf, int32_t nbytes);
 extern int32_t sys_vidmap(int8_t** screen_start);
 extern int32_t sys_set_handler(int32_t signum, void* handler_addr);
 extern int32_t sys_sigreturn(void);
+
 
 #endif	/* endif SYSCALL_H */

@@ -42,8 +42,6 @@ uint32_t fs_data_blocks = NULL;
 
 uint32_t directory_index = 0;   //index to iterate through subsequent directory_read calls
 
-fd_arr_entry_t fd_arr[MAXFILES_PER_TASK];
-
 void init_ext2_filesys(uint32_t boot_block_start) {
     fs_boot_block = (boot_block_t*) boot_block_start;     // cast boot block pointer to struct pointer
     fs_inode_arr = (inode_t*)((uint32_t)fs_boot_block + sizeof(boot_block_t));  // start of inode array in memory after boot block
