@@ -1,11 +1,12 @@
 #include "syscalls.h"
 #include "../filesystems/filesystem.h"
+#include "../paging/paging.h"
 
 
 /////////////////// SYSTEM EXECUTE HELPERS /////////////////////////////
 
 static int32_t parse_args(const int8_t* arg, int8_t* const buf);
-static int8_t setup_process_page(uint32_t pid);
+static int8_t setup_process_page(uint32_t pid, int8_t* const buf);
 static pcb_t* create_pcb(uint32_t pid);
 
 ///////////////////////////////////////////////////////////////////////
@@ -72,7 +73,49 @@ int32_t parse_args(const int8_t* arg, int8_t* const buf) {
 }
 
 
-int8_t setup_process_page(uint32_t pid) {
+int8_t setup_process_page(uint32_t pid, int8_t* const buf) {
+	if (pid == 0){
+		pd[PROCESS_DIR_IDX].mb.page_baseaddr_bit31_22 = PROCCESS_0_ADDR >> 22;
+	} else {
+		pd[PROCESS_DIR_IDX].mb.page_baseaddr_bit31_22 = PROCCESS_1_ADDR >> 22;
+	}
+
+	int32_t fd = fs_open(buf);
+	uint32_t file_length = fs_inode_arr[fd_arr[fd].inode_num].length;
+	
+	int8_t buf_read[NUM_DATA_BLOCKS * DATABLOCK_SIZE];
+
+	fs_read(fd, buf_read, file_length);
+
+	if ((buf_read[0] != 0x7f) | (buf_read[1] != 0x45) | (buf_read[2] != 0x4C) | (buf_read[3] != 0x46)){
+		return -1;
+	}
+
+	uint32_t *first_instruction = (uint32_t*) &buf_read[24];
+
+	uint32_t baseaddr = 0;
+	baseaddr += pd[PROCESS_DIR_IDX].mb.page_baseaddr_bit31_22;
+
+	uint32_t *page_address = (uint32_t *)baseaddr;
+
+	int i;
+	int offset =  0x048000 >> 22;
+
+	for(i = 0; i < file_length; i++){
+		memcpy(page_address+offset+i,&buf_read[i],1);
+	}
+
+	asm volatile("				\n\
+			mov %0, %%eax		\n\
+	 		mov %%eax, %%cr3  	\n\
+			mov %1, %%eax     	\n\
+			mov %%eax, %%eip	\n\
+			"
+			: "r"(pd) 
+			: "r"(*first_instruction) 
+			: "%eax"
+	);
+
 	return 0;
 }
 

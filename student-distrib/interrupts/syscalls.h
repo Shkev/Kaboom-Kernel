@@ -6,6 +6,8 @@
 #include "../paging/paging.h"
 
 #define NUM_PROCCESS 2
+#define PROCCESS_0_ADDR 0x2000
+#define PROCCESS_1_ADDR 0x3004
 
 
 /* Current state of a task. UPDATE LATER TO ADD MORE STATES AS NEEDED */
