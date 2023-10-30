@@ -131,6 +131,6 @@ extern int32_t badcall_open(const int8_t*);
 extern int32_t badcall_close(int32_t);
 
 // other helpers
-extern uint32_t get_file_size(int32_t fd);
+extern inline uint32_t get_file_size(int32_t fd);
 
 #endif  //FILESYS_H

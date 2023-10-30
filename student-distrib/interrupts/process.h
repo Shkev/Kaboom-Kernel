@@ -2,9 +2,15 @@
 #define PROCESS_H
 
 #include "../types.h"
+#include "../paging/paging.h"
 
 #define MAXFILES_PER_TASK 8
 #define NUM_PROCCESS 2
+#define PROCCESS_0_ADDR KERNEL_END_ADDR
+#define PROCCESS_1_ADDR 0xC00000
+#define PROGRAM_VIRTUAL_ADDR 0x08048000
+#define PCB_SIZE (1 << 13)
+
 
 /* file operations jump table. Different for each file type */
 struct file_ops {
@@ -42,8 +48,21 @@ typedef struct pcb {
 } pcb_t;
 
 
+//////////////// Variables to track the current state of running processes ////////////////////
+
 extern pcb_t* pcb_arr[NUM_PROCCESS];
 /* pid of most recently created process */
 extern int32_t curr_pid;
+
+
+//////////////////////////////// PROCEESS HANDLING FUNCTIONS ////////////////////////////////////
+
+
+/* start up a process */
+extern int32_t start_process(const int8_t* cmd);
+
+/* squash a process and return control to parent process */
+extern int32_t squash_process(uint8_t status);
+
 
 #endif /* endif PROCESS_H */

@@ -2,14 +2,8 @@
 #define SYSCALL_H
 
 #include "../types.h"
-//#include "../filesystems/filesystem.h"
 #include "process.h"
-#include "../paging/paging.h"
 
-#define PROCCESS_0_ADDR KERNEL_END_ADDR
-#define PROCCESS_1_ADDR 0xC00000
-#define PROGRAM_VIRTUAL_ADDR 0x08048000
-#define PCB_SIZE (1 << 13)
 
 /* system calls referenced by the system call handler. */
 
