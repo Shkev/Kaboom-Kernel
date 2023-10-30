@@ -15,10 +15,43 @@
 #define FILENAME_LEN    32
 #define DATABLOCK_SIZE 4096	/* size of file data blocks in memory */
 #define MAXFILES_PER_TASK 8
+#define NUM_PROCCESS 2
 
 #define FD_FLAG_INUSE(flag) ((flag & 0x1) == 1)
 #define SET_FD_FLAG_INUSE(flag) flag |= 0x1
 #define UNSET_FD_FLAG_INUSE(flag) flag &= 0xFFFFFFFE
+
+/* jumptable initialization macros*/
+#define FILL_RTC_OPS(jtab)   \
+	jtab.read = &rtc_read   ;\
+	jtab.write = &rtc_write ;\
+	jtab.open = &rtc_open   ;\
+	jtab.close = &rtc_close
+
+#define FILL_FILE_OPS(jtab)   \
+	jtab.read = &file_read   ;\
+	jtab.write = &file_write ;\
+	jtab.open = &file_open   ;\
+	jtab.close = &file_close
+
+#define FILL_DIR_OPS(jtab)         \
+	jtab.read = &directory_read   ;\
+	jtab.write = &directory_write ;\
+	jtab.open = &directory_open   ;\
+	jtab.close = &directory_close
+
+#define FILL_STDIN_OPS(jtab)         \
+	jtab.read = &terminal_read      ;\
+	jtab.write = &badcall_write     ;\
+	jtab.open = &badcall_open       ;\
+	jtab.close = &badcall_close
+
+#define FILL_STDOUT_OPS(jtab)         \
+	jtab.read = &badcall_read        ;\
+	jtab.write = &terminal_write     ;\
+	jtab.open = &badcall_open        ;\
+	jtab.close = &badcall_close
+
 
 enum filetype {
     DEVICE = 0,
@@ -72,6 +105,27 @@ typedef struct fd_arr_entry {
 } fd_arr_entry_t;
 
 
+/* Current state of a task. UPDATE LATER TO ADD MORE STATES AS NEEDED */
+enum task_state {
+    ACTIVE = 0,
+    STOPPED
+};
+
+/* Process control block stored in kernel*/
+typedef struct pcb {
+    uint32_t pid;
+    uint32_t parent_pid;
+    fd_arr_entry_t fd_arr[MAXFILES_PER_TASK];  /* file descriptor array. A given file descriptor indexes into this array to get info about the file. */
+    uint32_t stack_ptr;
+    uint32_t stack_base_ptr;
+    enum task_state state;
+} pcb_t;
+
+
+extern pcb_t* pcb_arr[NUM_PROCCESS];
+/* pid of most recently created process */
+extern int32_t curr_pid;
+
 ///////////// Pointers to fileystem data in memory /////////
 
 /* pointer to start of boot block in memory */
@@ -82,10 +136,6 @@ extern inode_t* fs_inode_arr;
 
 /* pointer to the start of data blocks in memory. i-th block can be accessed by data_blocks[i] */
 extern uint32_t fs_data_blocks;
-
-/* array containing file info indexed by file descriptor */
-// REMOVE THTIS BITCH
-extern fd_arr_entry_t fd_arr[MAXFILES_PER_TASK];
 
 /////////// Functions for filesystem API ///////////////
 
@@ -114,6 +164,12 @@ extern int32_t file_open(const int8_t* name);
 extern int32_t file_read(int32_t fd, void* buf, int32_t nbytes);
 extern int32_t file_write(int32_t fd, const void* buf, int32_t nbytes);
 extern int32_t file_close(int32_t fd);
+
+/* Bad call functions*/
+extern int32_t badcall_read(int32_t, void*, int32_t);
+extern int32_t badcall_write(int32_t, const void*, int32_t);
+extern int32_t badcall_open(const int8_t*);
+extern int32_t badcall_close(int32_t);
 
 // other helpers
 extern uint32_t get_file_size(int32_t fd);

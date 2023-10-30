@@ -5,31 +5,10 @@
 #include "../filesystems/filesystem.h"
 #include "../paging/paging.h"
 
-#define NUM_PROCCESS 2
-#define PROCCESS_0_ADDR 0x2000
-#define PROCCESS_1_ADDR 0x3004
-
-
-/* Current state of a task. UPDATE LATER TO ADD MORE STATES AS NEEDED */
-enum task_state {
-    ACTIVE = 0,
-    STOPPED
-};
-
-/* Process control block stored in kernel*/
-typedef struct pcb {
-    uint32_t pid;
-    uint32_t parent_pid;
-    fd_arr_entry_t fd_arr[MAXFILES_PER_TASK];  /* file descriptor array. A given file descriptor indexes into this array to get info about the file. */
-    uint32_t stack_ptr;
-    uint32_t stack_base_ptr;
-    enum task_state state;
-} pcb_t;
-
-/* pid of most recently created process */
-extern uint32_t curr_pid;
-
-extern pcb_t pcb_arr[NUM_PROCCESS];
+#define PROCCESS_0_ADDR KERNEL_END_ADDR
+#define PROCCESS_1_ADDR 0xC00000
+#define PROGRAM_VIRTUAL_ADDR 0x08048000
+#define PCB_SIZE (1 << 13)
 
 /* system calls referenced by the system call handler. */
 

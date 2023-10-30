@@ -1,52 +1,16 @@
 #include "filesystem.h"
 
-#define FILL_RTC_OPS(jtab)   \
-	jtab.read = &rtc_read   ;\
-	jtab.write = &rtc_write ;\
-	jtab.open = &rtc_open   ;\
-	jtab.close = &rtc_close
-
-#define FILL_FILE_OPS(jtab)   \
-	jtab.read = &file_read   ;\
-	jtab.write = &file_write ;\
-	jtab.open = &file_open   ;\
-	jtab.close = &file_close
-
-#define FILL_DIR_OPS(jtab)         \
-	jtab.read = &directory_read   ;\
-	jtab.write = &directory_write ;\
-	jtab.open = &directory_open   ;\
-	jtab.close = &directory_close
-
-#define FILL_STDIN_OPS(jtab)         \
-	jtab.read = &terminal_read      ;\
-	jtab.write = &badcall_write     ;\
-	jtab.open = &badcall_open       ;\
-	jtab.close = &badcall_close
-
-#define FILL_STDOUT_OPS(jtab)         \
-	jtab.read = &badcall_read        ;\
-	jtab.write = &terminal_write     ;\
-	jtab.open = &badcall_open        ;\
-	jtab.close = &badcall_close
-
-
 
 static int32_t find_file_index(const int8_t* fname);
 static int32_t find_open_fd(void);
 static int8_t filenames_equal(const int8_t* a, const int8_t* b);
 
-static int32_t badcall_read(int32_t, void*, int32_t);
-static int32_t badcall_write(int32_t, const void*, int32_t);
-static int32_t badcall_open(const int8_t*);
-static int32_t badcall_close(int32_t);
 
 
 boot_block_t* fs_boot_block = NULL;
 inode_t* fs_inode_arr = NULL;
 uint32_t fs_data_blocks = NULL;
 
-fd_arr_entry_t fd_arr[MAXFILES_PER_TASK];
 
 uint32_t directory_index = 0;   //index to iterate through subsequent directory_read calls
 
@@ -56,10 +20,6 @@ void init_ext2_filesys(uint32_t boot_block_start) {
     fs_inode_arr = (inode_t*)((uint32_t)fs_boot_block + sizeof(boot_block_t));  // start of inode array in memory after boot block
     fs_data_blocks = (uint32_t)fs_inode_arr + (sizeof(inode_t) * (fs_boot_block->inode_count));  // start of data blocks in memory
 
-    SET_FD_FLAG_INUSE(fd_arr[STDIN_FD].flags); // stdin
-	FILL_STDIN_OPS(fd_arr[STDIN_FD].ops_jtab);
-    SET_FD_FLAG_INUSE(fd_arr[STDOUT_FD].flags); // stdout
-	FILL_STDOUT_OPS(fd_arr[STDOUT_FD].ops_jtab);
 }
 
 
@@ -172,8 +132,8 @@ int32_t read_data(uint32_t inode, uint32_t offset, int8_t* buf, int32_t length){
 int32_t fs_close(int32_t fd) {
 	if (fd == 0 || fd == 1) // can't close stdin/stdout
 	    return -1;
-    UNSET_FD_FLAG_INUSE(fd_arr[fd].flags);
-	return fd_arr[fd].ops_jtab.close(fd);
+    UNSET_FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[fd].flags);
+	return pcb_arr[curr_pid]->fd_arr[fd].ops_jtab.close(fd);
 }
 
 
@@ -191,20 +151,20 @@ int32_t fs_open(const int8_t* fname) {
     }
 
     // fill entry in fd array
-    SET_FD_FLAG_INUSE(fd_arr[open_fd].flags);
-    fd_arr[open_fd].inode_num = opened_file.inode_num;
-    fd_arr[open_fd].read_pos = 0;
+    SET_FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[open_fd].flags);
+    pcb_arr[curr_pid]->fd_arr[open_fd].inode_num = opened_file.inode_num;
+    pcb_arr[curr_pid]->fd_arr[open_fd].read_pos = 0;
 
 	// fill operations jump table
 	switch (opened_file.filetype) {
 		case (DEVICE):
-			FILL_RTC_OPS(fd_arr[open_fd].ops_jtab);
+			FILL_RTC_OPS(pcb_arr[curr_pid]->fd_arr[open_fd].ops_jtab);
 			res = rtc_open(fname);
 		case (DIRECTORY):
-			FILL_DIR_OPS(fd_arr[open_fd].ops_jtab);
+			FILL_DIR_OPS(pcb_arr[curr_pid]->fd_arr[open_fd].ops_jtab);
 			res = directory_open(fname);
 		case (FILE):
-			FILL_FILE_OPS(fd_arr[open_fd].ops_jtab);
+			FILL_FILE_OPS(pcb_arr[curr_pid]->fd_arr[open_fd].ops_jtab);
 			res = file_open(fname);
 	}
 	if (res < 0) {
@@ -215,12 +175,12 @@ int32_t fs_open(const int8_t* fname) {
 
 
 int32_t fs_read(int32_t fd, void* buf, int32_t nbytes) {
-	return fd_arr[fd].ops_jtab.read(fd, buf, nbytes);
+	return pcb_arr[curr_pid]->fd_arr[fd].ops_jtab.read(fd, buf, nbytes);
 }
 
 
 int32_t fs_write(int32_t fd, const void* buf, int32_t nbytes) {
-	return fd_arr[fd].ops_jtab.write(fd, buf, nbytes);
+	return pcb_arr[curr_pid]->fd_arr[fd].ops_jtab.write(fd, buf, nbytes);
 }
 
 
@@ -251,19 +211,19 @@ int32_t directory_read(int32_t fd, void* buf, int32_t nbytes){
     if (buf == NULL) return -1;
     dentry_t directory_file; 
     /* Checks if end of directory is reached on read and returns 0*/
-    if(fd_arr[fd].read_pos >= fs_boot_block->direntry_count){
+    if(pcb_arr[curr_pid]->fd_arr[fd].read_pos >= fs_boot_block->direntry_count){
         return 0;
     }
 
     /* Populates the buffer with the corresponding file name at the given directory index form the given index*/
-    if(read_dentry_by_index(fd_arr[fd].read_pos, &directory_file) == 0) {
+    if(read_dentry_by_index(pcb_arr[curr_pid]->fd_arr[fd].read_pos, &directory_file) == 0) {
         memcpy(buf, directory_file.filename, FILENAME_LEN);
     } else {
         return -1;
     }
 
     /* Increments the variable that keeps track of the position in the director for subsequent reads*/
-    fd_arr[fd].read_pos++;
+    pcb_arr[curr_pid]->fd_arr[fd].read_pos++;
 
     /* returns the length of the filename*/
     return strlen(buf);
@@ -318,7 +278,7 @@ int32_t file_open(const int8_t* fname) {
  */
 int32_t file_read(int32_t fd, void* buf, int32_t nbytes) {
     if (buf == NULL) return -1;
-    uint32_t inode = fd_arr[fd].inode_num;
+    uint32_t inode = pcb_arr[curr_pid]->fd_arr[fd].inode_num;
     uint32_t file_size = fs_inode_arr[inode].length; // size of file in bytes
     
     /* if 0 bytes were given to read, return 0 */
@@ -326,12 +286,12 @@ int32_t file_read(int32_t fd, void* buf, int32_t nbytes) {
         return 0;
     }
     /* if curr read pos beyond end of file return 0 */
-    if (fd_arr[fd].read_pos >= file_size) {
+    if (pcb_arr[curr_pid]->fd_arr[fd].read_pos >= file_size) {
 	    return 0;
     }
     
     /* Reads data and returns number of bytes read if successful */
-    int32_t read_bytes = read_data(inode, fd_arr[fd].read_pos, buf, nbytes);
+    int32_t read_bytes = read_data(inode, pcb_arr[curr_pid]->fd_arr[fd].read_pos, buf, nbytes);
     if (read_bytes == -1) { // read failed
         return -1;
     }
@@ -339,11 +299,11 @@ int32_t file_read(int32_t fd, void* buf, int32_t nbytes) {
     /* Increments the variable that keeps track of the position in the file for subsequent reads*/
     if (read_bytes == 0) {
         // reached end of file. Set file position past end of file
-        read_bytes = file_size - fd_arr[fd].read_pos;
-        fd_arr[fd].read_pos = file_size+1;
+        read_bytes = file_size - pcb_arr[curr_pid]->fd_arr[fd].read_pos;
+        pcb_arr[curr_pid]->fd_arr[fd].read_pos = file_size+1;
     } else {
         // otherwise move read position forward
-        fd_arr[fd].read_pos += read_bytes;
+        pcb_arr[curr_pid]->fd_arr[fd].read_pos += read_bytes;
     }
     return read_bytes;
 }
@@ -400,7 +360,7 @@ int32_t find_file_index(const int8_t* fname) {
 int32_t find_open_fd() {
     int i;
     for (i = 0; i < MAXFILES_PER_TASK; ++i) {
-        if (!FD_FLAG_INUSE(fd_arr[i].flags)) {
+        if (!FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[i].flags)) {
             return i;
         }
     }
@@ -420,7 +380,6 @@ int8_t filenames_equal(const int8_t* a, const int8_t* b) {
 }
 
 
-
 /* get_file_size
 * DESCRIPTION:  gets file size
 * INPUTS:       int32_t fd - file descriptor pointing to open file
@@ -429,7 +388,7 @@ int8_t filenames_equal(const int8_t* a, const int8_t* b) {
 * SIDE EFFECTS: none
 */
 uint32_t get_file_size(int32_t fd) {
-    return fs_inode_arr[fd_arr[fd].inode_num].length;
+    return fs_inode_arr[pcb_arr[curr_pid]->fd_arr[fd].inode_num].length;
 }
 
 

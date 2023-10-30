@@ -4,7 +4,9 @@
 #define PAGEDIR_SIZE 1024	/* size of the non 4 mb page directory */
 #define PAGETABLE_SIZE 1024	/* size of the page table */
 #define PAGE_SIZE_4KB 4096		/* size of an individual page */
+#define PAGE_SIZE_4MB 0x400000
 #define KERNEL_ADDR 0x400000
+#define KERNEL_END_ADDR (KERNEL_ADDR + PAGE_SIZE_4MB)
 #define PROCESS_IMG_ADDR 0x08000000
 #define PROCESS_DIR_IDX (PROCESS_IMG_ADDR >> 22)
 

@@ -1,24 +1,89 @@
 #include "syscalls.h"
-#include "../filesystems/filesystem.h"
-#include "../paging/paging.h"
+#include "../x86_desc.h"
 
 
 /////////////////// SYSTEM EXECUTE HELPERS /////////////////////////////
 
 static int32_t parse_args(const int8_t* arg, int8_t* const buf);
-static int8_t setup_process_page(uint32_t pid, int8_t* const buf);
-static pcb_t* create_pcb(uint32_t pid);
+static void setup_process_page(int32_t pid);
+static pcb_t* create_pcb(int32_t pid);
+static void stack_switch (int32_t pid);
+static void switch_to_user(uint32_t user_eip);
+
+//////////////// SYSTEM HALT HELPERS //////////////////////////////////
+static void clear_fd_array(int32_t pid);
+static void set_jtab_badcall(struct file_ops* jtab);
 
 ///////////////////////////////////////////////////////////////////////
 
-uint32_t curr_pid = 0;
-pcb_t pcb_arr[NUM_PROCCESS];
+int32_t curr_pid = -1;
+pcb_t* pcb_arr[NUM_PROCCESS];
 
 int32_t sys_halt(uint8_t status) {
+	// clear_fd_array(curr_pid);	//clear file descriptor array
+	// //dont we already have parent data??!?
+
+	// curr_pid--;	//close a process
+	// if(curr_pid < 0) sys_execute("shell");	//relaunch shell if no programs are open
+
+	// else setup_process_page(curr_pid);	//restore parent paging
+	
+	// asm volatile(
+	// 	"jmp execute_return"
+	// );
+	switch_to_user();
 	return 0;
 }
 
 int32_t sys_execute(const int8_t* cmd) {
+	int32_t res;    /* check whether file system operations succeeded */
+
+	int8_t fname[DATABLOCK_SIZE];
+	(void)parse_args(cmd, fname);
+	setup_process_page(curr_pid);
+
+	// Obtain directory entry info for file
+	dentry_t file_dentry;
+	res = read_dentry_by_name(fname, &file_dentry);
+	if (res < 0) {
+		return -1;
+	}
+
+	// reads file contents
+	int8_t buf_read[NUM_DATA_BLOCKS * DATABLOCK_SIZE];
+	uint32_t file_len = fs_inode_arr[file_dentry.inode_num].length;
+	res = read_data(file_dentry.inode_num, 0, buf_read, file_len);
+	if (res < 0) { // read failed
+		return -1;
+	}
+
+	// if file is not execuable return -1
+	if ((buf_read[0] != 0x7f) | (buf_read[1] != 0x45) | (buf_read[2] != 0x4C) | (buf_read[3] != 0x46)){
+		return -1;
+	}
+
+	curr_pid++;
+
+	// copies file contents in memory
+	memcpy((uint32_t*)PROGRAM_VIRTUAL_ADDR, buf_read, file_len);
+
+	// flush TLB by overwriting cr3
+	asm volatile(
+    	"movl %0, %%eax;"
+    	"movl %%eax, %%cr3;"
+    	:
+    	: "r"(pd)
+    	: "%eax"
+	);
+
+	(void)create_pcb(curr_pid);
+	stack_switch(curr_pid);
+
+	// set up stack for iret
+	uint32_t *first_instr_addr = (uint32_t*)(buf_read + 24);
+	switch_to_user(*first_instr_addr);
+
+	// asm volatile("execute_return:");
 	return 0;
 }
 
@@ -56,6 +121,8 @@ int32_t sys_sigreturn() {
 
 //////////// HELPER FUNCTIONS ///////////////
 
+/* EXECUTE helper functions */
+
 // returns number of bytes copied into buffer
 int32_t parse_args(const int8_t* arg, int8_t* const buf) {
 	uint32_t start_pos = 0;
@@ -73,52 +140,83 @@ int32_t parse_args(const int8_t* arg, int8_t* const buf) {
 }
 
 
-int8_t setup_process_page(uint32_t pid, int8_t* const buf) {
+void setup_process_page(int32_t pid) {
+	//Chooses correct page directory entry offset based on page
 	if (pid == 0){
 		pd[PROCESS_DIR_IDX].mb.page_baseaddr_bit31_22 = PROCCESS_0_ADDR >> 22;
 	} else {
 		pd[PROCESS_DIR_IDX].mb.page_baseaddr_bit31_22 = PROCCESS_1_ADDR >> 22;
 	}
-
-	int32_t fd = fs_open(buf);
-	uint32_t file_length = fs_inode_arr[fd_arr[fd].inode_num].length;
-	
-	int8_t buf_read[NUM_DATA_BLOCKS * DATABLOCK_SIZE];
-
-	fs_read(fd, buf_read, file_length);
-
-	if ((buf_read[0] != 0x7f) | (buf_read[1] != 0x45) | (buf_read[2] != 0x4C) | (buf_read[3] != 0x46)){
-		return -1;
-	}
-
-	uint32_t *first_instruction = (uint32_t*) &buf_read[24];
-
-	uint32_t baseaddr = 0;
-	baseaddr += pd[PROCESS_DIR_IDX].mb.page_baseaddr_bit31_22;
-
-	uint32_t *page_address = (uint32_t *)baseaddr;
-
-	int i;
-	int offset =  0x048000 >> 22;
-
-	for(i = 0; i < file_length; i++){
-		memcpy(page_address+offset+i,&buf_read[i],1);
-	}
-
-	asm volatile("				\n\
-			mov %0, %%eax		\n\
-	 		mov %%eax, %%cr3  	\n\
-			mov %1, %%eax     	\n\
-			mov %%eax, %%eip	\n\
-			"
-			: "r"(pd) 
-			: "r"(*first_instruction) 
-			: "%eax"
-	);
-
-	return 0;
 }
 
-pcb_t* create_pcb(uint32_t pid) {
-	return 0;
+pcb_t* create_pcb(int32_t pid) {
+	//ADD PARENT ID
+	
+	uint32_t pcb_bottom_addr = KERNEL_END_ADDR - (pid)*PCB_SIZE;
+	pcb_arr[pid] = (pcb_t*)(pcb_bottom_addr - PCB_SIZE);
+
+	pcb_arr[pid]->pid = pid;
+	pcb_arr[pid]->parent_pid = 0; // figure this out later... should work for now
+	
+	//Initializes fd array for PCB with stdin and stdout
+	SET_FD_FLAG_INUSE(pcb_arr[pid]->fd_arr[STDIN_FD].flags); // stdin
+	FILL_STDIN_OPS(pcb_arr[pid]->fd_arr[STDIN_FD].ops_jtab);
+	SET_FD_FLAG_INUSE(pcb_arr[pid]->fd_arr[STDOUT_FD].flags); // stdout
+	FILL_STDOUT_OPS(pcb_arr[pid]->fd_arr[STDOUT_FD].ops_jtab);
+
+	//Saves Kernel stack pointer
+	pcb_arr[pid]->stack_base_ptr = pcb_bottom_addr;
+	pcb_arr[pid]->stack_ptr = pcb_bottom_addr;
+	
+	//Sets PCB status to active
+	pcb_arr[pid]->state = ACTIVE;
+
+	return pcb_arr[pid];
+}
+
+
+static void switch_to_user(uint32_t user_eip) {
+	asm volatile(
+    	"pushl %P1;"       // push user_ds
+    	"movl %P2, %%eax;"
+		"addl %P3, %%eax;" // process_img_addr + page_size_4mb
+		"pushl %%eax;"     
+		"pushfl;"
+		"pushl %P4;"       // push user_cs
+		"pushl %0;"
+		"iret;"
+    	:
+    	: "r"(user_eip),
+		  "p"(USER_DS),
+		  "p"(PROCESS_IMG_ADDR),
+		  "p"(PAGE_SIZE_4MB),
+		  "p"(USER_CS)
+    	: "%eax", "memory"
+	);
+}
+
+
+void stack_switch (int32_t pid) {
+	tss.ss0 = KERNEL_DS;
+	tss.esp0 = pcb_arr[curr_pid]->stack_base_ptr;
+}
+
+
+static void switch_to_user(uint32_t user_esp);
+
+/* HALT helper functions */
+
+static void set_jtab_badcall(struct file_ops* jtab) {
+	jtab->open = &badcall_open;
+	jtab->close = &badcall_close;
+	jtab->read = &badcall_read;
+	jtab->write = &badcall_write;
+}
+
+void clear_fd_array(int32_t pid){
+	int i;
+	for(i = 0; i < 8; i++){
+		UNSET_FD_FLAG_INUSE(pcb_arr[pid]->fd_arr[i].flags);		//set flags to unused
+		set_jtab_badcall(&pcb_arr[pid]->fd_arr[i].ops_jtab);
+	}
 }

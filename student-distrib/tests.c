@@ -263,21 +263,21 @@ int test_file_open_good() {
 		return FAIL;
     }
     // only fd entries 0, 1, 2 should be in use
-    if (!FD_FLAG_INUSE(fd_arr[fd].flags)) {
+    if (!FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[fd].flags)) {
 		return FAIL;
     }
     for (i = 2; i < MAXFILES_PER_TASK; ++i) {
 	if (i == fd) {
 	    continue;
 	}
-	if (FD_FLAG_INUSE(fd_arr[i].flags)) {
+	if (FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[i].flags)) {
 	    return FAIL;
 	}
     }
     dentry_t file_entry;
     read_dentry_by_name(fname, &file_entry);
     // check inode num is correct
-    if (file_entry.inode_num != fd_arr[fd].inode_num) {
+    if (file_entry.inode_num != pcb_arr[curr_pid]->fd_arr[fd].inode_num) {
 		return FAIL;
     }
 
@@ -301,7 +301,7 @@ int test_file_close_actual_file() {
     // close should succeed
     if (res < 0) return FAIL;
     // make sure file descriptor no longer in use
-    if (FD_FLAG_INUSE(fd_arr[fd].flags)) {
+    if (FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[fd].flags)) {
 		return FAIL;
     }
     return PASS;
@@ -312,7 +312,7 @@ int test_file_close_actual_file() {
 int test_read_past_file() {
     const int8_t* fname = "frame1.txt";
     int32_t fd = fs_open(fname);
-    inode_t inode = fs_inode_arr[fd_arr[fd].inode_num];
+    inode_t inode = fs_inode_arr[pcb_arr[curr_pid]->fd_arr[fd].inode_num];
     uint32_t file_size = inode.length;
 
     printf("file size: %d\n", file_size);
@@ -333,7 +333,7 @@ int test_read_past_file() {
 int test_read_after_eof() {
     const int8_t* fname = "frame1.txt";
     int32_t fd = fs_open(fname);
-    inode_t inode = fs_inode_arr[fd_arr[fd].inode_num];
+    inode_t inode = fs_inode_arr[pcb_arr[curr_pid]->fd_arr[fd].inode_num];
     uint32_t file_size = inode.length;
 
     int8_t buf[4096];
@@ -376,7 +376,7 @@ int test_read_file_update_read_pos() {
 
     int8_t buf[4096];
     (void)file_read(fd, buf, 100);
-    if (fd_arr[fd].read_pos != 100) {
+    if (pcb_arr[curr_pid]->fd_arr[fd].read_pos != 100) {
 		return FAIL;
     }
     
@@ -392,7 +392,7 @@ int test_read_large_file() {
     if (fd == -1) {
 		return FAIL;
     }
-    inode_t inode = fs_inode_arr[fd_arr[fd].inode_num];
+    inode_t inode = fs_inode_arr[pcb_arr[curr_pid]->fd_arr[fd].inode_num];
     uint32_t file_size = inode.length;
 
     printf("file size: %d\n", file_size);

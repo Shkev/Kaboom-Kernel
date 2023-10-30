@@ -12,6 +12,8 @@
 #include "tests.h"
 #include "paging/paging.h"
 #include "filesystems/filesystem.h"
+#include "interrupts/syscalls.h"
+//#include "interrupts/syscalls.h"
 
 #define RUN_TESTS
 
@@ -240,10 +242,10 @@ void entry(unsigned long magic, unsigned long addr) {
 
 #ifdef RUN_TESTS
     /* Run tests */
-    launch_tests();
+    //launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
-
+    sys_execute("shell");
     /* Spin (nicely, so we don't chew up cycles) */
     asm volatile (".1: hlt; jmp .1;");
 }
