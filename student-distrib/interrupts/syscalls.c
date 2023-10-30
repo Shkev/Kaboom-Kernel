@@ -1,20 +1,32 @@
 #include "syscalls.h"
 #include "../x86_desc.h"
-
+#include "../filesystems/filesystem.h"
 
 static void flush_tlb();
 
 /////////////////// SYSTEM EXECUTE HELPERS /////////////////////////////
 
+/* parse args from shell */
 static int32_t parse_args(const int8_t* arg, int8_t* const buf);
+
+/* setup process page addresses for process with given pid */
 static void setup_process_page(int32_t pid);
+
+/* initialize pcb memory block in kernel for given pid */
 static pcb_t* create_pcb(int32_t pid);
-static void stack_switch(int32_t pid);
+
+/* set entries in TSS for process */
+static void set_process_tss(int32_t pid);
+
+/* set up stack and iret to user space */
 static void switch_to_user(uint32_t user_eip);
 
 //////////////// SYSTEM HALT HELPERS //////////////////////////////////
 
+/* clear all entries in file descriptor array of given process */
 static void clear_fd_array(int32_t pid);
+
+/* set all entries in file operations jtab to a badcall fnc */
 static void set_jtab_badcall(struct file_ops* jtab);
 
 ///////////////////////////////////////////////////////////////////////
@@ -29,7 +41,7 @@ int32_t sys_halt(uint8_t status) {
 		clear_fd_array(curr_pid);
 		setup_process_page(pcb_arr[curr_pid]->parent_pid);
 		flush_tlb();
-		stack_switch(pcb_arr[curr_pid]->parent_pid);
+		set_process_tss(pcb_arr[curr_pid]->parent_pid);
 		curr_pid--;
 		return status;
 	}
@@ -71,7 +83,7 @@ int32_t sys_execute(const int8_t* cmd) {
 	flush_tlb();
 
 	(void)create_pcb(curr_pid);
-	stack_switch(curr_pid);
+	set_process_tss(curr_pid);
 
 	// set up stack for iret
 	uint32_t *first_instr_addr = (uint32_t*)(buf_read + 24);
@@ -200,9 +212,9 @@ static void switch_to_user(uint32_t user_eip) {
 }
 
 
-void stack_switch (int32_t pid) {
-	tss.ss0 = KERNEL_DS;
-	tss.esp0 = pcb_arr[curr_pid]->stack_base_ptr;
+void set_process_tss(int32_t pid) {
+    tss.ss0 = KERNEL_DS;
+    tss.esp0 = pcb_arr[curr_pid]->stack_base_ptr;
 }
 
 

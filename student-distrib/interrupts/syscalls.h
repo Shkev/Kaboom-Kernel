@@ -2,7 +2,8 @@
 #define SYSCALL_H
 
 #include "../types.h"
-#include "../filesystems/filesystem.h"
+//#include "../filesystems/filesystem.h"
+#include "process.h"
 #include "../paging/paging.h"
 
 #define PROCCESS_0_ADDR KERNEL_END_ADDR
