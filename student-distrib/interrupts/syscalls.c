@@ -2,15 +2,18 @@
 #include "../x86_desc.h"
 
 
+static void flush_tlb();
+
 /////////////////// SYSTEM EXECUTE HELPERS /////////////////////////////
 
 static int32_t parse_args(const int8_t* arg, int8_t* const buf);
 static void setup_process_page(int32_t pid);
 static pcb_t* create_pcb(int32_t pid);
-static void stack_switch (int32_t pid);
+static void stack_switch(int32_t pid);
 static void switch_to_user(uint32_t user_eip);
 
 //////////////// SYSTEM HALT HELPERS //////////////////////////////////
+
 static void clear_fd_array(int32_t pid);
 static void set_jtab_badcall(struct file_ops* jtab);
 
@@ -20,18 +23,16 @@ int32_t curr_pid = -1;
 pcb_t* pcb_arr[NUM_PROCCESS];
 
 int32_t sys_halt(uint8_t status) {
-	// clear_fd_array(curr_pid);	//clear file descriptor array
-	// //dont we already have parent data??!?
-
-	// curr_pid--;	//close a process
-	// if(curr_pid < 0) sys_execute("shell");	//relaunch shell if no programs are open
-
-	// else setup_process_page(curr_pid);	//restore parent paging
-	
-	// asm volatile(
-	// 	"jmp execute_return"
-	// );
-	switch_to_user();
+	if (curr_pid == 0) {
+		sys_execute("shell");
+	} else {
+		clear_fd_array(curr_pid);
+		setup_process_page(pcb_arr[curr_pid]->parent_pid);
+		flush_tlb();
+		stack_switch(pcb_arr[curr_pid]->parent_pid);
+		curr_pid--;
+		return status;
+	}
 	return 0;
 }
 
@@ -67,14 +68,7 @@ int32_t sys_execute(const int8_t* cmd) {
 	// copies file contents in memory
 	memcpy((uint32_t*)PROGRAM_VIRTUAL_ADDR, buf_read, file_len);
 
-	// flush TLB by overwriting cr3
-	asm volatile(
-    	"movl %0, %%eax;"
-    	"movl %%eax, %%cr3;"
-    	:
-    	: "r"(pd)
-    	: "%eax"
-	);
+	flush_tlb();
 
 	(void)create_pcb(curr_pid);
 	stack_switch(curr_pid);
@@ -120,6 +114,16 @@ int32_t sys_sigreturn() {
 }
 
 //////////// HELPER FUNCTIONS ///////////////
+
+void flush_tlb() {
+	asm volatile(
+    	"movl %0, %%eax;"
+    	"movl %%eax, %%cr3;"
+    	:
+    	: "r"(pd)
+    	: "%eax"
+	);
+}
 
 /* EXECUTE helper functions */
 
