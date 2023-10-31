@@ -7,6 +7,9 @@ int32_t sys_halt(uint8_t status) {
 }
 
 int32_t sys_execute(const int8_t* cmd) {
+    if (cmd == NULL) {
+        return -1;
+    }
     return start_process(cmd);
 }
 

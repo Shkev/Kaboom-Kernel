@@ -95,6 +95,8 @@ syscall_linkage:
 	cmpl $10, %eax
 	ja bad_sysnum
 
+	addl $-1, %eax
+
 	# start handling valid system call
 	pushal
 	pushfl

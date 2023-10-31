@@ -201,7 +201,7 @@ static void switch_to_user(uint32_t user_eip) {
 
 void set_process_tss(int32_t pid) {
     tss.ss0 = KERNEL_DS;
-    tss.esp0 = pcb_arr[curr_pid]->stack_base_ptr;
+    tss.esp0 = pcb_arr[pid]->stack_base_ptr;
 }
 
 

@@ -58,7 +58,7 @@ void paging_init()
     /* initialize page directory entries 
      * Note: all entries in pd and pt0 are set to 0 in x86_desc.S
      */
-    for (j = 0; j < 2; j++) {
+    for (j = 0; j < PAGEDIR_SIZE; j++) {
 	    /* first 4MB block in physical mem. Uses 4KB pages */
         if (j == 0) {
 	        ZERO_PAGEDIR_KB(pd[j].kb);
@@ -71,11 +71,9 @@ void paging_init()
             pd[j].mb.ps1 = 1;
 	        pd[j].mb.rw = 1;
             pd[j].mb.global = 1;
-            pd[j].mb.us = 1;
             pd[j].mb.page_baseaddr_bit31_22 = KERNEL_ADDR >> 22;
         } else { // eveything else allocated as needed by programs
 	        ZERO_PAGEDIR_KB(pd[j].kb);
-	        pd[j].kb.pt_baseaddr = j;
 	    }
     }
     
@@ -84,6 +82,7 @@ void paging_init()
     pd[PROCESS_DIR_IDX].mb.present = 1;
     pd[PROCESS_DIR_IDX].mb.ps1 = 1;
     pd[PROCESS_DIR_IDX].mb.rw = 1;
+    pd[PROCESS_DIR_IDX].mb.us = 1;
 
     // initializing page table 0 for first 4MB block
     for (j = 0; j < PAGETABLE_SIZE; j++)

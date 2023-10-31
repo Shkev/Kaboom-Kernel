@@ -29,7 +29,6 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes)
     if (buf == NULL) return -1;
     cli();
     printf("%s", buf); //print the buffer
-    //fill_buffer(keybuff, '\0', 128); //clear the buffer
     sti();
     return strlen(buf); //return the length of the buffer
 }
