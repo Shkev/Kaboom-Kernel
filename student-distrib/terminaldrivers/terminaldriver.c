@@ -7,12 +7,12 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes)
     //initialize buf buffer
     uint32_t count;
 
-    if (nbytes > 128) //check if valid
+    if (nbytes > KEYBUF_MAX_SIZE) //check if valid
     {
-        return -1;
+        nbytes = KEYBUF_MAX_SIZE;
     }
 
-    while(enterflag == 0) //copy from keybuff to buffer
+    while (enterflag == 0) //copy from keybuff to buffer
     {
         memcpy((int8_t*)buf, keybuff, nbytes);
     }
@@ -28,7 +28,9 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes)
 {
     if (buf == NULL) return -1;
     cli();
+    //reset_screenx();
     printf("%s", buf); //print the buffer
+    enterflag = 0;
     sti();
     return strlen(buf); //return the length of the buffer
 }

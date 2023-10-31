@@ -184,7 +184,7 @@ pcb_t* create_pcb(int32_t pid) {
 static void switch_to_user(uint32_t user_eip) {
     asm volatile(
     	"pushl $%P1;"       // push user_ds
-        "pushl $%P2;"     
+        "pushl $%P2;"       
         "pushfl;"
         "pushl $%P3;"       // push user_cs
         "pushl %0;"
