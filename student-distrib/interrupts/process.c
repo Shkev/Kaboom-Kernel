@@ -47,6 +47,7 @@ int32_t start_process(const int8_t* cmd) {
     int8_t fname[FILENAME_LEN+1] = {'\0'};
     (void)parse_args(cmd, fname);
     setup_process_page(get_next_pid(curr_pid));
+    flush_tlb();
 
     // Obtain directory entry info for file
     dentry_t file_dentry;
@@ -67,8 +68,6 @@ int32_t start_process(const int8_t* cmd) {
     }
 
     curr_pid = get_next_pid(curr_pid);
-
-    flush_tlb();
 
     (void)create_pcb(curr_pid);
     set_process_tss(curr_pid);

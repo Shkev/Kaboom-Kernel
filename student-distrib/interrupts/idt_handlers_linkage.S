@@ -98,15 +98,18 @@ syscall_linkage:
 	addl $-1, %eax
 
 	# start handling valid system call
-	pushal
-	pushfl
+	pushl %edx
+	pushl %ecx
+	pushl %ebx
+	# push args
 	pushl %edx
 	pushl %ecx
 	pushl %ebx
 	call *syscall_jtab(, %eax, 4)
 	addl $12, %esp
-	popfl
-	popal
+	popl %ebx
+	popl %ecx
+	popl %edx
 	iret
 
 bad_sysnum:
