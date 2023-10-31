@@ -159,7 +159,7 @@ pcb_t* create_pcb(int32_t pid) {
     //ADD PARENT ID
 	
     uint32_t pcb_bottom_addr = KERNEL_END_ADDR - (pid)*PCB_SIZE;
-    pcb_arr[pid] = (pcb_t*)(pcb_bottom_addr - PCB_SIZE + 1);
+    pcb_arr[pid] = (pcb_t*)(pcb_bottom_addr - PCB_SIZE);
 
     pcb_arr[pid]->pid = pid;
     pcb_arr[pid]->parent_pid = 0; // figure this out later... should work for now
@@ -171,8 +171,8 @@ pcb_t* create_pcb(int32_t pid) {
     FILL_STDOUT_OPS(pcb_arr[pid]->fd_arr[STDOUT_FD].ops_jtab);
 
     //Saves Kernel stack pointer
-    pcb_arr[pid]->stack_base_ptr = pcb_bottom_addr;
-    pcb_arr[pid]->stack_ptr = pcb_bottom_addr;
+    pcb_arr[pid]->stack_base_ptr = pcb_bottom_addr - sizeof(uint32_t);
+    pcb_arr[pid]->stack_ptr = pcb_bottom_addr - sizeof(uint32_t);
 	
     //Sets PCB status to active
     pcb_arr[pid]->state = ACTIVE;
@@ -192,7 +192,7 @@ static void switch_to_user(uint32_t user_eip) {
             :
             : "r"(user_eip),
               "p"(USER_DS),
-              "p"(PROCESS_IMG_ADDR + PAGE_SIZE_4MB),
+              "p"(PROCESS_IMG_ADDR + PAGE_SIZE_4MB - 4),
               "p"(USER_CS)
             : "%eax", "memory"
         );

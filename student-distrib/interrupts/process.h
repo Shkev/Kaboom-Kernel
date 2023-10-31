@@ -6,8 +6,10 @@
 
 #define MAXFILES_PER_TASK 8
 #define NUM_PROCCESS 2
+// physical addresses //
 #define PROCCESS_0_ADDR KERNEL_END_ADDR
 #define PROCCESS_1_ADDR 0xC00000
+/////////////////////////
 #define PROGRAM_VIRTUAL_ADDR 0x08048000
 #define PCB_SIZE (1 << 13)
 
