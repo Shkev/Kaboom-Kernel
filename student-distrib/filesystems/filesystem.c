@@ -130,24 +130,24 @@ int32_t read_data(uint32_t inode, uint32_t offset, int8_t* buf, int32_t length){
 
 
 int32_t fs_close(int32_t fd) {
-	if (fd == 0 || fd == 1) // can't close stdin/stdout
-	    return -1;
+    if (fd == 0 || fd == 1) // can't close stdin/stdout
+	return -1;
     UNSET_FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[fd].flags);
-	return pcb_arr[curr_pid]->fd_arr[fd].ops_jtab.close(fd);
+    return pcb_arr[curr_pid]->fd_arr[fd].ops_jtab.close(fd);
 }
 
 
 int32_t fs_open(const int8_t* fname) {
-  if (fname == NULL) return -1;
+    if (fname == NULL) return -1;
     int32_t open_fd = find_open_fd();
     if (open_fd < 0) {
-	    return -1;
+	return -1;
     }
 
     dentry_t opened_file;
     int32_t res = read_dentry_by_name(fname, &opened_file);
     if (res < 0) {
-	    return -1;
+	return -1;
     }
 
     // fill entry in fd array
@@ -155,35 +155,37 @@ int32_t fs_open(const int8_t* fname) {
     pcb_arr[curr_pid]->fd_arr[open_fd].inode_num = opened_file.inode_num;
     pcb_arr[curr_pid]->fd_arr[open_fd].read_pos = 0;
 
-	// fill operations jump table
-	switch (opened_file.filetype) {
-		case (DEVICE):
-			FILL_RTC_OPS(pcb_arr[curr_pid]->fd_arr[open_fd].ops_jtab);
-			res = rtc_open(fname);
-			break;
-		case (DIRECTORY):
-			FILL_DIR_OPS(pcb_arr[curr_pid]->fd_arr[open_fd].ops_jtab);
-			res = directory_open(fname);
-			break;
-		case (FILE):
-			FILL_FILE_OPS(pcb_arr[curr_pid]->fd_arr[open_fd].ops_jtab);
-			res = file_open(fname);
-			break;
-	}
-	if (res < 0) {
-		return -1;
-	}
-	return open_fd;
+    // fill operations jump table
+    switch (opened_file.filetype) {
+	case (DEVICE):
+	    FILL_RTC_OPS(pcb_arr[curr_pid]->fd_arr[open_fd].ops_jtab);
+	    res = rtc_open(fname);
+	    break;
+	case (DIRECTORY):
+	    FILL_DIR_OPS(pcb_arr[curr_pid]->fd_arr[open_fd].ops_jtab);
+	    res = directory_open(fname);
+	    break;
+	case (FILE):
+	    FILL_FILE_OPS(pcb_arr[curr_pid]->fd_arr[open_fd].ops_jtab);
+	    res = file_open(fname);
+	    break;
+    }
+    if (res < 0) {
+	return -1;
+    }
+    return open_fd;
 }
 
 
 int32_t fs_read(int32_t fd, void* buf, int32_t nbytes) {
-	return pcb_arr[curr_pid]->fd_arr[fd].ops_jtab.read(fd, buf, nbytes);
+    if (buf == NULL) return -1;
+    return pcb_arr[curr_pid]->fd_arr[fd].ops_jtab.read(fd, buf, nbytes);
 }
 
 
 int32_t fs_write(int32_t fd, const void* buf, int32_t nbytes) {
-	return pcb_arr[curr_pid]->fd_arr[fd].ops_jtab.write(fd, buf, nbytes);
+    if (buf == NULL) return -1;
+    return pcb_arr[curr_pid]->fd_arr[fd].ops_jtab.write(fd, buf, nbytes);
 }
 
 
@@ -195,8 +197,8 @@ int32_t fs_write(int32_t fd, const void* buf, int32_t nbytes) {
 * SIDE EFFECTS: none
 */
 int32_t directory_open(const int8_t* fname) {
-	// does nothing... nothing special needs to be done for directories
-	return 0;
+    // does nothing... nothing special needs to be done for directories
+    return 0;
 }
 
 
@@ -266,8 +268,8 @@ int32_t directory_close(int32_t fd) {
 * SIDE EFFECTS: none
 */
 int32_t file_open(const int8_t* fname) {
-	// does nothing... nothing special to do for files
-	return 0;
+    // does nothing... nothing special to do for files
+    return 0;
 }
 
 
@@ -290,7 +292,7 @@ int32_t file_read(int32_t fd, void* buf, int32_t nbytes) {
     }
     /* if curr read pos beyond end of file return 0 */
     if (pcb_arr[curr_pid]->fd_arr[fd].read_pos >= file_size) {
-	    return 0;
+	return 0;
     }
     
     /* Reads data and returns number of bytes read if successful */
