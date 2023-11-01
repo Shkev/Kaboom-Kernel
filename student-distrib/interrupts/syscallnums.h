@@ -6,6 +6,8 @@
 /* number associated with each system call
  * Used to access system calls in jump table */
 
+// idk if we actually use these anywhere but here for reference
+
 #define SYS_HALT    1
 #define SYS_EXECUTE 2
 #define SYS_READ    3

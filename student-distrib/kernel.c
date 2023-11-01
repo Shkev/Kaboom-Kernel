@@ -12,8 +12,10 @@
 #include "tests.h"
 #include "paging/paging.h"
 #include "filesystems/filesystem.h"
+#include "interrupts/syscalls.h"
+//#include "interrupts/syscalls.h"
 
-#define RUN_TESTS
+//#define RUN_TESTS
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -243,7 +245,7 @@ void entry(unsigned long magic, unsigned long addr) {
     launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
-
+    sys_execute("shell");
     /* Spin (nicely, so we don't chew up cycles) */
     asm volatile (".1: hlt; jmp .1;");
 }
