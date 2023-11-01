@@ -19,7 +19,7 @@ int32_t sys_read(int32_t fd, void* buf, int32_t nbytes) {
 }
 
 int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes) {
-    if (buf == NULL) return -1;
+//    if (buf == NULL) return -1;
     return fs_write(fd, buf, nbytes);
 }
 

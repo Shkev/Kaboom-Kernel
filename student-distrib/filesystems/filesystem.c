@@ -138,7 +138,7 @@ int32_t fs_close(int32_t fd) {
 
 
 int32_t fs_open(const int8_t* fname) {
-	if (fname == NULL) return -1;
+  if (fname == NULL) return -1;
     int32_t open_fd = find_open_fd();
     if (open_fd < 0) {
 	    return -1;
@@ -160,12 +160,15 @@ int32_t fs_open(const int8_t* fname) {
 		case (DEVICE):
 			FILL_RTC_OPS(pcb_arr[curr_pid]->fd_arr[open_fd].ops_jtab);
 			res = rtc_open(fname);
+			break;
 		case (DIRECTORY):
 			FILL_DIR_OPS(pcb_arr[curr_pid]->fd_arr[open_fd].ops_jtab);
 			res = directory_open(fname);
+			break;
 		case (FILE):
 			FILL_FILE_OPS(pcb_arr[curr_pid]->fd_arr[open_fd].ops_jtab);
 			res = file_open(fname);
+			break;
 	}
 	if (res < 0) {
 		return -1;
