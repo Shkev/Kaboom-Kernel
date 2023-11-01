@@ -41,8 +41,8 @@ enum task_state {
 
 /* Process control block stored in kernel*/
 typedef struct pcb {
-    uint32_t pid;
-    uint32_t parent_pid;
+    int32_t pid;
+    int32_t parent_pid;
     fd_arr_entry_t fd_arr[MAXFILES_PER_TASK];  /* file descriptor array. A given file descriptor indexes into this array to get info about the file. */
     uint32_t stack_ptr;
     uint32_t stack_base_ptr;

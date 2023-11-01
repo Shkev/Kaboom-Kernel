@@ -5,6 +5,7 @@
 
 int32_t curr_pid = -1;
 pcb_t* pcb_arr[NUM_PROCCESS];
+uint32_t return_status = 0;
 
 static inline void flush_tlb();
 
@@ -22,7 +23,7 @@ static inline uint32_t is_executable(const int8_t* file_contents);
 static void setup_process_page(int32_t pid);
 
 /* initialize pcb memory block in kernel for given pid */
-static pcb_t* create_pcb(int32_t pid);
+static pcb_t* create_new_pcb();
 
 /* set entries in TSS for process */
 static inline void set_process_tss(int32_t pid);
@@ -67,17 +68,20 @@ int32_t start_process(const int8_t* cmd) {
 	    return -1;
     }
 
+    (void)create_new_pcb();
     curr_pid = get_next_pid(curr_pid);
-
-    (void)create_pcb(curr_pid);
     set_process_tss(curr_pid);
 
     // set up stack for iret
     uint32_t *first_instr_addr = (uint32_t*)(PROGRAM_VIRTUAL_ADDR + 24);
+
+    //store ebp and esp
+    //use inline assembly
+    //flag shows if saved
+
     switch_to_user(*first_instr_addr);
 
-    // asm volatile("execute_return:");
-    return 0;
+    return return_status;
 }
 
 
@@ -90,10 +94,21 @@ int32_t squash_process(uint8_t status) {
         setup_process_page(pcb_arr[curr_pid]->parent_pid);
         flush_tlb();
         set_process_tss(pcb_arr[curr_pid]->parent_pid);
-        curr_pid--;
-        return status;
+	curr_pid = pcb_arr[curr_pid]->parent_pid;
+        return_status = (uint32_t)status;
+        // restore saved ebp and esp from before running execute
+	uint32_t saved_ebp = pcb_arr[curr_pid]->stack_base_ptr;
+	uint32_t saved_esp = pcb_arr[curr_pid]->stack_ptr; 
+	asm volatile(
+	    "movl %0, %%ebp;"
+	    "movl %1, %%esp;"
+	    :   
+	    : "r"(saved_ebp), "r"(saved_esp)
+	    : "%eax"
+	    );
+	return return_status;
     }
-    return 0;
+    return -1;
 }
 
 
@@ -154,33 +169,51 @@ void setup_process_page(int32_t pid) {
     }
 }
 
-pcb_t* create_pcb(int32_t pid) {
-    //ADD PARENT ID
-	
-    uint32_t pcb_bottom_addr = KERNEL_END_ADDR - (pid)*PCB_SIZE;
-    pcb_arr[pid] = (pcb_t*)(pcb_bottom_addr - PCB_SIZE);
+pcb_t* create_new_pcb() {
+    int32_t next_pid = get_next_pid(curr_pid);
+    
+    uint32_t pcb_bottom_addr = KERNEL_END_ADDR - (next_pid)*PCB_SIZE;
+    pcb_arr[next_pid] = (pcb_t*)(pcb_bottom_addr - PCB_SIZE);
 
-    pcb_arr[pid]->pid = pid;
-    pcb_arr[pid]->parent_pid = 0; // figure this out later... should work for now
+    pcb_arr[next_pid]->pid = next_pid;
+    pcb_arr[next_pid]->parent_pid = curr_pid;
 	
     //Initializes fd array for PCB with stdin and stdout
-    SET_FD_FLAG_INUSE(pcb_arr[pid]->fd_arr[STDIN_FD].flags); // stdin
-    FILL_STDIN_OPS(pcb_arr[pid]->fd_arr[STDIN_FD].ops_jtab);
-    SET_FD_FLAG_INUSE(pcb_arr[pid]->fd_arr[STDOUT_FD].flags); // stdout
-    FILL_STDOUT_OPS(pcb_arr[pid]->fd_arr[STDOUT_FD].ops_jtab);
+    SET_FD_FLAG_INUSE(pcb_arr[next_pid]->fd_arr[STDIN_FD].flags); // stdin
+    FILL_STDIN_OPS(pcb_arr[next_pid]->fd_arr[STDIN_FD].ops_jtab);
+    SET_FD_FLAG_INUSE(pcb_arr[next_pid]->fd_arr[STDOUT_FD].flags); // stdout
+    FILL_STDOUT_OPS(pcb_arr[next_pid]->fd_arr[STDOUT_FD].ops_jtab);
 
     //Saves Kernel stack pointer
-    pcb_arr[pid]->stack_base_ptr = pcb_bottom_addr - sizeof(uint32_t);
-    pcb_arr[pid]->stack_ptr = pcb_bottom_addr - sizeof(uint32_t);
+    pcb_arr[next_pid]->stack_base_ptr = pcb_bottom_addr - sizeof(uint32_t);
+    pcb_arr[next_pid]->stack_ptr = pcb_bottom_addr - sizeof(uint32_t);
 	
     //Sets PCB status to active
-    pcb_arr[pid]->state = ACTIVE;
+    pcb_arr[next_pid]->state = ACTIVE;
 
-    return pcb_arr[pid];
+    return pcb_arr[next_pid];
 }
 
-
 static void switch_to_user(uint32_t user_eip) {
+    /* no need for stack pointer later if there is no parent process since in that case halt
+     * will just restart shell and not return to execute/syscall linkage */
+    if (pcb_arr[curr_pid]->parent_pid >= 0) {
+	uint32_t saved_ebp;
+	uint32_t saved_esp;
+//    uint32_t saved_registers_flag;
+	// save current ebp and esp
+	asm volatile(
+	    "movl %%ebp, %0;"
+	    "movl %%esp, %1;"
+	    : "=r"(saved_ebp), "=r"(saved_esp) 
+	    :
+	    : "%eax"
+	    );
+	pcb_arr[pcb_arr[curr_pid]->parent_pid]->stack_ptr = saved_esp;
+	pcb_arr[pcb_arr[curr_pid]->parent_pid]->stack_base_ptr = saved_ebp;
+    }
+
+    // set up stack and iret
     asm volatile(
     	"pushl $%P1;"       // push user_ds
         "pushl $%P2;"       
@@ -188,13 +221,14 @@ static void switch_to_user(uint32_t user_eip) {
         "pushl $%P3;"       // push user_cs
         "pushl %0;"
         "iret;"
-            :
+            : 
             : "r"(user_eip),
               "p"(USER_DS),
               "p"(PROCESS_IMG_ADDR + PAGE_SIZE_4MB - 4),
               "p"(USER_CS)
             : "%eax", "memory"
         );
+        return;
 }
 
 
@@ -220,4 +254,3 @@ void clear_fd_array(int32_t pid){
         set_jtab_badcall(&pcb_arr[pid]->fd_arr[i].ops_jtab);
     }
 }
-
