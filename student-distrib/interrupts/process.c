@@ -54,18 +54,22 @@ int32_t start_process(const int8_t* cmd) {
     dentry_t file_dentry;
     res = read_dentry_by_name(fname, &file_dentry);
     if (res < 0) {
-	    return -1;
+	// reverse paging back to current process's page before returning
+	setup_process_page(curr_pid);
+	return -1;
     }
 
     // reads file contents
     uint32_t file_len = fs_inode_arr[file_dentry.inode_num].length;
     res = read_data(file_dentry.inode_num, 0, (int8_t*)PROGRAM_VIRTUAL_ADDR, file_len);
     if (res < 0) { // read failed
-	    return -1;
+	setup_process_page(curr_pid);
+	return -1;
     }
 
     if (!is_executable((int8_t*)PROGRAM_VIRTUAL_ADDR)) {
-	    return -1;
+	setup_process_page(curr_pid);
+	return -1;
     }
 
     (void)create_new_pcb();
