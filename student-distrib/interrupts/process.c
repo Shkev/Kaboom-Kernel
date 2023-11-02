@@ -79,10 +79,6 @@ int32_t start_process(const int8_t* cmd) {
     // set up stack for iret
     uint32_t *first_instr_addr = (uint32_t*)(PROGRAM_VIRTUAL_ADDR + 24);
 
-    //store ebp and esp
-    //use inline assembly
-    //flag shows if saved
-
     switch_to_user(*first_instr_addr);
 
     return return_status;

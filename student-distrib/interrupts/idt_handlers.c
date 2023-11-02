@@ -1,4 +1,5 @@
 #include "idt_handlers.h"
+#include "syscalls.h"
 #include "../lib.h"
 #include "../i8259.h"
 
@@ -7,10 +8,10 @@
 // keep track of whether RTC has had an interrupt
 volatile uint32_t rtc_flag = 0;
 
-
 int enterflag = 0;
 int keybuffbackup = 0;
 char keybuff[KEYBUF_MAX_SIZE];
+
 
 
 /*divide_zero_handler()
@@ -488,10 +489,22 @@ void kbd_handler() {
                 } else if (((scan_code == LEFTSHIFT_PRESSED) || (scan_code == RIGHTSHIFT_PRESSED)) && (shift == 0)){
                     shift = 1;
                 } else if ((ctrl == 1) && (scan_code == L_PRESS)) {
+		    // CTRL-L logic to clear screen
                     clear();
                     fill_buffer(keybuff, '\0', KEYBUF_MAX_SIZE);
                     keybuffcount = 0;
-                } else {
+                } else if ((ctrl == 1) && (scan_code == C_PRESS)) {
+		    // CTRL-C logic to halt current program
+		    fill_buffer(keybuff, '\0', KEYBUF_MAX_SIZE);
+                    keybuffcount = 0;
+		    if (curr_pid >= 0) { // if there is a process running terminate it
+			send_eoi(1);
+			sti();
+			// halt acts like a soft interrupt here
+			sys_halt(1);
+		    }
+		}
+		else {
                     // num pad support... does nothing for now but adds a long list of ifs :)
                     if (scan_code == LEFTALT_PRESSED) {
                         // left alt press

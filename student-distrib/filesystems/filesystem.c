@@ -130,7 +130,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, int8_t* buf, int32_t length){
 
 
 int32_t fs_close(int32_t fd) {
-    if (fd == 0 || fd == 1) // can't close stdin/stdout
+    if (fd <= 1 || fd >= MAXFILES_PER_TASK || !FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[fd].flags)) // can't close stdin/stdout (or invalid fd)
 	    return -1;
     UNSET_FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[fd].flags);
     return pcb_arr[curr_pid]->fd_arr[fd].ops_jtab.close(fd);
@@ -178,13 +178,13 @@ int32_t fs_open(const int8_t* fname) {
 
 
 int32_t fs_read(int32_t fd, void* buf, int32_t nbytes) {
-    if (buf == NULL) return -1;
+    if (buf == NULL || fd < 0 || fd >= MAXFILES_PER_TASK || !FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[fd].flags)) return -1;
     return pcb_arr[curr_pid]->fd_arr[fd].ops_jtab.read(fd, buf, nbytes);
 }
 
 
 int32_t fs_write(int32_t fd, const void* buf, int32_t nbytes) {
-    if (buf == NULL) return -1;
+    if (buf == NULL || fd < 0 || fd >= MAXFILES_PER_TASK || !FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[fd].flags)) return -1;
     return pcb_arr[curr_pid]->fd_arr[fd].ops_jtab.write(fd, buf, nbytes);
 }
 
@@ -213,7 +213,7 @@ int32_t directory_open(const int8_t* fname) {
 * SIDE EFFECTS: 
 */
 int32_t directory_read(int32_t fd, void* buf, int32_t nbytes){
-    if (buf == NULL) return -1;
+    if (buf == NULL || fd < 0 || fd >= MAXFILES_PER_TASK || !FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[fd].flags)) return -1;
     dentry_t directory_file;
     /* Checks if end of directory is reached on read and returns 0*/
     if (pcb_arr[curr_pid]->fd_arr[fd].read_pos >= fs_boot_block->direntry_count) {
@@ -243,7 +243,6 @@ int32_t directory_read(int32_t fd, void* buf, int32_t nbytes){
 * SIDE EFFECTS: none
 */
 int32_t directory_write(int32_t fd, const void* buf, int32_t nbytes) {
-    if (buf == NULL) return -1;
     return -1;
 }
 
@@ -256,6 +255,8 @@ int32_t directory_write(int32_t fd, const void* buf, int32_t nbytes) {
 * SIDE EFFECTS: none
 */
 int32_t directory_close(int32_t fd) {
+    if (fd <= 1 || fd >= MAXFILES_PER_TASK || !FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[fd].flags)) // can't close stdin/stdout (or invalid fd)
+	return -1;
     return 0;
 }
 
@@ -282,7 +283,7 @@ int32_t file_open(const int8_t* fname) {
  * RETURNS: If the initial read position is past EOF return 0, -1 if read failrs, else the number of bytes read.
  */
 int32_t file_read(int32_t fd, void* buf, int32_t nbytes) {
-    if (buf == NULL) return -1;
+    if (buf == NULL || fd < 0 || fd >= MAXFILES_PER_TASK || !FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[fd].flags)) return -1;
     uint32_t inode = pcb_arr[curr_pid]->fd_arr[fd].inode_num;
     uint32_t file_size = fs_inode_arr[inode].length; // size of file in bytes
     
@@ -334,6 +335,7 @@ int32_t file_write(int32_t fd, const void* buf, int32_t nbytes) {
 * SIDE EFFECTS: none
 */
 int32_t file_close(int32_t fd) {
+    if (fd < 0 || fd >= MAXFILES_PER_TASK) return -1;
     return 0;
 }
 

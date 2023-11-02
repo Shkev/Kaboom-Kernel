@@ -9,6 +9,7 @@
 
 extern char keybuff[KEYBUF_MAX_SIZE];
 
+/* has rtc encountered interrupt */
 extern volatile uint32_t rtc_flag;
 
 
