@@ -12,10 +12,9 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes)
         nbytes = KEYBUF_MAX_SIZE;
     }
 
-    while (enterflag == 0) //copy from keybuff to buffer
-    {
-        memcpy((int8_t*)buf, keybuff, nbytes);
-    }
+    while (enterflag == 0);
+    
+    memcpy((int8_t*)buf, keybuff, nbytes);
 
     enterflag = 0;
     count = keybuffbackup; //copy the count

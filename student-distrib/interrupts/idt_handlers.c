@@ -439,6 +439,7 @@ void kbd_handler() {
     {
         if(enterflag == 1) 
         {
+            keybuff[keybuffcount++] = '\n';
             putc('\n');
             keybuffbackup = keybuffcount;
             keybuffcount = 0; 
@@ -472,6 +473,7 @@ void kbd_handler() {
                 keybuff[keybuffcount++] = ' ';
             }
         } else if (enterflag == 1) {
+            keybuff[keybuffcount++] = '\n';
             putc('\n');
             keybuffbackup = keybuffcount;
             keybuffcount = 0;   

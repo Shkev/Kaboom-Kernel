@@ -91,6 +91,7 @@ int32_t start_process(const int8_t* cmd) {
 
 int32_t squash_process(uint8_t status) {
     if (curr_pid == 0) {
+        curr_pid = pcb_arr[curr_pid]->parent_pid;
         // always start shell if nothing else running
         sys_execute("shell");
     } else {
@@ -98,7 +99,7 @@ int32_t squash_process(uint8_t status) {
         setup_process_page(pcb_arr[curr_pid]->parent_pid);
         flush_tlb();
         set_process_tss(pcb_arr[curr_pid]->parent_pid);
-	curr_pid = pcb_arr[curr_pid]->parent_pid;
+	    curr_pid = pcb_arr[curr_pid]->parent_pid;
         return_status = (uint32_t)status;
         // restore saved ebp and esp from before running execute
 	uint32_t saved_ebp = pcb_arr[curr_pid]->stack_base_ptr;
