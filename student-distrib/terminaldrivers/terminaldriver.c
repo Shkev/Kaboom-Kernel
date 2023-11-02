@@ -27,9 +27,11 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes)
 int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes)
 {
     if (buf == NULL) return -1;
+    int i;
     cli();
-    //reset_screenx();
-    printf("%s", buf); //print the buffer
+    for (i = 0; i < nbytes; ++i) {
+        putc(*((int8_t*)buf + i));
+    }
     enterflag = 0;
     sti();
     return strlen(buf); //return the length of the buffer

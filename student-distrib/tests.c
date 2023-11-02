@@ -214,13 +214,15 @@ int system_call_fail_test(){
 //====================================================================
 
 int test_dir_read() {
+	curr_pid = 0;
+	int fd = fs_open(".");
     int test_ret;
     int8_t buf[FILENAME_LEN+1];
 #if (GRAPHICS == 1)
 	int i;
     clear();
 #endif
-    while ((test_ret = directory_read(0, buf, 0)) != 0) {
+    while ((test_ret = directory_read(fd, buf, 0)) != 0) {
 		buf[FILENAME_LEN] = '\0';
 #if (GRAPHICS == 1)
 		dentry_t d;
@@ -235,7 +237,8 @@ int test_dir_read() {
 		printf("File Size: %d\n", fs_inode_arr[d.inode_num].length);
 #endif	
     }
-    
+	fs_close(fd);
+    curr_pid = -1;
     return test_ret == 0 ? PASS : FAIL;
 }
 
@@ -611,7 +614,7 @@ void launch_tests() {
 
 	/* Checkpoint 2 tests */
   
-    // TEST_OUTPUT("test directory read: ", test_dir_read());
+     //TEST_OUTPUT("test directory read: ", test_dir_read());
 	// TEST_OUTPUT("test directory write: ", test_dir_write());
 	// TEST_OUTPUT("test open nonexistent file: ", test_file_open_bad());
   //TEST_OUTPUT("test open good file: ", test_file_open_good());

@@ -131,7 +131,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, int8_t* buf, int32_t length){
 
 int32_t fs_close(int32_t fd) {
     if (fd == 0 || fd == 1) // can't close stdin/stdout
-	return -1;
+	    return -1;
     UNSET_FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[fd].flags);
     return pcb_arr[curr_pid]->fd_arr[fd].ops_jtab.close(fd);
 }
@@ -141,7 +141,7 @@ int32_t fs_open(const int8_t* fname) {
     if (fname == NULL) return -1;
     int32_t open_fd = find_open_fd();
     if (open_fd < 0) {
-	return -1;
+	    return -1;
     }
 
     dentry_t opened_file;
@@ -209,36 +209,36 @@ int32_t directory_open(const int8_t* fname) {
 *               nbytes  - number of bytes to read
 *               
 * OUTPUTS:      none
-* RETURN VALUE: return 0, don't need to read directory
+* RETURN VALUE: return number of bytes read, return -1 on error
 * SIDE EFFECTS: 
 */
 int32_t directory_read(int32_t fd, void* buf, int32_t nbytes){
     if (buf == NULL) return -1;
-    dentry_t directory_file; 
+    dentry_t directory_file;
     /* Checks if end of directory is reached on read and returns 0*/
-    if(pcb_arr[curr_pid]->fd_arr[fd].read_pos >= fs_boot_block->direntry_count){
+    if (pcb_arr[curr_pid]->fd_arr[fd].read_pos >= fs_boot_block->direntry_count) {
         return 0;
     }
 
     /* Populates the buffer with the corresponding file name at the given directory index form the given index*/
     if(read_dentry_by_index(pcb_arr[curr_pid]->fd_arr[fd].read_pos, &directory_file) == 0) {
-        memcpy(buf, directory_file.filename, FILENAME_LEN);
+        strncpy(buf, directory_file.filename, FILENAME_LEN);
     } else {
         return -1;
     }
 
-    /* Increments the variable that keeps track of the position in the director for subsequent reads*/
+    /* Increments the variable that keeps track of the position in the directory for subsequent reads*/
     pcb_arr[curr_pid]->fd_arr[fd].read_pos++;
 
-    /* returns the length of the filename*/
-    return strlen(buf);
+    /* returns the length of the filename */
+    return FILENAME_LEN;
 }
 
 
 /* directory_write
 * DESCRIPTION:  write function for directories in file system, does nothing in our OS
 * INPUTS:       ignore
-* OUTPUTS:      returns whether or not write was successful
+* OUTPUTS:      none
 * RETURN VALUE: -1
 * SIDE EFFECTS: none
 */
