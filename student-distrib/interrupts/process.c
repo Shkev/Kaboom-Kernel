@@ -121,7 +121,7 @@ int32_t squash_process(uint8_t status) {
 
         if(exception_flag == 1) {
             exception_flag = 0;
-            return_status = 256;
+            return_status = 256; //256 - Exception return value
         } else {
             return_status = (uint32_t)status;
         }
