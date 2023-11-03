@@ -1,16 +1,51 @@
 #include "filesystem.h"
 
+/* static jump tables for each device type's operations */
+
+static struct file_ops rtc_ops = {
+    .read = rtc_read,
+    .write = rtc_write,
+    .open = rtc_open,
+    .close = rtc_close
+};
+
+static struct file_ops dir_ops = {
+    .read = directory_read,
+    .write = directory_write,
+    .open = directory_open,
+    .close = directory_close
+};
+
+static struct file_ops fops = {
+    .read = file_read,
+    .write = file_write,
+    .open = file_open,
+    .close = file_close
+};
+
+static struct file_ops stdin_ops = {
+    .read = terminal_read,
+    .write = badcall_write,
+    .open = badcall_open,
+    .close = badcall_close
+};
+
+static struct file_ops stdout_ops = {
+    .read = badcall_read,
+    .write = terminal_write,
+    .open = badcall_open,
+    .close = badcall_close
+};
+
+/* helper functions */
 
 static int32_t find_file_index(const int8_t* fname);
 static int32_t find_open_fd(void);
 static int8_t filenames_equal(const int8_t* a, const int8_t* b);
 
-
-
 boot_block_t* fs_boot_block = NULL;
 inode_t* fs_inode_arr = NULL;
 uint32_t fs_data_blocks = NULL;
-
 
 uint32_t directory_index = 0;   //index to iterate through subsequent directory_read calls
 
@@ -19,7 +54,6 @@ void init_ext2_filesys(uint32_t boot_block_start) {
     fs_boot_block = (boot_block_t*) boot_block_start;     // cast boot block pointer to struct pointer
     fs_inode_arr = (inode_t*)((uint32_t)fs_boot_block + sizeof(boot_block_t));  // start of inode array in memory after boot block
     fs_data_blocks = (uint32_t)fs_inode_arr + (sizeof(inode_t) * (fs_boot_block->inode_count));  // start of data blocks in memory
-
 }
 
 
@@ -87,7 +121,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, int8_t* buf, int32_t length){
 	    return -1;
     }
     if (offset >= length_curr_file) {
-	    // offset it beyond end of file
+	    // offset if beyond end of file
 	    return 0;
     }
     if (length+offset > length_curr_file) { // can't read more than the file contains
@@ -125,7 +159,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, int8_t* buf, int32_t length){
     // handle reading last block where we may not be reading the entire thing (like the first one)
     memcpy(buf + write_pos, (uint32_t*)curr_read, length - write_pos); 
     
-    return return_val;      //returns number of bytes copied into buffer
+    return return_val;      // returns number of bytes copied into buffer
 }
 
 
@@ -158,15 +192,15 @@ int32_t fs_open(const int8_t* fname) {
     // fill operations jump table
     switch (opened_file.filetype) {
 	case (DEVICE):
-	    FILL_RTC_OPS(pcb_arr[curr_pid]->fd_arr[open_fd].ops_jtab);
+	    fill_rtc_ops(&pcb_arr[curr_pid]->fd_arr[open_fd].ops_jtab);
 	    res = rtc_open(fname);
 	    break;
 	case (DIRECTORY):
-	    FILL_DIR_OPS(pcb_arr[curr_pid]->fd_arr[open_fd].ops_jtab);
+	    fill_dir_ops(&pcb_arr[curr_pid]->fd_arr[open_fd].ops_jtab);
 	    res = directory_open(fname);
 	    break;
 	case (FILE):
-	    FILL_FILE_OPS(pcb_arr[curr_pid]->fd_arr[open_fd].ops_jtab);
+	    fill_file_ops(&pcb_arr[curr_pid]->fd_arr[open_fd].ops_jtab);
 	    res = file_open(fname);
 	    break;
     }
@@ -339,6 +373,7 @@ int32_t file_close(int32_t fd) {
     return 0;
 }
 
+///////////// HELPER FUNCTIONS ////////////////////////
 
 /* find_file_index(int8_t* fname)
  * DESCRIPTION: Find the index of file with given name in filesystem.
@@ -422,4 +457,26 @@ int32_t badcall_open(const int8_t* fname) {
 
 int32_t badcall_close(int32_t fd) {
 	return -1;
+}
+
+////////////// Helpers to fill file operation jump tables ////////////////
+
+void fill_rtc_ops(struct file_ops* ops_jtab) {
+    *ops_jtab = rtc_ops;
+}
+
+void fill_dir_ops(struct file_ops* ops_jtab) {
+    *ops_jtab = dir_ops;
+}
+
+void fill_file_ops(struct file_ops* ops_jtab) {
+    *ops_jtab = fops;
+}
+
+void fill_stdin_ops(struct file_ops* ops_jtab) {
+    *ops_jtab = stdin_ops;
+}
+
+void fill_stdout_ops(struct file_ops* ops_jtab) {
+    *ops_jtab = stdout_ops;
 }

@@ -251,9 +251,9 @@ pcb_t* create_new_pcb() {
 	
     //Initializes fd array for PCB with stdin and stdout
     SET_FD_FLAG_INUSE(pcb_arr[next_pid]->fd_arr[STDIN_FD].flags); // stdin
-    FILL_STDIN_OPS(pcb_arr[next_pid]->fd_arr[STDIN_FD].ops_jtab);
+    fill_stdin_ops(&pcb_arr[next_pid]->fd_arr[STDIN_FD].ops_jtab);
     SET_FD_FLAG_INUSE(pcb_arr[next_pid]->fd_arr[STDOUT_FD].flags); // stdout
-    FILL_STDOUT_OPS(pcb_arr[next_pid]->fd_arr[STDOUT_FD].ops_jtab);
+    fill_stdout_ops(&pcb_arr[next_pid]->fd_arr[STDOUT_FD].ops_jtab);
 
     //Saves Kernel stack pointer
     pcb_arr[next_pid]->stack_base_ptr = pcb_bottom_addr - sizeof(uint32_t);

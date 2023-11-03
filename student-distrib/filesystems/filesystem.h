@@ -20,38 +20,6 @@
 #define SET_FD_FLAG_INUSE(flag) flag |= 0x1
 #define UNSET_FD_FLAG_INUSE(flag) flag &= 0xFFFFFFFE
 
-/* jumptable initialization macros*/
-#define FILL_RTC_OPS(jtab)   \
-	jtab.read = &rtc_read   ;\
-	jtab.write = &rtc_write ;\
-	jtab.open = &rtc_open   ;\
-	jtab.close = &rtc_close
-
-#define FILL_FILE_OPS(jtab)   \
-	jtab.read = &file_read   ;\
-	jtab.write = &file_write ;\
-	jtab.open = &file_open   ;\
-	jtab.close = &file_close
-
-#define FILL_DIR_OPS(jtab)         \
-	jtab.read = &directory_read   ;\
-	jtab.write = &directory_write ;\
-	jtab.open = &directory_open   ;\
-	jtab.close = &directory_close
-
-#define FILL_STDIN_OPS(jtab)         \
-	jtab.read = &terminal_read      ;\
-	jtab.write = &badcall_write     ;\
-	jtab.open = &badcall_open       ;\
-	jtab.close = &badcall_close
-
-#define FILL_STDOUT_OPS(jtab)         \
-	jtab.read = &badcall_read        ;\
-	jtab.write = &terminal_write     ;\
-	jtab.open = &badcall_open        ;\
-	jtab.close = &badcall_close
-
-
 enum filetype {
     DEVICE = 0,
     DIRECTORY = 1,
@@ -129,6 +97,13 @@ extern int32_t badcall_read(int32_t, void*, int32_t);
 extern int32_t badcall_write(int32_t, const void*, int32_t);
 extern int32_t badcall_open(const int8_t*);
 extern int32_t badcall_close(int32_t);
+
+/* Helper functions to set filesystem systemcall jump tables for files */
+extern inline void fill_rtc_ops(struct file_ops* ops_jtab);
+extern inline void fill_dir_ops(struct file_ops* ops_jtab);
+extern inline void fill_file_ops(struct file_ops* ops_jtab);
+extern inline void fill_stdin_ops(struct file_ops* ops_jtab);
+extern inline void fill_stdout_ops(struct file_ops* ops_jtab);
 
 // other helpers
 extern inline uint32_t get_file_size(int32_t fd);
