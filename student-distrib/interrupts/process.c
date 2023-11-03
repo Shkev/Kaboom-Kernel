@@ -43,6 +43,7 @@ static inline void set_jtab_badcall(struct file_ops* jtab);
 ///////////////////////////////////////////////////////////////////////
 
 int32_t start_process(const int8_t* cmd) {
+    cli();
     int32_t res;    /* check whether file system operations succeeded */
     // later change to get all arguments to given command as well (probably get_args syscall?)
     int8_t fname[FILENAME_LEN+1] = {'\0'};
@@ -96,6 +97,7 @@ int32_t squash_process(uint8_t status) {
         // always start shell if nothing else running
         sys_execute("shell");
     } else {
+        cli();
         clear_fd_array(curr_pid);
         setup_process_page(pcb_arr[curr_pid]->parent_pid);
         flush_tlb();
@@ -118,6 +120,7 @@ int32_t squash_process(uint8_t status) {
             : "r"(saved_ebp), "r"(saved_esp)
             : "%eax"
             );
+        sti();
         return return_status;
     }
     return -1;

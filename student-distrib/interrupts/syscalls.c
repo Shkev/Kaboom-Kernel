@@ -13,19 +13,27 @@ int32_t sys_execute(const int8_t* cmd) {
 }
 
 int32_t sys_read(int32_t fd, void* buf, int32_t nbytes) {
-    return fs_read(fd, buf, nbytes);
+    int32_t res = fs_read(fd, buf, nbytes);
+    return res;
 }
 
 int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes) {
-    return fs_write(fd, buf, nbytes);
+    int32_t res = fs_write(fd, buf, nbytes);
+    return res;
 }
 
 int32_t sys_open(const int8_t* fname) {
-    return fs_open(fname);
+    cli();
+    int32_t res = fs_open(fname);
+    sti();
+    return res;
 }
 
 int32_t sys_close(int32_t fd) {
-    return fs_close(fd);
+    cli();
+    int32_t res = fs_close(fd);
+    sti();
+    return res;
 }
 
 int32_t sys_getargs(int8_t* buf, int32_t nbytes) {

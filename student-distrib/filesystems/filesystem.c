@@ -147,7 +147,7 @@ int32_t fs_open(const int8_t* fname) {
     dentry_t opened_file;
     int32_t res = read_dentry_by_name(fname, &opened_file);
     if (res < 0) {
-	return -1;
+	    return -1;
     }
 
     // fill entry in fd array
