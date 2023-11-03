@@ -27,11 +27,9 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes)
 {
     if (buf == NULL) return -1;
     int i;
-    cli();
     for (i = 0; i < nbytes; ++i) {
         putc(*((int8_t*)buf + i));
     }
     enterflag = 0;
-    sti();
     return strlen(buf); //return the length of the buffer
 }

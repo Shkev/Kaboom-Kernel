@@ -46,6 +46,12 @@ int32_t start_process(const int8_t* cmd) {
     int32_t res;    /* check whether file system operations succeeded */
     // later change to get all arguments to given command as well (probably get_args syscall?)
     int8_t fname[FILENAME_LEN+1] = {'\0'};
+
+    if (get_next_pid(curr_pid) >= NUM_PROCCESS) {
+        // max num processes reached, can't create more
+        return -1;
+    }
+
     (void)parse_args(cmd, fname);
     setup_process_page(get_next_pid(curr_pid));
     flush_tlb();
@@ -78,7 +84,6 @@ int32_t start_process(const int8_t* cmd) {
 
     // set up stack for iret
     uint32_t *first_instr_addr = (uint32_t*)(PROGRAM_VIRTUAL_ADDR + 24);
-
     switch_to_user(*first_instr_addr);
 
     return return_status;
@@ -97,23 +102,22 @@ int32_t squash_process(uint8_t status) {
         set_process_tss(pcb_arr[curr_pid]->parent_pid);
 	    curr_pid = pcb_arr[curr_pid]->parent_pid;
 
-        if(exception_flag == 1){
+        if(exception_flag == 1) {
             exception_flag = 0;
             return_status = 256;
-        }
-        else{
+        } else {
             return_status = (uint32_t)status;
         }
         // restore saved ebp and esp from before running execute
-	uint32_t saved_ebp = pcb_arr[curr_pid]->stack_base_ptr;
-	uint32_t saved_esp = pcb_arr[curr_pid]->stack_ptr; 
-	asm volatile(
-	    "movl %0, %%ebp;"
-	    "movl %1, %%esp;"
-	    :   
-	    : "r"(saved_ebp), "r"(saved_esp)
-	    : "%eax"
-	    );
+	    uint32_t saved_ebp = pcb_arr[curr_pid]->stack_base_ptr;
+	    uint32_t saved_esp = pcb_arr[curr_pid]->stack_ptr; 
+	    asm volatile(
+            "movl %0, %%ebp;"
+            "movl %1, %%esp;"
+            :   
+            : "r"(saved_ebp), "r"(saved_esp)
+            : "%eax"
+            );
         return return_status;
     }
     return -1;
@@ -206,21 +210,19 @@ static void switch_to_user(uint32_t user_eip) {
     /* no need for stack pointer later if there is no parent process since in that case halt
      * will just restart shell and not return to execute/syscall linkage */
     if (pcb_arr[curr_pid]->parent_pid >= 0) {
-	uint32_t saved_ebp;
-	uint32_t saved_esp;
-//    uint32_t saved_registers_flag;
-	// save current ebp and esp
-	asm volatile(
-	    "movl %%ebp, %0;"
-	    "movl %%esp, %1;"
-	    : "=r"(saved_ebp), "=r"(saved_esp) 
-	    :
-	    : "%eax"
-	    );
-	pcb_arr[pcb_arr[curr_pid]->parent_pid]->stack_ptr = saved_esp;
-	pcb_arr[pcb_arr[curr_pid]->parent_pid]->stack_base_ptr = saved_ebp;
+        uint32_t saved_ebp;
+        uint32_t saved_esp;
+        // save current ebp and esp
+        asm volatile(
+            "movl %%ebp, %0;"
+            "movl %%esp, %1;"
+            : "=r"(saved_ebp), "=r"(saved_esp) 
+            );
+        pcb_arr[pcb_arr[curr_pid]->parent_pid]->stack_ptr = saved_esp;
+        pcb_arr[pcb_arr[curr_pid]->parent_pid]->stack_base_ptr = saved_ebp;
     }
 
+    sti();              // enable interrupts before going to user space (need to allow kbd interrupts)
     // set up stack and iret
     asm volatile(
     	"pushl $%P1;"       // push user_ds
@@ -234,7 +236,7 @@ static void switch_to_user(uint32_t user_eip) {
               "p"(USER_DS),
               "p"(PROCESS_IMG_ADDR + PAGE_SIZE_4MB - 4),
               "p"(USER_CS)
-            : "%eax", "memory"
+            : "memory"
         );
         return;
 }

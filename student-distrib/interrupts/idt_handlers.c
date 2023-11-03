@@ -4,7 +4,7 @@
 #include "../i8259.h"
 #include "process.h"
 
-#define PRINT_HANDLER(task) printf("EXCEPTION: " task "error")
+#define PRINT_HANDLER(task) printf("EXCEPTION: " task "error\n")
 
 // keep track of whether RTC has had an interrupt
 volatile uint32_t rtc_flag = 0;
@@ -192,7 +192,7 @@ void gen_protect_flt_handler() {
 * SIDE EFFECTS: the problem
 */
 void pg_fault_handler() {
-    //PRINT_HANDLER("pg");
+    PRINT_HANDLER("pg");
     exception_flag = 1;
     sys_halt(1);
 }

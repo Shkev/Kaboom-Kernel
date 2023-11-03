@@ -56,6 +56,7 @@ extern pcb_t* pcb_arr[NUM_PROCCESS];
 /* pid of most recently created process */
 extern int32_t curr_pid;
 
+extern volatile uint32_t exception_flag;
 
 //////////////////////////////// PROCEESS HANDLING FUNCTIONS ////////////////////////////////////
 
