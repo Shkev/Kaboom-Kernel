@@ -29,12 +29,12 @@ static pcb_t* create_new_pcb();
 static inline void set_process_tss(int32_t pid);
 
 /* set up stack and iret to user space */
-static inline void switch_to_user(uint32_t user_eip);
+static void switch_to_user(uint32_t user_eip);
 
 //////////////// SYSTEM HALT HELPERS //////////////////////////////////
 
 /* clear all entries in file descriptor array of given process */
-static inline void clear_fd_array(int32_t pid);
+static void clear_fd_array(int32_t pid);
 
 ///////////////////////////////////////////////////////////////////////
 
@@ -151,7 +151,7 @@ int32_t squash_process(uint8_t status) {
  * RETURNS:       none
  * SIDE EFFECTS:  resets cr3 to point to page directory (so nothing should change here), flushes TLB
  */
-void flush_tlb() {
+static inline void flush_tlb() {
     asm volatile(
     	"movl %0, %%eax;"
     	"movl %%eax, %%cr3;"
@@ -170,7 +170,7 @@ void flush_tlb() {
  * RETURNS:       incremented value of pid
  * SIDE EFFECTS:  none
  */
-int32_t get_next_pid(int32_t pid) {
+static inline int32_t get_next_pid(int32_t pid) {
     return pid+1;
 }
 
@@ -209,7 +209,7 @@ int32_t parse_args(const int8_t* arg, int8_t* const buf) {
  * OUTPUTS:         none
  * RETURN VALUE:    1 (true) if file is executable, 0 (false) otherwise
  */
-uint32_t is_executable(const int8_t* file_contents) {
+static inline uint32_t is_executable(const int8_t* file_contents) {
     // check ELF magic number at start of file
     return (file_contents[0] == 0x7f) && (file_contents[1] == 0x45) && (file_contents[2] == 0x4C) && (file_contents[3] == 0x46);
 }
@@ -315,7 +315,7 @@ static void switch_to_user(uint32_t user_eip) {
  * RETURNS:       none
  * SIDE EFFECTS:  sets segment and stack base pointer of current process
  */
-void set_process_tss(int32_t pid) {
+static inline void set_process_tss(int32_t pid) {
     tss.ss0 = KERNEL_DS;
     tss.esp0 = pcb_arr[pid]->stack_base_ptr;
 }
