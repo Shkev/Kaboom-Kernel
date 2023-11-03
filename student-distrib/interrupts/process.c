@@ -7,6 +7,7 @@ int32_t curr_pid = -1;
 pcb_t* pcb_arr[NUM_PROCCESS];
 uint32_t return_status = 0;
 
+volatile uint32_t exception_flag = 0;
 static inline void flush_tlb();
 
 static int32_t get_next_pid(int32_t pid);
@@ -43,7 +44,6 @@ static inline void set_jtab_badcall(struct file_ops* jtab);
 
 int32_t start_process(const int8_t* cmd) {
     int32_t res;    /* check whether file system operations succeeded */
-
     // later change to get all arguments to given command as well (probably get_args syscall?)
     int8_t fname[FILENAME_LEN+1] = {'\0'};
     (void)parse_args(cmd, fname);
@@ -96,7 +96,14 @@ int32_t squash_process(uint8_t status) {
         flush_tlb();
         set_process_tss(pcb_arr[curr_pid]->parent_pid);
 	    curr_pid = pcb_arr[curr_pid]->parent_pid;
-        return_status = (uint32_t)status;
+
+        if(exception_flag == 1){
+            exception_flag = 0;
+            return_status = 256;
+        }
+        else{
+            return_status = (uint32_t)status;
+        }
         // restore saved ebp and esp from before running execute
 	uint32_t saved_ebp = pcb_arr[curr_pid]->stack_base_ptr;
 	uint32_t saved_esp = pcb_arr[curr_pid]->stack_ptr; 
@@ -107,7 +114,7 @@ int32_t squash_process(uint8_t status) {
 	    : "r"(saved_ebp), "r"(saved_esp)
 	    : "%eax"
 	    );
-	return return_status;
+        return return_status;
     }
     return -1;
 }

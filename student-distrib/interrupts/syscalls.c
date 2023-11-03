@@ -1,7 +1,6 @@
 #include "syscalls.h"
 #include "../filesystems/filesystem.h"
 
-
 int32_t sys_halt(uint8_t status) {
     return squash_process(status);
 }

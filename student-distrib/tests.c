@@ -537,7 +537,7 @@ int test_rtc_open() {
 	clear();
 	rtc_open(NULL);
 	int i = 0;
-	for (i = 0; i < 10; i++){
+	for (i = 0; i < 100; i++){
 		rtc_read(NULL, NULL, NULL);
 		printf("%d", i);
 	}
@@ -630,7 +630,7 @@ void launch_tests() {
 	// TEST_OUTPUT("test reading 0 bytes from file: ", test_read_nothing());
 	// TEST_OUTPUT("test part of file from start: ", test_read_file_partial_start());
 	// TEST_OUTPUT("test writing to file: ", test_file_write());
-	//TEST_OUTPUT("test rtc open: ", test_rtc_open());
+	TEST_OUTPUT("test rtc open: ", test_rtc_open());
 	//TEST_OUTPUT("test rtc write: ", test_rtc_write());
 	// TEST_OUTPUT("test rtc not power 2: ", test_rtc_not_power_2());
 	// TEST_OUTPUT("test rtc greater 1024: ", test_rtc_greater_1024());

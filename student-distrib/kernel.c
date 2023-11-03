@@ -15,7 +15,7 @@
 #include "interrupts/syscalls.h"
 //#include "interrupts/syscalls.h"
 
-//#define RUN_TESTS
+#define RUN_TESTS 0
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -242,7 +242,7 @@ void entry(unsigned long magic, unsigned long addr) {
 
 #ifdef RUN_TESTS
     /* Run tests */
-    launch_tests();
+    //launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
     sys_execute("shell");
