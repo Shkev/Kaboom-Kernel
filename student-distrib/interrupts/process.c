@@ -9,8 +9,7 @@ uint32_t return_status = 0;
 
 volatile uint32_t exception_flag = 0;
 static inline void flush_tlb();
-
-static int32_t get_next_pid(int32_t pid);
+static inline int32_t get_next_pid(int32_t pid);
 
 /////////////////// SYSTEM EXECUTE HELPERS /////////////////////////////
 
@@ -37,18 +36,16 @@ static inline void switch_to_user(uint32_t user_eip);
 /* clear all entries in file descriptor array of given process */
 static inline void clear_fd_array(int32_t pid);
 
-/* set all entries in file operations jtab to a badcall fnc */
-static inline void set_jtab_badcall(struct file_ops* jtab);
-
 ///////////////////////////////////////////////////////////////////////
 
 /* start_process()
  * 
- * DESCRIPTION:   helper function for sys_execute, starts execute
- * INPUTS:        cmd - program to execute, read from terminal
- * OUTPUTS:       whatever the specified function does
- * RETURNS:       returns 0-255 status from halt, 256 for exceptions, -1 otherwise
- * SIDE EFFECTS:  none
+ * DESCRIPTION:   helper function for sys_execute, starts a process for command with given name
+ * INPUTS:        cmd - program name to execute
+ * OUTPUTS:       none
+ * RETURNS:       returns 0-255 status from halt, 256 for exceptions, -1 if error occurs or invalid executable
+ * SIDE EFFECTS:  Creates new PCB entry, modifies program page directory memory mapping, flushes TLB, updates curr_pid, updates TSS
+ *                modifies memory at determined program location, and switches to user space to run program
  */
 int32_t start_process(const int8_t* cmd) {
     cli();
@@ -70,21 +67,21 @@ int32_t start_process(const int8_t* cmd) {
     res = read_dentry_by_name(fname, &file_dentry);
     if (res < 0) {
 	// reverse paging back to current process's page before returning
-	setup_process_page(curr_pid);
-	return -1;
+	    setup_process_page(curr_pid);
+	    return -1;
     }
 
     // reads file contents
     uint32_t file_len = fs_inode_arr[file_dentry.inode_num].length;
     res = read_data(file_dentry.inode_num, 0, (int8_t*)PROGRAM_VIRTUAL_ADDR, file_len);
     if (res < 0) { // read failed
-	setup_process_page(curr_pid);
-	return -1;
+	    setup_process_page(curr_pid);
+	    return -1;
     }
     //checks if program is a valid executable
     if (!is_executable((int8_t*)PROGRAM_VIRTUAL_ADDR)) {
-	setup_process_page(curr_pid);
-	return -1;
+	    setup_process_page(curr_pid);
+	    return -1;
     }
     //init new pcb struct
     (void)create_new_pcb();
@@ -100,11 +97,13 @@ int32_t start_process(const int8_t* cmd) {
 
 /* squash_process()
  * 
- * DESCRIPTION:   returns 32-bit casted status value passed in by program, or exceptions
- * INPUTS:        status - 8-bit value ranging from 0-255
+ * DESCRIPTION:   Terminate current process
+ * INPUTS:        status - 8-bit unsigned value ranging from 0-255
  * OUTPUTS:       none
- * RETURNS:       casted value of status
- * SIDE EFFECTS:  none
+ * RETURNS:       status. If called through an exception returns 256
+ *                Note: never reaches return if sentinel program being halted
+ * SIDE EFFECTS:  stops current process, restores parent process's page directory memory mapping, flushes TLB, updates curr_pid, updates TSS, resets exception flag
+ *                sets ebp and esp registers
  */
 int32_t squash_process(uint8_t status) {
     if (curr_pid == 0) {
@@ -146,11 +145,11 @@ int32_t squash_process(uint8_t status) {
 
 /* flush_tlb()
  * 
- * DESCRIPTION:   helper function to flush TLB
+ * DESCRIPTION:   flushes TLB
  * INPUTS:        none
  * OUTPUTS:       none
  * RETURNS:       none
- * SIDE EFFECTS:  resets cr3 to point to page directory, flushes TLB
+ * SIDE EFFECTS:  resets cr3 to point to page directory (so nothing should change here), flushes TLB
  */
 void flush_tlb() {
     asm volatile(
@@ -234,7 +233,7 @@ void setup_process_page(int32_t pid) {
 
 /* create_new_pcb()
  * 
- * DESCRIPTION:   creates new entry in pcb array for new process
+ * DESCRIPTION:   creates new entry in pcb array for new process forking off current process
  * INPUTS:        none
  * OUTPUTS:       none
  * RETURNS:       new pcb_t struct object
@@ -321,16 +320,6 @@ void set_process_tss(int32_t pid) {
     tss.esp0 = pcb_arr[pid]->stack_base_ptr;
 }
 
-
-/* HALT helper functions */
-//jump table for bad calls
-static void set_jtab_badcall(struct file_ops* jtab) {
-    jtab->open = &badcall_open;
-    jtab->close = &badcall_close;
-    jtab->read = &badcall_read;
-    jtab->write = &badcall_write;
-}
-
 /* clear_fd_array()
  * 
  * DESCRIPTION:   clears fd array for a process when done using
@@ -339,11 +328,11 @@ static void set_jtab_badcall(struct file_ops* jtab) {
  * RETURNS:       none
  * SIDE EFFECTS:  clears the flags and resets all file operation pointers
  */
-void clear_fd_array(int32_t pid){
+void clear_fd_array(int32_t pid) {
     int i;
     //iterate through max size of fd array
-    for(i = 0; i < 8; i++){
+    for (i = 0; i < MAXFILES_PER_TASK; i++) {
         UNSET_FD_FLAG_INUSE(pcb_arr[pid]->fd_arr[i].flags);		//set flags to unused
-        set_jtab_badcall(&pcb_arr[pid]->fd_arr[i].ops_jtab);
+        fill_badcall_ops(&pcb_arr[pid]->fd_arr[i].ops_jtab);
     }
 }

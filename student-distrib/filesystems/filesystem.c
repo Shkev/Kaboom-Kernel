@@ -37,6 +37,13 @@ static struct file_ops stdout_ops = {
     .close = badcall_close
 };
 
+static struct file_ops badcall_ops = {
+    .read = badcall_read,
+    .write = badcall_write,
+    .open = badcall_open,
+    .close = badcall_close
+};
+
 /* helper functions */
 
 static int32_t find_file_index(const int8_t* fname);
@@ -479,4 +486,8 @@ void fill_stdin_ops(struct file_ops* ops_jtab) {
 
 void fill_stdout_ops(struct file_ops* ops_jtab) {
     *ops_jtab = stdout_ops;
+}
+
+void fill_badcall_ops(struct file_ops* ops_jtab) {
+    *ops_jtab = badcall_ops;
 }

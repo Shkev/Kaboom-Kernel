@@ -104,6 +104,7 @@ extern inline void fill_dir_ops(struct file_ops* ops_jtab);
 extern inline void fill_file_ops(struct file_ops* ops_jtab);
 extern inline void fill_stdin_ops(struct file_ops* ops_jtab);
 extern inline void fill_stdout_ops(struct file_ops* ops_jtab);
+extern inline void fill_badcall_ops(struct file_ops* ops_jtab);
 
 // other helpers
 extern inline uint32_t get_file_size(int32_t fd);
