@@ -42,6 +42,14 @@ static inline void set_jtab_badcall(struct file_ops* jtab);
 
 ///////////////////////////////////////////////////////////////////////
 
+/* start_process()
+ * 
+ * DESCRIPTION:   helper function for sys_execute, starts execute
+ * INPUTS:        cmd - program to execute, read from terminal
+ * OUTPUTS:       whatever the specified function does
+ * RETURNS:       returns 0-255 status from halt, 256 for exceptions, -1 otherwise
+ * SIDE EFFECTS:  none
+ */
 int32_t start_process(const int8_t* cmd) {
     cli();
     int32_t res;    /* check whether file system operations succeeded */
@@ -73,12 +81,12 @@ int32_t start_process(const int8_t* cmd) {
 	setup_process_page(curr_pid);
 	return -1;
     }
-
+    //checks if program is a valid executable
     if (!is_executable((int8_t*)PROGRAM_VIRTUAL_ADDR)) {
 	setup_process_page(curr_pid);
 	return -1;
     }
-
+    //init new pcb struct
     (void)create_new_pcb();
     curr_pid = get_next_pid(curr_pid);
     set_process_tss(curr_pid);
@@ -87,10 +95,17 @@ int32_t start_process(const int8_t* cmd) {
     uint32_t *first_instr_addr = (uint32_t*)(PROGRAM_VIRTUAL_ADDR + 24);
     switch_to_user(*first_instr_addr);
 
-    return return_status;
+    return return_status;   //value returned is set by system halt
 }
 
-
+/* squash_process()
+ * 
+ * DESCRIPTION:   returns 32-bit casted status value passed in by program, or exceptions
+ * INPUTS:        status - 8-bit value ranging from 0-255
+ * OUTPUTS:       none
+ * RETURNS:       casted value of status
+ * SIDE EFFECTS:  none
+ */
 int32_t squash_process(uint8_t status) {
     if (curr_pid == 0) {
         curr_pid = pcb_arr[curr_pid]->parent_pid;
@@ -129,6 +144,14 @@ int32_t squash_process(uint8_t status) {
 
 //////////// HELPER FUNCTIONS ///////////////
 
+/* flush_tlb()
+ * 
+ * DESCRIPTION:   helper function to flush TLB
+ * INPUTS:        none
+ * OUTPUTS:       none
+ * RETURNS:       none
+ * SIDE EFFECTS:  resets cr3 to point to page directory, flushes TLB
+ */
 void flush_tlb() {
     asm volatile(
     	"movl %0, %%eax;"
@@ -139,6 +162,15 @@ void flush_tlb() {
 	);
 }
 
+
+/* get_next_pid()
+ * 
+ * DESCRIPTION:   increments pid
+ * INPUTS:        none
+ * OUTPUTS:       none
+ * RETURNS:       incremented value of pid
+ * SIDE EFFECTS:  none
+ */
 int32_t get_next_pid(int32_t pid) {
     return pid+1;
 }
@@ -146,6 +178,15 @@ int32_t get_next_pid(int32_t pid) {
 /* EXECUTE helper functions */
 
 // returns number of bytes copied into buffer
+
+/* parse_args()
+ * 
+ * DESCRIPTION:   parses through terminal read buffer, gets executable argument
+ * INPUTS:        arg - input from terminal
+ * OUTPUTS:       buf - buffer to store executable command
+ * RETURNS:       bytes loaded into buffer
+ * SIDE EFFECTS:  loads buffer with just the executable command from argument
+ */
 int32_t parse_args(const int8_t* arg, int8_t* const buf) {
     uint32_t start_pos = 0;
     // skip leading spaces/null chars
@@ -174,7 +215,14 @@ uint32_t is_executable(const int8_t* file_contents) {
     return (file_contents[0] == 0x7f) && (file_contents[1] == 0x45) && (file_contents[2] == 0x4C) && (file_contents[3] == 0x46);
 }
 
-
+/* setup_process_page()
+ * 
+ * DESCRIPTION:   sets up 8MB or 12MB page accordingly
+ * INPUTS:        pid - current process id number
+ * OUTPUTS:       none
+ * RETURNS:       none
+ * SIDE EFFECTS:  fills page directory entry with correct physical memory mapping
+ */
 void setup_process_page(int32_t pid) {
     //Chooses correct page directory entry offset based on page
     if (pid == 0) {
@@ -184,6 +232,14 @@ void setup_process_page(int32_t pid) {
     }
 }
 
+/* create_new_pcb()
+ * 
+ * DESCRIPTION:   creates new entry in pcb array for new process
+ * INPUTS:        none
+ * OUTPUTS:       none
+ * RETURNS:       new pcb_t struct object
+ * SIDE EFFECTS:  initalizes new pcb_t struct object, and adds it to pcb array
+ */
 pcb_t* create_new_pcb() {
     int32_t next_pid = get_next_pid(curr_pid);
     
@@ -209,6 +265,14 @@ pcb_t* create_new_pcb() {
     return pcb_arr[next_pid];
 }
 
+/* switch_to_user()
+ * 
+ * DESCRIPTION:   switches to user space to run program
+ * INPUTS:        user_eip - instruction pointer to the first instruction in program
+ * OUTPUTS:       none
+ * RETURNS:       none
+ * SIDE EFFECTS:  saves old process esp and ebp so that halt can return to execute when program is finished running
+ */
 static void switch_to_user(uint32_t user_eip) {
     /* no need for stack pointer later if there is no parent process since in that case halt
      * will just restart shell and not return to execute/syscall linkage */
@@ -244,7 +308,14 @@ static void switch_to_user(uint32_t user_eip) {
         return;
 }
 
-
+/* setup_process_tss()
+ * 
+ * DESCRIPTION:   sets up tss
+ * INPUTS:        pid - current process id number
+ * OUTPUTS:       none
+ * RETURNS:       none
+ * SIDE EFFECTS:  sets segment and stack base pointer of current process
+ */
 void set_process_tss(int32_t pid) {
     tss.ss0 = KERNEL_DS;
     tss.esp0 = pcb_arr[pid]->stack_base_ptr;
@@ -252,7 +323,7 @@ void set_process_tss(int32_t pid) {
 
 
 /* HALT helper functions */
-
+//jump table for bad calls
 static void set_jtab_badcall(struct file_ops* jtab) {
     jtab->open = &badcall_open;
     jtab->close = &badcall_close;
@@ -260,8 +331,17 @@ static void set_jtab_badcall(struct file_ops* jtab) {
     jtab->write = &badcall_write;
 }
 
+/* clear_fd_array()
+ * 
+ * DESCRIPTION:   clears fd array for a process when done using
+ * INPUTS:        pid - current process id number
+ * OUTPUTS:       none
+ * RETURNS:       none
+ * SIDE EFFECTS:  clears the flags and resets all file operation pointers
+ */
 void clear_fd_array(int32_t pid){
     int i;
+    //iterate through max size of fd array
     for(i = 0; i < 8; i++){
         UNSET_FD_FLAG_INUSE(pcb_arr[pid]->fd_arr[i].flags);		//set flags to unused
         set_jtab_badcall(&pcb_arr[pid]->fd_arr[i].ops_jtab);
