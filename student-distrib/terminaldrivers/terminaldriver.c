@@ -1,21 +1,31 @@
 #include "terminaldriver.h"
 #include "../interrupts/idt_handlers.h"
 
-uint32_t terminal_read(int32_t fd, void* buf, int32_t nbytes)
+/* terminal_read()
+ * 
+ * DESCRIPTION:   reads from terminal
+ * INPUTS:        fd - file directory entry
+ *                buf - input buffer
+ *                nbytes - number of bytes to read
+ * OUTPUTS:       none
+ * RETURNS:       number of bytes read, -1 otherwise
+ * SIDE EFFECTS:  none
+ */
+int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes)
 {
     if (buf == NULL) return -1;
     //initialize buf buffer
     uint32_t count;
 
-    if (nbytes > 128) //check if valid
+    if (nbytes > KEYBUF_MAX_SIZE) //check if valid
     {
-        return -1;
+        nbytes = KEYBUF_MAX_SIZE;
     }
 
-    while(enterflag == 0) //copy from keybuff to buffer
-    {
-        memcpy((int8_t*)buf, keybuff, nbytes);
-    }
+    sti();
+    while (enterflag == 0);
+    
+    memcpy((int8_t*)buf, keybuff, nbytes);
 
     enterflag = 0;
     count = keybuffbackup; //copy the count
@@ -24,12 +34,23 @@ uint32_t terminal_read(int32_t fd, void* buf, int32_t nbytes)
     return count;
 }
 
-uint32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes)
+/* terminal_write
+ * 
+ * DESCRIPTION:   writes to terminal
+ * INPUTS:        fd - file directory entry
+ *                buf - buffer to write to
+ *                nbytes - number of bytes to write
+ * OUTPUTS:       none
+ * RETURNS:       number of bytes wrote to buffer, -1 otherwise
+ * SIDE EFFECTS:  none
+ */
+int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes)
 {
     if (buf == NULL) return -1;
-    cli();
-    printf("%s", buf); //print the buffer
-    //fill_buffer(keybuff, '\0', 128); //clear the buffer
-    sti();
+    int i;
+    for (i = 0; i < nbytes; ++i) {
+        putc(*((int8_t*)buf + i));
+    }
+    enterflag = 0;
     return strlen(buf); //return the length of the buffer
 }

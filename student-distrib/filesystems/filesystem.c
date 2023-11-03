@@ -1,25 +1,25 @@
 #include "filesystem.h"
-#include "../lib.h"
+
 
 static int32_t find_file_index(const int8_t* fname);
 static int32_t find_open_fd(void);
 static int8_t filenames_equal(const int8_t* a, const int8_t* b);
 
+
+
 boot_block_t* fs_boot_block = NULL;
 inode_t* fs_inode_arr = NULL;
 uint32_t fs_data_blocks = NULL;
 
+
 uint32_t directory_index = 0;   //index to iterate through subsequent directory_read calls
 
-fd_arr_entry_t fd_arr[MAXFILES_PER_TASK];
 
 void init_ext2_filesys(uint32_t boot_block_start) {
     fs_boot_block = (boot_block_t*) boot_block_start;     // cast boot block pointer to struct pointer
     fs_inode_arr = (inode_t*)((uint32_t)fs_boot_block + sizeof(boot_block_t));  // start of inode array in memory after boot block
     fs_data_blocks = (uint32_t)fs_inode_arr + (sizeof(inode_t) * (fs_boot_block->inode_count));  // start of data blocks in memory
-    // initialize fd_arr?? (jump table, etc.)
-    SET_FD_FLAG_INUSE(fd_arr[0].flags); // stdin
-    SET_FD_FLAG_INUSE(fd_arr[1].flags); // stdout
+
 }
 
 
@@ -40,6 +40,7 @@ int32_t read_dentry_by_name(const int8_t* fname, dentry_t* dentry){
     }
     return read_dentry_by_index(dir, dentry);
 }
+
 
 /* read_dentry_by_index
 * DESCRIPTION:  reads each element of the directory entry at the given index in the boot block
@@ -128,85 +129,15 @@ int32_t read_data(uint32_t inode, uint32_t offset, int8_t* buf, int32_t length){
 }
 
 
-/* int32_t directory_open(uint32_t)
-* DESCRIPTION:  opens a directory file based on the name
-* INPUTS:       const int8_t* fname - name of the directory to open
-* OUTPUTS:      none
-* RETURN VALUE: returns 0, already in directory
-* SIDE EFFECTS: none
-*/
-int32_t directory_open(const int8_t* fname) {
-    if (fname == NULL) return -1;
-    directory_index = 0;
-    return 0;
+int32_t fs_close(int32_t fd) {
+    if (fd <= 1 || fd >= MAXFILES_PER_TASK || !FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[fd].flags)) // can't close stdin/stdout (or invalid fd)
+	    return -1;
+    UNSET_FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[fd].flags);
+    return pcb_arr[curr_pid]->fd_arr[fd].ops_jtab.close(fd);
 }
 
 
-/* int32_t directory_read(int8_t*, int8_t*, uint32_t)
-* DESCRIPTION:  Read next entry in the current directory.
-* INPUTS:       fd      - name of the directory to open
-*               buf     - the buffer to write contents to
-*               nbytes  - number of bytes to read
-*               
-* OUTPUTS:      none
-* RETURN VALUE: return 0, don't need to read directory
-* SIDE EFFECTS: 
-*/
-int32_t directory_read(int32_t fd, int8_t* buf, int32_t nbytes){
-    if (buf == NULL) return -1;
-    dentry_t directory_file; 
-    /* Checks if end of directory is reached on read and returns 0*/
-    if(directory_index >= fs_boot_block->direntry_count){
-        return 0;
-    }
-
-    /* Populates the buffer with the corresponding file name at the given directory index form the given index*/
-    if(read_dentry_by_index(directory_index, &directory_file) == 0) {
-        memcpy(buf, directory_file.filename, FILENAME_LEN);
-    } else {
-        return -1;
-    }
-
-    /* Increments the variable that keeps track of the position in the director for subsequent reads*/
-    directory_index++;
-
-    /* returns the length of the filename*/
-    return strlen(buf);
-}
-
-
-/* directory_write
-* DESCRIPTION:  write function for directories in file system, does nothing in our OS
-* INPUTS:       none
-* OUTPUTS:      returns whether or not write was successful
-* RETURN VALUE: -1
-* SIDE EFFECTS: none
-*/
-int32_t directory_write(int32_t fd, const void* buf, int32_t nbytes) {
-    if (buf == NULL) return -1;
-    return -1;
-}
-
-/* directory_close
-* DESCRIPTION:  closes the directory, does nothing in our OS
-* INPUTS:       none
-* OUTPUTS:      returns whether or close was successful
-* RETURN VALUE: 0 if file opened, -1 otherwise.
-* SIDE EFFECTS: none
-*/
-int32_t directory_close(int32_t fd) {
-    directory_index = 0;
-    return 0;
-}
-
-/* file_open
-* DESCRIPTION:  opens the file
-* INPUTS:       const int8_t* fname - file name
-* OUTPUTS:      returns whether or file open was successful
-* RETURN VALUE: 0 if file opened, -1 otherwise.
-* SIDE EFFECTS: none
-*/
-int32_t file_open(const int8_t* fname) {
+int32_t fs_open(const int8_t* fname) {
     if (fname == NULL) return -1;
     int32_t open_fd = find_open_fd();
     if (open_fd < 0) {
@@ -220,12 +151,126 @@ int32_t file_open(const int8_t* fname) {
     }
 
     // fill entry in fd array
-    SET_FD_FLAG_INUSE(fd_arr[open_fd].flags);
-    fd_arr[open_fd].ops_jtab = NULL; // CHANGE THIS LATER
-    fd_arr[open_fd].inode_num = opened_file.inode_num;
-    fd_arr[open_fd].read_pos = 0;
+    SET_FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[open_fd].flags);
+    pcb_arr[curr_pid]->fd_arr[open_fd].inode_num = opened_file.inode_num;
+    pcb_arr[curr_pid]->fd_arr[open_fd].read_pos = 0;
 
+    // fill operations jump table
+    switch (opened_file.filetype) {
+	case (DEVICE):
+	    FILL_RTC_OPS(pcb_arr[curr_pid]->fd_arr[open_fd].ops_jtab);
+	    res = rtc_open(fname);
+	    break;
+	case (DIRECTORY):
+	    FILL_DIR_OPS(pcb_arr[curr_pid]->fd_arr[open_fd].ops_jtab);
+	    res = directory_open(fname);
+	    break;
+	case (FILE):
+	    FILL_FILE_OPS(pcb_arr[curr_pid]->fd_arr[open_fd].ops_jtab);
+	    res = file_open(fname);
+	    break;
+    }
+    if (res < 0) {
+	return -1;
+    }
     return open_fd;
+}
+
+
+int32_t fs_read(int32_t fd, void* buf, int32_t nbytes) {
+    if (buf == NULL || fd < 0 || fd >= MAXFILES_PER_TASK || !FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[fd].flags)) return -1;
+    return pcb_arr[curr_pid]->fd_arr[fd].ops_jtab.read(fd, buf, nbytes);
+}
+
+
+int32_t fs_write(int32_t fd, const void* buf, int32_t nbytes) {
+    if (buf == NULL || fd < 0 || fd >= MAXFILES_PER_TASK || !FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[fd].flags)) return -1;
+    return pcb_arr[curr_pid]->fd_arr[fd].ops_jtab.write(fd, buf, nbytes);
+}
+
+
+/* int32_t directory_open(uint32_t)
+* DESCRIPTION:  opens a directory file based on the name
+* INPUTS:       const int8_t* fname - name of the directory to open
+* OUTPUTS:      none
+* RETURN VALUE: returns 0, already in directory
+* SIDE EFFECTS: none
+*/
+int32_t directory_open(const int8_t* fname) {
+    // does nothing... nothing special needs to be done for directories
+    return 0;
+}
+
+
+/* int32_t directory_read(int8_t*, int8_t*, uint32_t)
+* DESCRIPTION:  Read next entry in the current directory.
+* INPUTS:       fd      - fd of directory to read
+*               buf     - the buffer to write contents to
+*               nbytes  - number of bytes to read
+*               
+* OUTPUTS:      none
+* RETURN VALUE: return number of bytes read, return -1 on error
+* SIDE EFFECTS: 
+*/
+int32_t directory_read(int32_t fd, void* buf, int32_t nbytes){
+    if (buf == NULL || fd < 0 || fd >= MAXFILES_PER_TASK || !FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[fd].flags)) return -1;
+    dentry_t directory_file;
+    /* Checks if end of directory is reached on read and returns 0*/
+    if (pcb_arr[curr_pid]->fd_arr[fd].read_pos >= fs_boot_block->direntry_count) {
+        return 0;
+    }
+
+    /* Populates the buffer with the corresponding file name at the given directory index form the given index*/
+    if(read_dentry_by_index(pcb_arr[curr_pid]->fd_arr[fd].read_pos, &directory_file) == 0) {
+        strncpy(buf, directory_file.filename, FILENAME_LEN);
+    } else {
+        return -1;
+    }
+
+    /* Increments the variable that keeps track of the position in the directory for subsequent reads*/
+    pcb_arr[curr_pid]->fd_arr[fd].read_pos++;
+
+    /* returns the length of the filename */
+    return FILENAME_LEN;
+}
+
+
+/* directory_write
+* DESCRIPTION:  write function for directories in file system, does nothing in our OS
+* INPUTS:       ignore
+* OUTPUTS:      none
+* RETURN VALUE: -1
+* SIDE EFFECTS: none
+*/
+int32_t directory_write(int32_t fd, const void* buf, int32_t nbytes) {
+    return -1;
+}
+
+
+/* directory_close
+* DESCRIPTION:  closes the directory, does nothing in our OS
+* INPUTS:       none
+* OUTPUTS:      returns whether or close was successful
+* RETURN VALUE: 0 if file opened, -1 otherwise.
+* SIDE EFFECTS: none
+*/
+int32_t directory_close(int32_t fd) {
+    if (fd <= 1 || fd >= MAXFILES_PER_TASK || !FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[fd].flags)) // can't close stdin/stdout (or invalid fd)
+	return -1;
+    return 0;
+}
+
+
+/* file_open
+* DESCRIPTION:  opens the file
+* INPUTS:       const int8_t* fname - file name
+* OUTPUTS:      returns whether or file open was successful
+* RETURN VALUE: 0 if file opened, -1 otherwise.
+* SIDE EFFECTS: none
+*/
+int32_t file_open(const int8_t* fname) {
+    // does nothing... nothing special to do for files
+    return 0;
 }
 
 
@@ -237,9 +282,9 @@ int32_t file_open(const int8_t* fname) {
  * OUTPUTS: none
  * RETURNS: If the initial read position is past EOF return 0, -1 if read failrs, else the number of bytes read.
  */
-int32_t file_read(int32_t fd, int8_t* buf, int32_t nbytes) {
-    if (buf == NULL) return -1;
-    uint32_t inode = fd_arr[fd].inode_num;
+int32_t file_read(int32_t fd, void* buf, int32_t nbytes) {
+    if (buf == NULL || fd < 0 || fd >= MAXFILES_PER_TASK || !FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[fd].flags)) return -1;
+    uint32_t inode = pcb_arr[curr_pid]->fd_arr[fd].inode_num;
     uint32_t file_size = fs_inode_arr[inode].length; // size of file in bytes
     
     /* if 0 bytes were given to read, return 0 */
@@ -247,12 +292,12 @@ int32_t file_read(int32_t fd, int8_t* buf, int32_t nbytes) {
         return 0;
     }
     /* if curr read pos beyond end of file return 0 */
-    if (fd_arr[fd].read_pos >= file_size) {
-	    return 0;
+    if (pcb_arr[curr_pid]->fd_arr[fd].read_pos >= file_size) {
+	return 0;
     }
     
     /* Reads data and returns number of bytes read if successful */
-    int32_t read_bytes = read_data(inode, fd_arr[fd].read_pos, buf, nbytes);
+    int32_t read_bytes = read_data(inode, pcb_arr[curr_pid]->fd_arr[fd].read_pos, buf, nbytes);
     if (read_bytes == -1) { // read failed
         return -1;
     }
@@ -260,11 +305,11 @@ int32_t file_read(int32_t fd, int8_t* buf, int32_t nbytes) {
     /* Increments the variable that keeps track of the position in the file for subsequent reads*/
     if (read_bytes == 0) {
         // reached end of file. Set file position past end of file
-        read_bytes = file_size - fd_arr[fd].read_pos;
-        fd_arr[fd].read_pos = file_size+1;
+        read_bytes = file_size - pcb_arr[curr_pid]->fd_arr[fd].read_pos;
+        pcb_arr[curr_pid]->fd_arr[fd].read_pos = file_size+1;
     } else {
         // otherwise move read position forward
-        fd_arr[fd].read_pos += read_bytes;
+        pcb_arr[curr_pid]->fd_arr[fd].read_pos += read_bytes;
     }
     return read_bytes;
 }
@@ -290,9 +335,7 @@ int32_t file_write(int32_t fd, const void* buf, int32_t nbytes) {
 * SIDE EFFECTS: none
 */
 int32_t file_close(int32_t fd) {
-    if (fd == 0 || fd == 1)
-	    return -1;
-    UNSET_FD_FLAG_INUSE(fd_arr[fd].flags);
+    if (fd < 0 || fd >= MAXFILES_PER_TASK) return -1;
     return 0;
 }
 
@@ -324,7 +367,7 @@ int32_t find_file_index(const int8_t* fname) {
 int32_t find_open_fd() {
     int i;
     for (i = 0; i < MAXFILES_PER_TASK; ++i) {
-        if (!FD_FLAG_INUSE(fd_arr[i].flags)) {
+        if (!FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[i].flags)) {
             return i;
         }
     }
@@ -344,7 +387,6 @@ int8_t filenames_equal(const int8_t* a, const int8_t* b) {
 }
 
 
-
 /* get_file_size
 * DESCRIPTION:  gets file size
 * INPUTS:       int32_t fd - file descriptor pointing to open file
@@ -353,5 +395,31 @@ int8_t filenames_equal(const int8_t* a, const int8_t* b) {
 * SIDE EFFECTS: none
 */
 uint32_t get_file_size(int32_t fd) {
-    return fs_inode_arr[fd_arr[fd].inode_num].length;
+    return fs_inode_arr[pcb_arr[curr_pid]->fd_arr[fd].inode_num].length;
+}
+
+
+////////////// BAD CALLS (dummy functions) ////////////////
+
+/* badcall_read
+ * DESCRIPTION: A bad function call.
+ * INPUTS:      ignore
+ * OUTPUTS:     none
+ * RETURNS:     -1
+ * SIDE EFFECTS: none
+ */
+int32_t badcall_read(int32_t fd, void* buf, int32_t nbytes) {
+	return -1;
+}
+
+int32_t badcall_write(int32_t fd, const void* buf, int32_t nbytes) {
+	return -1;
+}
+
+int32_t badcall_open(const int8_t* fname) {
+	return -1;
+}
+
+int32_t badcall_close(int32_t fd) {
+	return -1;
 }

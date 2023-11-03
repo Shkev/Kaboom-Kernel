@@ -1,25 +1,31 @@
 #include "idt_handlers.h"
+#include "syscalls.h"
 #include "../lib.h"
 #include "../i8259.h"
+#include "process.h"
 
-#define PRINT_HANDLER(task) printf("EXCEPTION: " task "error")
+#define PRINT_HANDLER(task) printf("EXCEPTION: " task "error\n")
 
-// static void fill_buffer(int8_t* buf, int8_t val, uint32_t nbytes);
+// keep track of whether RTC has had an interrupt
+volatile uint32_t rtc_flag = 0;
 
-uint32_t rtc_flag = 0;
+int enterflag = 0;
+int keybuffbackup = 0;
 
 char keybuff[KEYBUF_MAX_SIZE];
+
+
 
 /*divide_zero_handler()
 * DESCRIPTION: Prints the divide by zero exception and emulates blue screen of death by infinitly looping
 * INPUTS: none
-* OUTPUTS: none
+* OUTPUTS: prints the exception
 * RETURN VALUE: none
 * SIDE EFFECTS: the problem
 */
 void divide_zero_handler() {
-    PRINT_HANDLER("divide_zero");
-    while(1);
+    //PRINT_HANDLER("divide_zero");
+    sys_halt((uint8_t) 69);
 }
 
 /*debug_handler()
@@ -30,8 +36,8 @@ void divide_zero_handler() {
 * SIDE EFFECTS: the problem
 */
 void debug_handler() {
-    PRINT_HANDLER("debug");
-    while(1);
+    //PRINT_HANDLER("debug");
+    sys_halt((uint8_t) 69);
 }
 
 /*nmi_handler()
@@ -42,8 +48,8 @@ void debug_handler() {
 * SIDE EFFECTS: the problem
 */
 void nmi_handler() {
-    PRINT_HANDLER("nmi");
-    while(1);
+    //PRINT_HANDLER("nmi");
+    sys_halt((uint8_t) 69);
 }
 
 /*breakpoint_handler()
@@ -54,8 +60,8 @@ void nmi_handler() {
 * SIDE EFFECTS: the problem
 */
 void breakpoint_handler() {
-    PRINT_HANDLER("breakpoint");
-    while(1);
+    //PRINT_HANDLER("breakpoint");
+    sys_halt((uint8_t) 69);
 }
 
 /*overflow_handler()
@@ -66,8 +72,8 @@ void breakpoint_handler() {
 * SIDE EFFECTS: the problem
 */
 void overflow_handler() {
-    PRINT_HANDLER("overflow");
-    while(1);
+    //PRINT_HANDLER("overflow");
+    sys_halt((uint8_t) 69);
 }
 
 /*bnd_rng_exceed()
@@ -78,8 +84,8 @@ void overflow_handler() {
 * SIDE EFFECTS: the problem
 */
 void bnd_rng_exceed_handler() {
-    PRINT_HANDLER("bnd_rng_exceed");
-    while(1);
+    //PRINT_HANDLER("bnd_rng_exceed");
+    sys_halt((uint8_t) 69);
 }
 
 /*invalid_opcode_handler()
@@ -90,8 +96,8 @@ void bnd_rng_exceed_handler() {
 * SIDE EFFECTS: the problem
 */
 void invalid_opcode_handler() {
-    PRINT_HANDLER("invalid_opcode");
-    while(1);
+    //PRINT_HANDLER("invalid_opcode");
+    sys_halt((uint8_t) 69);
 }
 
 /*device_na_handler()
@@ -102,8 +108,8 @@ void invalid_opcode_handler() {
 * SIDE EFFECTS: the problem
 */
 void device_na_handler() {
-    PRINT_HANDLER("device_na");
-    while(1);
+    //PRINT_HANDLER("device_na");
+    sys_halt((uint8_t) 69);
 }
 
 /*double_fault_handler()
@@ -114,8 +120,8 @@ void device_na_handler() {
 * SIDE EFFECTS: the problem
 */
 void double_fault_handler() {
-    PRINT_HANDLER("double_fault");
-    while(1);
+    //PRINT_HANDLER("double_fault");
+    sys_halt((uint8_t) 69);
 }
 
 /*seg_overrun_handler()
@@ -126,8 +132,8 @@ void double_fault_handler() {
 * SIDE EFFECTS: the problem
 */
 void seg_overrun_handler() {
-    PRINT_HANDLER("seg_overrun");
-    while(1);
+    //PRINT_HANDLER("seg_overrun");
+    sys_halt((uint8_t) 69);
 }
 
 /*invalid_tss_handler()
@@ -138,8 +144,8 @@ void seg_overrun_handler() {
 * SIDE EFFECTS: the problem
 */
 void invalid_tss_handler() {
-    PRINT_HANDLER("invalid_tss");
-    while(1);
+    //PRINT_HANDLER("invalid_tss");
+    sys_halt((uint8_t) 69);
 }
 
 /*seg_nopres_handler()
@@ -150,8 +156,8 @@ void invalid_tss_handler() {
 * SIDE EFFECTS: the problem
 */
 void seg_nopres_handler() {
-    PRINT_HANDLER("seg_nopres");
-    while(1);
+    //PRINT_HANDLER("seg_nopres");
+    sys_halt((uint8_t) 69);
 }
 
 /*stack_segfault_handler()
@@ -162,8 +168,8 @@ void seg_nopres_handler() {
 * SIDE EFFECTS: the problem
 */
 void stack_segfault_handler() {
-    PRINT_HANDLER("stack_segfault");
-    while(1);
+    //PRINT_HANDLER("stack_segfault");
+    sys_halt((uint8_t) 69);
 }
 
 /*gen_protect_flt_handler()
@@ -174,8 +180,8 @@ void stack_segfault_handler() {
 * SIDE EFFECTS: the problem
 */
 void gen_protect_flt_handler() {
-    PRINT_HANDLER("gen_protect_flt");
-    while(1);
+    //PRINT_HANDLER("gen_protect_flt");
+    sys_halt((uint8_t) 69);
 }
 
 /*pg_fault_handler()
@@ -187,7 +193,8 @@ void gen_protect_flt_handler() {
 */
 void pg_fault_handler() {
     PRINT_HANDLER("pg");
-    while(1);
+    exception_flag = 1;
+    sys_halt(1);
 }
 
 /*x87_fpe_handler()
@@ -198,8 +205,8 @@ void pg_fault_handler() {
 * SIDE EFFECTS: the problem
 */
 void x87_fpe_handler() {
-    PRINT_HANDLER("x87_fpe");
-    while(1);
+    //PRINT_HANDLER("x87_fpe");
+    sys_halt((uint8_t) 69);
 }
 
 /*align_check_handler()
@@ -210,8 +217,8 @@ void x87_fpe_handler() {
 * SIDE EFFECTS: the problem
 */
 void align_check_handler() {
-    PRINT_HANDLER("align_check");
-    while(1);
+    //PRINT_HANDLER("align_check");
+    sys_halt((uint8_t) 69);
 }
 
 /*machine_check_handler()
@@ -222,8 +229,8 @@ void align_check_handler() {
 * SIDE EFFECTS: the problem
 */
 void machine_check_handler() {
-    PRINT_HANDLER("machine_check");
-    while(1);
+    //PRINT_HANDLER("machine_check");
+    sys_halt((uint8_t) 69);
 }
 
 /*simd_fpe_handler()
@@ -234,8 +241,8 @@ void machine_check_handler() {
 * SIDE EFFECTS: the problem
 */
 void simd_fpe_handler() {
-    PRINT_HANDLER("simd_fpe");
-    while(1);
+    //PRINT_HANDLER("simd_fpe");
+    sys_halt((uint8_t) 69);
 }
 
 /*virt_handler()
@@ -246,8 +253,8 @@ void simd_fpe_handler() {
 * SIDE EFFECTS: the problem
 */
 void virt_handler() {
-    PRINT_HANDLER("virt");
-    while(1);
+    //PRINT_HANDLER("virt");
+    sys_halt((uint8_t) 69);
 }
 
 /*ctl_protect_handler()
@@ -258,8 +265,8 @@ void virt_handler() {
 * SIDE EFFECTS: the problem
 */
 void ctl_protect_handler() {
-    PRINT_HANDLER("ctl_protect");
-    while(1);
+    //PRINT_HANDLER("ctl_protect");
+    sys_halt((uint8_t) 69);
 }
 
 /*hpi_handler()
@@ -270,11 +277,12 @@ void ctl_protect_handler() {
 * SIDE EFFECTS: the problem
 */
 void hpi_handler() {
-    PRINT_HANDLER("hpi");
-    while(1);
+    //PRINT_HANDLER("hpi");
+    sys_halt((uint8_t) 69);
 }
 
-/*vmm_comm_handler()
+
+/* vmm_comm_handler()
 * DESCRIPTION: Prints the exception and emulates blue screen of death by infinitly looping
 * INPUTS: none
 * OUTPUTS: none
@@ -282,11 +290,12 @@ void hpi_handler() {
 * SIDE EFFECTS: the problem
 */
 void vmm_comm_handler() {
-    PRINT_HANDLER("vmm_comm");
-    while(1);
+    //PRINT_HANDLER("vmm_comm");
+    sys_halt((uint8_t) 69);
 }
 
-/*security_handler()
+
+/* security_handler()
 * DESCRIPTION: Prints the security handler exception and emulates blue screen of death by infinitly looping
 * INPUTS: none
 * OUTPUTS: none
@@ -294,12 +303,14 @@ void vmm_comm_handler() {
 * SIDE EFFECTS: the problem
 */
 void security_handler() {
-    PRINT_HANDLER("security");
-    while(1);
+    //PRINT_HANDLER("security");
+    sys_halt((uint8_t)69);
 }
 
+
 /* Interrupt Handlers */
-/*rtc_handler()
+
+/* rtc_handler()
 * DESCRIPTION: processes rtc interrupts
 * INPUTS: none
 * OUTPUTS: none
@@ -322,18 +333,13 @@ void rtc_handler() {
     sti();
 }
 
-void system_call_handler() {
-    PRINT_HANDLER("system call");
-    while(1);
-}
 
-
-int shift = 0;
-int capslock = 0;
-int backspace = 0;
-int tab = 0;
-int ctrl = 0;
-int keybuffcount = 0;
+static int shift = 0;
+static int capslock = 0;
+static int backspace = 0;
+static int tab = 0;
+static int ctrl = 0;
+static int keybuffcount = 0;
 
 /*kbd_handler()
 * DESCRIPTION: processes keyboard interrupts
@@ -437,8 +443,8 @@ void kbd_handler() {
     {
         if(enterflag == 1) 
         {
+            keybuff[keybuffcount++] = '\n';
             putc('\n');
-            // keybuff[keybuffcount] = '\n';
             keybuffbackup = keybuffcount;
             keybuffcount = 0; 
         } else if (backspace == 1)
@@ -471,6 +477,7 @@ void kbd_handler() {
                 keybuff[keybuffcount++] = ' ';
             }
         } else if (enterflag == 1) {
+            keybuff[keybuffcount++] = '\n';
             putc('\n');
             keybuffbackup = keybuffcount;
             keybuffcount = 0;   
@@ -485,10 +492,22 @@ void kbd_handler() {
                 } else if (((scan_code == LEFTSHIFT_PRESSED) || (scan_code == RIGHTSHIFT_PRESSED)) && (shift == 0)){
                     shift = 1;
                 } else if ((ctrl == 1) && (scan_code == L_PRESS)) {
+		    // CTRL-L logic to clear screen
                     clear();
                     fill_buffer(keybuff, '\0', KEYBUF_MAX_SIZE);
                     keybuffcount = 0;
-                } else {
+                } else if ((ctrl == 1) && (scan_code == C_PRESS)) {
+		    // CTRL-C logic to halt current program
+		    fill_buffer(keybuff, '\0', KEYBUF_MAX_SIZE);
+                    keybuffcount = 0;
+		    if (curr_pid >= 0) { // if there is a process running terminate it
+			send_eoi(1);
+			sti();
+			// halt acts like a soft interrupt here
+			sys_halt(1);
+		    }
+		}
+		else {
                     // num pad support... does nothing for now but adds a long list of ifs :)
                     if (scan_code == LEFTALT_PRESSED) {
                         // left alt press
@@ -611,14 +630,6 @@ void kbd_handler() {
 }
 
 
-/* Interrupt Handlers */
-/*rtc_handler()
-* DESCRIPTION: processes rtc interrupts
-* INPUTS: none
-* OUTPUTS: none
-* RETURN VALUE: none
-* SIDE EFFECTS: handles rtc, sends EOI when done
-*/
 void fill_buffer(int8_t* buf, int8_t val, uint32_t nbytes) {
     int i;
     for (i = 0; i < nbytes; ++i) {

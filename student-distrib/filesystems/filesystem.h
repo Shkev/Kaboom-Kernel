@@ -3,17 +3,54 @@
 
 #include "../types.h"
 #include "../lib.h"
+#include "../rtcdrivers/rtcdrivers.h"
+#include "../terminaldrivers/terminaldriver.h"
+#include "../interrupts/process.h"
+
+#define STDIN_FD 0
+#define STDOUT_FD 1
 #define BOOT_BLOCK_RESERVED 52
 #define DIR_ENTRY_RESERVED  24
 #define FILES_IN_DIR    63
 #define NUM_DATA_BLOCKS 1023
 #define FILENAME_LEN    32
 #define DATABLOCK_SIZE 4096	/* size of file data blocks in memory */
-#define MAXFILES_PER_TASK 8
 
 #define FD_FLAG_INUSE(flag) ((flag & 0x1) == 1)
 #define SET_FD_FLAG_INUSE(flag) flag |= 0x1
 #define UNSET_FD_FLAG_INUSE(flag) flag &= 0xFFFFFFFE
+
+/* jumptable initialization macros*/
+#define FILL_RTC_OPS(jtab)   \
+	jtab.read = &rtc_read   ;\
+	jtab.write = &rtc_write ;\
+	jtab.open = &rtc_open   ;\
+	jtab.close = &rtc_close
+
+#define FILL_FILE_OPS(jtab)   \
+	jtab.read = &file_read   ;\
+	jtab.write = &file_write ;\
+	jtab.open = &file_open   ;\
+	jtab.close = &file_close
+
+#define FILL_DIR_OPS(jtab)         \
+	jtab.read = &directory_read   ;\
+	jtab.write = &directory_write ;\
+	jtab.open = &directory_open   ;\
+	jtab.close = &directory_close
+
+#define FILL_STDIN_OPS(jtab)         \
+	jtab.read = &terminal_read      ;\
+	jtab.write = &badcall_write     ;\
+	jtab.open = &badcall_open       ;\
+	jtab.close = &badcall_close
+
+#define FILL_STDOUT_OPS(jtab)         \
+	jtab.read = &badcall_read        ;\
+	jtab.write = &terminal_write     ;\
+	jtab.open = &badcall_open        ;\
+	jtab.close = &badcall_close
+
 
 enum filetype {
     DEVICE = 0,
@@ -47,20 +84,6 @@ typedef struct inode {
 } inode_t;
 #pragma pack()
 
-/* Stores info about a file in the file descriptor array
- * Note that read_pos is interpretted differently for each file type.
- * For directories it indicates 1 + the number of directory entrie that have been read so far. */
-typedef struct fd_arr_entry {
-    uint32_t ops_jtab;		/* ptr to jmp table containing type-specific open,read,write,close fncs */
-    uint32_t inode_num;		/* inode number for the file */
-    uint32_t read_pos;		/* offset (in bytes) from start of file to start reading from */
-    uint32_t flags;		/* first bit 1 indicates in use, 0 indicates not in use. */
-} fd_arr_entry_t;
-
-
-/* file descriptor array. A given file descriptor indexes into this array to get info about the file */
-//extern fd_arr_entry_t fd_arr[MAXFILES_PER_TASK];
-
 
 ///////////// Pointers to fileystem data in memory /////////
 
@@ -73,9 +96,6 @@ extern inode_t* fs_inode_arr;
 /* pointer to the start of data blocks in memory. i-th block can be accessed by data_blocks[i] */
 extern uint32_t fs_data_blocks;
 
-/* array containing file info indexed by file descriptor */
-extern fd_arr_entry_t fd_arr[MAXFILES_PER_TASK];
-
 /////////// Functions for filesystem API ///////////////
 
 extern int32_t read_dentry_by_name(const int8_t* fname, dentry_t* dentry);
@@ -86,19 +106,31 @@ extern int32_t read_data(uint32_t inode, uint32_t offset, int8_t* buf, int32_t l
 
 extern void init_ext2_filesys(uint32_t boot_block_start);
 
+/* Generic system calls for fileystem */
+extern int32_t fs_open(const int8_t* fname);
+extern int32_t fs_close(int32_t fd);
+extern int32_t fs_read(int32_t fd, void* buf, int32_t nbytes);
+extern int32_t fs_write(int32_t fd, const void* buf, int32_t nbytes);
+
 /* System call functions for directories */
 extern int32_t directory_open(const int8_t* fname);
-extern int32_t directory_read(int32_t fd, int8_t* buf, int32_t nbytes);
+extern int32_t directory_read(int32_t fd, void* buf, int32_t nbytes);
 extern int32_t directory_write(int32_t fd, const void* buf, int32_t nbytes);
 extern int32_t directory_close(int32_t fd);
 
 /* System call functions for files */
-extern int32_t file_open(const int8_t* fname);
-extern int32_t file_read(int32_t fd, int8_t* buf, int32_t nbytes);
+extern int32_t file_open(const int8_t* name);
+extern int32_t file_read(int32_t fd, void* buf, int32_t nbytes);
 extern int32_t file_write(int32_t fd, const void* buf, int32_t nbytes);
 extern int32_t file_close(int32_t fd);
 
+/* Bad call functions*/
+extern int32_t badcall_read(int32_t, void*, int32_t);
+extern int32_t badcall_write(int32_t, const void*, int32_t);
+extern int32_t badcall_open(const int8_t*);
+extern int32_t badcall_close(int32_t);
+
 // other helpers
-extern uint32_t get_file_size(int32_t fd);
+extern inline uint32_t get_file_size(int32_t fd);
 
 #endif  //FILESYS_H

@@ -5,10 +5,10 @@
 static int32_t write_rtc_rate(uint32_t rate);
 
 /* check if input is power of 2 */
-static uint8_t is_power_of_2(uint32_t);
+static uint8_t is_power_of_2(int32_t);
 
 /* compute RTC rate corresponding to given frequency */
-static uint32_t compute_rtc_rate_from_freq(uint32_t freq);
+static uint32_t compute_rtc_rate_from_freq(int32_t freq);
 
 /* rtc_open(uint8_t*)
  * 
@@ -18,8 +18,7 @@ static uint32_t compute_rtc_rate_from_freq(uint32_t freq);
  * RETURNS:       0
  * SIDE EFFECTS:  Changes RTC rate (value in register A)
  */
-int32_t rtc_open(const uint8_t* fname) {
-    //if (fname == NULL) return -1;
+int32_t rtc_open(const int8_t* fname) {
     const uint8_t init_rate = 0x0F;           /* set frequency rate to 2 */
     write_rtc_rate(init_rate);
     return 0;
@@ -54,7 +53,7 @@ int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes) {
  */
 int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes) {
     if (buf == NULL) return -1;
-    uint32_t write_freq =  (uint32_t)buf;     /* convert write value to integer */
+    int32_t write_freq =  *((int32_t *) buf);     /* convert write value to integer */
     if (write_freq > 1024 || !is_power_of_2(write_freq)) {
 	    return -1;
     }
@@ -115,7 +114,7 @@ int32_t write_rtc_rate(uint32_t rate) {
  * RETURNS;         0 if n not a power of 2, nonzero value otherwise
  * SIDE EFFECTS:    none
  */
-uint8_t is_power_of_2(uint32_t n) {
+uint8_t is_power_of_2(int32_t n) {
     return (n & (n - 1)) == 0;
 }
 
@@ -127,7 +126,7 @@ uint8_t is_power_of_2(uint32_t n) {
  * RETURNS;         rate for RTC converted from given frequency
  * SIDE EFFECTS:    none
  */
-uint32_t compute_rtc_rate_from_freq(uint32_t freq) {
+uint32_t compute_rtc_rate_from_freq(int32_t freq) {
     /* freq = 2^n = 2^(15 - (rate-1))    =>    rate = 16 - n
      * where n = where first 1 occurs in binary repr of freq */
     uint32_t n = 0;
