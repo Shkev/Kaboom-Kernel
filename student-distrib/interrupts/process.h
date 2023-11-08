@@ -67,5 +67,5 @@ extern int32_t start_process(const int8_t* cmd);
 /* squash a process and return control to parent process */
 extern int32_t squash_process(uint8_t status);
 
-
+extern int32_t get_command_line_args(int8_t* buf, int32_t nbytes);
 #endif /* endif PROCESS_H */

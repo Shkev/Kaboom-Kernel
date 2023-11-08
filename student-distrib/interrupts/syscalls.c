@@ -91,7 +91,7 @@ int32_t sys_close(int32_t fd) {
 /* sys calls not yet implemented*/
 
 int32_t sys_getargs(int8_t* buf, int32_t nbytes) {
-    return 0;
+    return get_command_line_args(buf,nbytes);
 }
 
 int32_t sys_vidmap(int8_t** screen_start) {

@@ -6,6 +6,8 @@
 int32_t curr_pid = -1;
 pcb_t* pcb_arr[NUM_PROCCESS];
 uint32_t return_status = 0;
+/////////GLOBAL BUFFER FOR COMMAND ARGS/////////////
+uint8_t command_line[33];
 
 volatile uint32_t exception_flag = 0;
 static inline void flush_tlb();
@@ -198,10 +200,27 @@ int32_t parse_args(const int8_t* arg, int8_t* const buf) {
 	    buf[idx] = arg[start_pos + idx];
 	    idx++;
     }
+
+
+    start_pos += idx;           //new start position for args
+    while ((arg[start_pos] == ' ') || (arg[start_pos] == '\0')) {
+        if(arg[start_pos]=='\0'){
+            buf[idx] = '\0';
+            return idx;
+        }
+	    start_pos++;
+    }
+
+    uint32_t args_idx = 0;
+    while ((arg[start_pos + args_idx] != ' ') && (arg[start_pos + args_idx] != '\0')) {
+	    command_line[args_idx] = arg[start_pos + args_idx];
+	    args_idx++;
+    }
+
+    command_line[args_idx] = '\0';
     buf[idx] = '\0';
     return idx;
 }
-
 
 /* is_executable
  * DESCRIPTION:     Check if file with given contents is an exectuable
@@ -211,7 +230,7 @@ int32_t parse_args(const int8_t* arg, int8_t* const buf) {
  */
 static inline uint32_t is_executable(const int8_t* file_contents) {
     // check ELF magic number at start of file
-    return (file_contents[0] == 0x7f) && (file_contents[1] == 0x45) && (file_contents[2] == 0x4C) && (file_contents[3] == 0x46);
+    return (file_contents[0] == 0x7f) && (file_contents[1] == 0x45) && (file_contents[2]     == 0x4C) && (file_contents[3] == 0x46);
 }
 
 /* setup_process_page()
@@ -335,4 +354,16 @@ void clear_fd_array(int32_t pid) {
         UNSET_FD_FLAG_INUSE(pcb_arr[pid]->fd_arr[i].flags);		//set flags to unused
         fill_badcall_ops(&pcb_arr[pid]->fd_arr[i].ops_jtab);
     }
+}
+
+int32_t get_command_line_args(int8_t* buf, int32_t nbytes){
+    if(buf==NULL || strlen(command_line) > nbytes) return -1;
+
+    int i = 0;
+    while(command_line[i]!='\0'){
+        buf[i] = command_line[i];
+        i++;
+    }
+    buf[i]= '\0';
+    return 0;
 }
