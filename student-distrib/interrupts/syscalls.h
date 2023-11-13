@@ -3,6 +3,8 @@
 
 #include "../types.h"
 #include "process.h"
+#include "../filesystems/filesystem.h"
+#include "../paging/paging.h"
 
 
 /* system calls referenced by the system call handler. */

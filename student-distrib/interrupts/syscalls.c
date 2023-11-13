@@ -1,5 +1,5 @@
 #include "syscalls.h"
-#include "../filesystems/filesystem.h"
+#include "../lib.h"
 
 /* sys_halt()
  * 
@@ -95,14 +95,28 @@ int32_t sys_getargs(int8_t* buf, int32_t nbytes) {
 }
 
 int32_t sys_vidmap(int8_t** screen_start) {
+    // invalid pointer given; address doesn't point to something in program's addr space
+    if ((screen_start == NULL) || (((uint32_t)screen_start & 0xFFB00000) != PROCESS_IMG_ADDR)) {
+        return -1;
+    }
+    pd[USER_VIDEO_PD_IDX].kb.present = 1;
+    pd[USER_VIDEO_PD_IDX].kb.us = 1;
+    pd[USER_VIDEO_PD_IDX].kb.rw = 1;
+    pd[USER_VIDEO_PD_IDX].kb.pt_baseaddr = ((uint32_t)pt1) >> 12;
+    pt1[USER_VIDEO_PT_IDX].present = 1;
+    pt1[USER_VIDEO_PT_IDX].rw = 1;
+    pt1[USER_VIDEO_PT_IDX].us = 1;
+    pt1[USER_VIDEO_PT_IDX].page_baseaddr = VIDEO >> 12;
+    pcb_arr[curr_pid]->using_video = 1;
+    *screen_start = USER_VIDEO;
     return 0;
 }
 
 int32_t sys_set_handler(int32_t signum, void* handler_addr) {
-    return 0;
+    return -1;
 }
 
 int32_t sys_sigreturn() {
-    return 0;
+    return -1;
 }
 
