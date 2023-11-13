@@ -4,10 +4,10 @@
 #include "syscalls.h"
 
 int32_t curr_pid = -1;
-pcb_t* pcb_arr[NUM_PROCCESS];
+pcb_t* pcb_arr[NUM_PROCESS];
 uint32_t return_status = 0;
 /////////GLOBAL BUFFER FOR COMMAND ARGS/////////////
-uint8_t command_line[33];
+int8_t command_line[CMD_ARG_LEN];
 
 volatile uint32_t exception_flag = 0;
 static inline void flush_tlb();
@@ -55,7 +55,10 @@ int32_t start_process(const int8_t* cmd) {
     // later change to get all arguments to given command as well (probably get_args syscall?)
     int8_t fname[FILENAME_LEN+1] = {'\0'};
 
-    if (get_next_pid(curr_pid) >= NUM_PROCCESS) {
+    // empty command line arg
+    memset(command_line, '\0', CMD_ARG_LEN);
+
+    if (get_next_pid(curr_pid) >= NUM_PROCESS) {
         // max num processes reached, can't create more
         return -1;
     }
@@ -115,6 +118,9 @@ int32_t squash_process(uint8_t status) {
     } else {
         cli();
         clear_fd_array(curr_pid);
+        // disable user video mem for program
+        pd[USER_VIDEO_PD_IDX].kb.present = 0;
+        pt1[USER_VIDEO_PT_IDX].present = 0;
         setup_process_page(pcb_arr[curr_pid]->parent_pid);
         flush_tlb();
         set_process_tss(pcb_arr[curr_pid]->parent_pid);
@@ -200,8 +206,7 @@ int32_t parse_args(const int8_t* arg, int8_t* const buf) {
 	    buf[idx] = arg[start_pos + idx];
 	    idx++;
     }
-
-
+     
     start_pos += idx;           //new start position for args
     while ((arg[start_pos] == ' ') || (arg[start_pos] == '\0')) {
         if(arg[start_pos]=='\0'){
@@ -243,11 +248,7 @@ static inline uint32_t is_executable(const int8_t* file_contents) {
  */
 void setup_process_page(int32_t pid) {
     //Chooses correct page directory entry offset based on page
-    if (pid == 0) {
-	    pd[PROCESS_DIR_IDX].mb.page_baseaddr_bit31_22 = PROCCESS_0_ADDR >> 22;
-    } else {
-	    pd[PROCESS_DIR_IDX].mb.page_baseaddr_bit31_22 = PROCCESS_1_ADDR >> 22;
-    }
+    pd[PROCESS_DIR_IDX].mb.page_baseaddr_bit31_22 = (PROCCESS_0_ADDR + pid * PAGE_SIZE_4MB) >> 22;
 }
 
 /* create_new_pcb()
@@ -266,6 +267,7 @@ pcb_t* create_new_pcb() {
 
     pcb_arr[next_pid]->pid = next_pid;
     pcb_arr[next_pid]->parent_pid = curr_pid;
+    strcpy(pcb_arr[next_pid]->command_line_args, command_line);
 	
     //Initializes fd array for PCB with stdin and stdout
     SET_FD_FLAG_INUSE(pcb_arr[next_pid]->fd_arr[STDIN_FD].flags); // stdin
@@ -279,6 +281,8 @@ pcb_t* create_new_pcb() {
 	
     //Sets PCB status to active
     pcb_arr[next_pid]->state = ACTIVE;
+    // default to video not used
+    pcb_arr[next_pid]->using_video = 0;
 
     return pcb_arr[next_pid];
 }
@@ -357,13 +361,9 @@ void clear_fd_array(int32_t pid) {
 }
 
 int32_t get_command_line_args(int8_t* buf, int32_t nbytes){
-    if(buf==NULL || strlen(command_line) > nbytes) return -1;
-
-    int i = 0;
-    while(command_line[i]!='\0'){
-        buf[i] = command_line[i];
-        i++;
+    if (buf == NULL || strlen(command_line) > nbytes || strlen(command_line) == 0) {
+        return -1;
     }
-    buf[i]= '\0';
+    strncpy(buf, pcb_arr[curr_pid]->command_line_args, CMD_ARG_LEN);
     return 0;
 }
