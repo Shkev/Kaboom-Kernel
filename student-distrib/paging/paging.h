@@ -10,7 +10,53 @@
 #define PROCESS_IMG_ADDR 0x08000000
 #define PROCESS_DIR_IDX (PROCESS_IMG_ADDR >> 22)
 
+#define USER_VIDEO 0x8400000 // right after user program addr block
+#define USER_VIDEO_PD_IDX (USER_VIDEO >> 22)
+#define USER_VIDEO_PT_IDX ((USER_VIDEO >> 12) & 0x3FF)
+
 #ifndef ASM
+
+#define ZERO_PAGEDIR_KB(name)     \
+    name.present = 0       ;\
+    name.rw = 0            ;\
+    name.us = 0            ;\
+    name.pwt = 0           ;\
+    name.pcd = 0           ;\
+    name.accessed = 0      ;\
+    name.avl1 = 0          ;\
+    name.ps0 = 0           ;\
+    name.avl2 = 0          ;\
+    name.pt_baseaddr = 0    \
+
+
+#define ZERO_PAGEDIR_MB(name)         \
+    name.present = 0                 ;\
+    name.rw = 0                      ;\
+    name.us = 0                      ;\
+    name.pwt = 0                     ;\
+    name.pcd = 0                     ;\
+    name.accessed = 0                ;\
+    name.d = 0                       ;\
+    name.ps1 = 0                     ;\
+    name.global = 0                  ;\
+    name.avl = 0                     ;\
+    name.pat = 0                     ;\
+    name.page_baseaddr_bit39_32 = 0  ;\
+    name.rsvd = 0                    ;\
+    name.page_baseaddr_bit31_22 = 0   \
+
+
+#define ZERO_PAGETAB_ENTRY(name)      \
+    name.present = 0                 ;\
+    name.rw = 0                      ;\
+    name.us = 0                      ;\
+    name.pwt = 0                     ;\
+    name.pcd = 0                     ;\
+    name.accessed = 0                ;\
+    name.d = 0                       ;\
+    name.global = 0                  ;\
+    name.avl = 0                     ;\
+    name.page_baseaddr = 0            \
 
 #include "../types.h"
 #include "../lib.h"
@@ -100,6 +146,9 @@ typedef union page_table_entry_t {
 extern pagedir_entry_t pd[PAGEDIR_SIZE] __attribute__((aligned (PAGE_SIZE_4KB)));
 /* one page table for now for first 4MB in mem. Add more as needed by programs */
 extern page_table_entry_t pt0[PAGETABLE_SIZE] __attribute__((aligned (PAGE_SIZE_4KB)));
+
+// added for vidmap
+extern page_table_entry_t pt1[PAGETABLE_SIZE] __attribute__((aligned (PAGE_SIZE_4KB)));
 
 #endif // ASM
 

@@ -5,13 +5,14 @@
 #include "../paging/paging.h"
 
 #define MAXFILES_PER_TASK 8
-#define NUM_PROCCESS 2
+#define NUM_PROCESS 6
 // physical addresses //
 #define PROCCESS_0_ADDR KERNEL_END_ADDR
 #define PROCCESS_1_ADDR 0xC00000
 /////////////////////////
 #define PROGRAM_VIRTUAL_ADDR 0x08048000
 #define PCB_SIZE (1 << 13)
+#define CMD_ARG_LEN 128
 
 
 /* file operations jump table. Different for each file type */
@@ -47,12 +48,14 @@ typedef struct pcb {
     uint32_t stack_ptr;
     uint32_t stack_base_ptr;
     enum task_state state;
+    uint8_t using_video : 1;    /* set to 1 if process using video memory, else 0 by default */
+    int8_t command_line_args[CMD_ARG_LEN];
 } pcb_t;
 
 
 //////////////// Variables to track the current state of running processes ////////////////////
 
-extern pcb_t* pcb_arr[NUM_PROCCESS];
+extern pcb_t* pcb_arr[NUM_PROCESS];
 /* pid of most recently created process */
 extern int32_t curr_pid;
 
@@ -67,5 +70,5 @@ extern int32_t start_process(const int8_t* cmd);
 /* squash a process and return control to parent process */
 extern int32_t squash_process(uint8_t status);
 
-
+extern int32_t get_command_line_args(int8_t* buf, int32_t nbytes);
 #endif /* endif PROCESS_H */

@@ -138,7 +138,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, int8_t* buf, int32_t length){
         return_val = length;
     }
 
-    nblock = (length+offset) / DATABLOCK_SIZE + 1;
+    nblock = (length+(offset % DATABLOCK_SIZE)) / DATABLOCK_SIZE + 1;
     curr_block = offset / 4096;
     curr_byte = offset % 4096;
     write_pos = 0;
@@ -358,7 +358,7 @@ int32_t file_read(int32_t fd, void* buf, int32_t nbytes) {
 /* file_write
 * DESCRIPTION:  write function for files in file system, does nothing
 * INPUTS:       none
-* OUTPUTS:      returns whether or not write was successful
+* OUTPUTS:      returns whether or not write was successful 
 * RETURN VALUE: -1
 * SIDE EFFECTS: none
 */

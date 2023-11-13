@@ -1,47 +1,7 @@
 #include "paging.h"
 
-#define ZERO_PAGEDIR_KB(name)     \
-    name.present = 0       ;\
-    name.rw = 0            ;\
-    name.us = 0            ;\
-    name.pwt = 0           ;\
-    name.pcd = 0           ;\
-    name.accessed = 0      ;\
-    name.avl1 = 0          ;\
-    name.ps0 = 0           ;\
-    name.avl2 = 0          ;\
-    name.pt_baseaddr = 0    \
 
-
-#define ZERO_PAGEDIR_MB(name)         \
-    name.present = 0                 ;\
-    name.rw = 0                      ;\
-    name.us = 0                      ;\
-    name.pwt = 0                     ;\
-    name.pcd = 0                     ;\
-    name.accessed = 0                ;\
-    name.d = 0                       ;\
-    name.ps1 = 0                     ;\
-    name.global = 0                  ;\
-    name.avl = 0                     ;\
-    name.pat = 0                     ;\
-    name.page_baseaddr_bit39_32 = 0  ;\
-    name.rsvd = 0                    ;\
-    name.page_baseaddr_bit31_22 = 0   \
-
-
-#define ZERO_PAGETAB_ENTRY(name)      \
-    name.present = 0                 ;\
-    name.rw = 0                      ;\
-    name.us = 0                      ;\
-    name.pwt = 0                     ;\
-    name.pcd = 0                     ;\
-    name.accessed = 0                ;\
-    name.d = 0                       ;\
-    name.global = 0                  ;\
-    name.avl = 0                     ;\
-    name.page_baseaddr = 0            \
-
+page_table_entry_t pt1[PAGETABLE_SIZE];
 
 /*
  * void paging_init(void):
@@ -84,11 +44,13 @@ void paging_init()
     pd[PROCESS_DIR_IDX].mb.rw = 1;
     pd[PROCESS_DIR_IDX].mb.us = 1;
 
-    // initializing page table 0 for first 4MB block
+    // initializing page table 0 and 1 for first 4MB block
     for (j = 0; j < PAGETABLE_SIZE; j++)
     {
         ZERO_PAGETAB_ENTRY(pt0[j]);
+        ZERO_PAGETAB_ENTRY(pt1[j]);
         pt0[j].rw = 1;
+        pt1[j].rw = 1;
         pt0[j].page_baseaddr = j;
         /* if page not for video memory */
         if (j == (VIDEO >> 12)) { // for video mem
