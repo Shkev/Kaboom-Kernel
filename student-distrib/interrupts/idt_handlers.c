@@ -2,7 +2,6 @@
 #include "syscalls.h"
 #include "../lib.h"
 #include "../i8259.h"
-#include "process.h"
 
 #define PRINT_HANDLER(task) printf("EXCEPTION: " task "error\n")
 
@@ -11,9 +10,6 @@ volatile uint32_t rtc_flag = 0;
 
 int enterflag = 0;
 int keybuffbackup = 0;
-
-char keybuff[KEYBUF_MAX_SIZE];
-
 
 
 /*divide_zero_handler()
@@ -334,11 +330,13 @@ void rtc_handler() {
 }
 
 
+/* flags indicating whether key is pressed */
 static int shift = 0;
 static int capslock = 0;
 static int backspace = 0;
 static int tab = 0;
 static int ctrl = 0;
+static int alt = 0;
 static int keybuffcount = 0;
 
 /*kbd_handler()
@@ -375,13 +373,6 @@ void kbd_handler() {
     '\0', '\0', '\0', '\0', '\0', '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', 
     '.', '\0', '\0', '\0', '\0', '\0'};
 
-    // char schar[] = {'\0', '\0', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', 
-    // '\0', '\0', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n', '\0', 'A', 'S',
-    // 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '\"', '~', '\0', '|', 'Z', 'X', 'C', 'V', 'B', 'N', 
-    // 'M', '<', '>', '?', '\0', '*', '\0', ' ', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', 
-    // '\0', '\0', '\0', '\0', '\0', '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', 
-    // '.', '\0', '\0', '\0', '\0', '\0'};
-
     /* saves the scancode from the keyboard port*/
     uint8_t scan_code;
     scan_code = inb(KBD_PORT);
@@ -392,123 +383,117 @@ void kbd_handler() {
     uint8_t schar_case_key = schar[scan_code];
 
     //SHIFT RELEASE LOGIC
-    if (((scan_code == LSHIFT_RELEASE) || (scan_code == RSHIFT_RELEASE)) && (shift == 1))
-    {
+    if (((scan_code == LSHIFT_RELEASE) || (scan_code == RSHIFT_RELEASE)) && (shift == 1)) {
         shift = 0;
     }
 
     //BACKSPACE LOGIC
-    if (scan_code == BACKSPACE_PRESSED)
-    {
+    if (scan_code == BACKSPACE_PRESSED) {
         backspace = 1;
-    } else if (scan_code == BACKSPACE_RELEASE)
-    {
+    } else if (scan_code == BACKSPACE_RELEASE) {
         // release
         backspace = 0;
     }
 
     //TAB LOGIC
-    if (scan_code == TAB_PRESSED)
-    {
+    if (scan_code == TAB_PRESSED) {
         tab = 1;
-    } else if (scan_code == TAB_RELEASE)
-    {
+    } else if (scan_code == TAB_RELEASE) {
         // release
         tab = 0;
     }
 
     //ENTER LOGIC
-    if (scan_code == ENTER_PRESSED)
-    {
+    if (scan_code == ENTER_PRESSED) {
         enterflag = 1;
-    } else if (scan_code == ENTER_RELEASE)
-    {
+    } else if (scan_code == ENTER_RELEASE) {
         // release
-        fill_buffer(keybuff, '\0', KEYBUF_MAX_SIZE);
+        fill_buffer(terminals[curr_term].keybuf, '\0', KEYBUF_MAX_SIZE);
         enterflag = 0;
     }
 
     //CTRL LOGIC
-    if (scan_code == LEFTCTRL_PRESSED)
-    {
+    if (scan_code == LEFTCTRL_PRESSED) {
         ctrl = 1;
-    } else if (scan_code == LEFTCTRL_RELEASE)
-    {
+    } else if (scan_code == LEFTCTRL_RELEASE) {
         // release
         ctrl = 0;
     }
 
-    //PRESSING LOGIC
-    if (keybuffcount >= KEYBUF_MAX_SIZE-1)
-    {
-        if(enterflag == 1) 
-        {
-            keybuff[keybuffcount++] = '\n';
-            putc('\n');
-            keybuffbackup = keybuffcount;
-            keybuffcount = 0; 
-        } else if (backspace == 1)
-        {
-            putc('\b');
-            keybuff[--keybuffcount] = '\0';
-        } else if ((ctrl == 1) && (scan_code == L_PRESS)) {
-            clear();
-            keybuffcount = 0;
-            fill_buffer(keybuff, '\0', KEYBUF_MAX_SIZE);
-        } 
+    // ALT LOGIC
+    if (scan_code == LEFTALT_PRESSED) {
+        alt = 1;
+    } else if (scan_code == LEFTALT_RELEASE) {
+        alt = 0;
     }
-    else
-    {
-        if (backspace == 1)
-        {
-            if(keybuffcount != 0)
-            {
-                putc('\b');
-                keybuff[--keybuffcount] = '\0';
-            }
-        } else if (tab == 1)
-        {
-            if (keybuffcount < KEYBUF_MAX_SIZE - TABSIZE - 1)
-            {
+    
+    /* keyboard commands logic (ctrl-L, ctrl-C, etc.) */
+    if ((ctrl == 1) && (scan_code == L_PRESS)) {
+	// CTRL-L logic to clear screen
+	clear();
+	keybuffcount = 0;
+	fill_buffer(terminals[curr_term].keybuf, '\0', KEYBUF_MAX_SIZE);
+    } else if ((ctrl == 1) && (scan_code == C_PRESS)) {
+	// CTRL-C logic to halt current program
+	fill_buffer(terminals[curr_term].keybuf, '\0', KEYBUF_MAX_SIZE);
+	keybuffcount = 0;
+	if (curr_pid >= 0) { // if there is a process running terminate it
+	    send_eoi(1);
+	    sti();
+	    // halt acts like a soft interrupt here
+	    sys_halt(1);
+	}
+    } else if (alt == 1) {
+	// ALT commands (switching active terminal)
+	switch (scan_code) {
+	    case (F1_PRESSED):
+		switch_terminal(0);
+		break;
+	    case (F2_PRESSED):
+		switch_terminal(1);
+		break;
+	    case (F3_PRESSED):
+		switch_terminal(2);
+		break;
+	    default:
+		// do nothing
+		break;
+	}
+    }
+    // PRESSING LOGIC (lots of cases to consider...)
+    else if (enterflag == 1) { // if enter pressed
+	terminals[curr_term].keybuf[keybuffcount++] = '\n';
+	putc('\n');
+	keybuffbackup = keybuffcount;
+	keybuffcount = 0; 
+    } else if (backspace == 1) { // handle backspace pressed
+	if (keybuffcount != 0) {
+	    putc('\b');
+	    terminals[curr_term].keybuf[--keybuffcount] = '\0';
+	}
+    } else if (keybuffcount < KEYBUF_MAX_SIZE-1) { // if buffer not full, handle other key presses
+        if (tab == 1) {
+            if (keybuffcount < KEYBUF_MAX_SIZE - TABSIZE - 1) { // if can fit a tab, add it to buffer
                 putc('\t');
-                keybuff[keybuffcount++] = ' ';
-                keybuff[keybuffcount++] = ' ';
-                keybuff[keybuffcount++] = ' ';
-                keybuff[keybuffcount++] = ' ';
+                terminals[curr_term].keybuf[keybuffcount++] = ' ';
+                terminals[curr_term].keybuf[keybuffcount++] = ' ';
+                terminals[curr_term].keybuf[keybuffcount++] = ' ';
+                terminals[curr_term].keybuf[keybuffcount++] = ' ';
             }
-        } else if (enterflag == 1) {
-            keybuff[keybuffcount++] = '\n';
-            putc('\n');
-            keybuffbackup = keybuffcount;
-            keybuffcount = 0;   
         } else {
             if (scan_code <= F12_PRESSED) {
-                if(scan_code == CAPSLOCK_PRESSED && capslock == 0)
-                {
+                if(scan_code == CAPSLOCK_PRESSED && capslock == 0) {
+		    // toggle caps lock on
                     capslock = 1;
-                } else if (scan_code == CAPSLOCK_PRESSED && capslock == 1)
-                {
+                } else if (scan_code == CAPSLOCK_PRESSED && capslock == 1) {
+		    // toggle caps lock off
                     capslock = 0;
-                } else if (((scan_code == LEFTSHIFT_PRESSED) || (scan_code == RIGHTSHIFT_PRESSED)) && (shift == 0)){
+                } else if (((scan_code == LEFTSHIFT_PRESSED) || (scan_code == RIGHTSHIFT_PRESSED)) && (shift == 0)) {
+		    // shift pressed
                     shift = 1;
-                } else if ((ctrl == 1) && (scan_code == L_PRESS)) {
-		    // CTRL-L logic to clear screen
-                    clear();
-                    fill_buffer(keybuff, '\0', KEYBUF_MAX_SIZE);
-                    keybuffcount = 0;
-                } else if ((ctrl == 1) && (scan_code == C_PRESS)) {
-		    // CTRL-C logic to halt current program
-		    fill_buffer(keybuff, '\0', KEYBUF_MAX_SIZE);
-                    keybuffcount = 0;
-		    if (curr_pid >= 0) { // if there is a process running terminate it
-			send_eoi(1);
-			sti();
-			// halt acts like a soft interrupt here
-			sys_halt(1);
-		    }
-		}
+                }
 		else {
-                    // num pad support... does nothing for now but adds a long list of ifs :)
+                    // support for keys we don't need for now... does nothing for now but adds a long list of ifs :)
                     if (scan_code == LEFTALT_PRESSED) {
                         // left alt press
                     } else if (scan_code == LEFTCTRL_PRESSED) {
@@ -587,34 +572,33 @@ void kbd_handler() {
                     
                     } else if (scan_code == F12_PRESSED) {
                         
-                    } else {
-                        if ((capslock == 1 || shift == 1) && ctrl == 0)
-                        {
-                            if (capslock == 1 && shift == 1)
-                            {
+                    } 
+		    else {
+                        if ((capslock == 1 || shift == 1) && ctrl == 0) {
+                            if (capslock == 1 && shift == 1) {
                                 // caps lock pressed and want special char
                                 if ((scan_code == BACKTICK_PRESSED) || (scan_code == ONE_PRESSED) || (scan_code == TWO_PRESSED) || (scan_code == THREE_PRESSED) || (scan_code == FOUR_PRESSED) || (scan_code == FIVE_PRESSED) || (scan_code == SIX_PRESSED) || (scan_code == SEVEN_PRESSED) || (scan_code == EIGHT_PRESSED) || (scan_code == NINE_PRESSED) || (scan_code == ZERO_PRESSED) || (scan_code == MINUS_PRESSED) || (scan_code == EQUAL_PRESSED) || (scan_code == LEFTBRACKET_PRESSED) || (scan_code == RIGHTBRACKET_PRESSED) || (scan_code == BACKSLASH_PRESSED) || (scan_code == SEMICOLON_PRESSED) || (scan_code == SINGLEQUOTE_PRESSED) || (scan_code == COMMA_PRESSED) || (scan_code == PERIOD_PRESSED) || (scan_code == FORWARDSLASH_PRESSED))
                                 {
                                     printf("%c", schar_case_key);
-                                    keybuff[keybuffcount] = schar_case_key;
+                                    terminals[curr_term].keybuf[keybuffcount] = schar_case_key;
                                     keybuffcount++;
                                 } else {
                                     printf("%c", lower_case_key);
-                                    keybuff[keybuffcount] = lower_case_key;
+                                    terminals[curr_term].keybuf[keybuffcount] = lower_case_key;
                                     keybuffcount++;
                                 }
                             } else if (shift == 1) {
                                 printf("%c", schar_case_key);
-                                keybuff[keybuffcount] = schar_case_key;
+                                terminals[curr_term].keybuf[keybuffcount] = schar_case_key;
                                 keybuffcount++;
                             } else {
                                 printf("%c", upper_case_key);
-                                keybuff[keybuffcount] = upper_case_key;
+                                terminals[curr_term].keybuf[keybuffcount] = upper_case_key;
                                 keybuffcount++;
                             }
                         } else {
                             printf("%c", lower_case_key);
-                            keybuff[keybuffcount] = lower_case_key;
+                            terminals[curr_term].keybuf[keybuffcount] = lower_case_key;
                             keybuffcount++;
                         }
                     }

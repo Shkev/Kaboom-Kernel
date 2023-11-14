@@ -128,17 +128,17 @@ typedef union pagedir_entry_t {
 typedef union page_table_entry_t {
     uint32_t val;
     struct {
-		uint32_t present         : 1;
-		uint32_t rw              : 1;
-		uint32_t us              : 1;
-		uint32_t pwt             : 1;
-		uint32_t pcd             : 1;
-		uint32_t accessed        : 1;
-		uint32_t d               : 1;
-		uint32_t pat             : 1;
-		uint32_t global          : 1;
-		uint32_t avl             : 3;
-		uint32_t page_baseaddr   : 20;
+	uint32_t present         : 1;
+	uint32_t rw              : 1;
+	uint32_t us              : 1;
+	uint32_t pwt             : 1;
+	uint32_t pcd             : 1;
+	uint32_t accessed        : 1;
+	uint32_t d               : 1;
+	uint32_t pat             : 1;
+	uint32_t global          : 1;
+	uint32_t avl             : 3;
+	uint32_t page_baseaddr   : 20;
     } __attribute__ ((packed));
 } page_table_entry_t;
 

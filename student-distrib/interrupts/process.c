@@ -3,14 +3,20 @@
 #include "../filesystems/filesystem.h"
 #include "syscalls.h"
 
+/////// EXTERNALLY VISIBLE VARIABLES ////////
 int32_t curr_pid = -1;
+uint8_t curr_term = 0;
 pcb_t* pcb_arr[NUM_PROCESS];
-uint32_t return_status = 0;
-/////////GLOBAL BUFFER FOR COMMAND ARGS/////////////
-int8_t command_line[CMD_ARG_LEN];
+term_info_t terminals[MAX_TERMINAL];
 
 volatile uint32_t exception_flag = 0;
-static inline void flush_tlb();
+/////////////////////////////////////////////
+
+static uint32_t return_status = 0;
+/* buffer for command line arguments */
+static int8_t command_line[CMD_ARG_LEN];
+
+////// HELPER FUNCTIONS ///////
 static inline int32_t get_next_pid(int32_t pid);
 
 /////////////////// SYSTEM EXECUTE HELPERS /////////////////////////////
@@ -63,7 +69,10 @@ int32_t start_process(const int8_t* cmd) {
         return -1;
     }
 
-    (void)parse_args(cmd, fname);
+    res = parse_args(cmd, fname);
+    if (res < 0) {
+	return -1;
+    }
     setup_process_page(get_next_pid(curr_pid));
     flush_tlb();
 
@@ -149,8 +158,6 @@ int32_t squash_process(uint8_t status) {
 }
 
 
-//////////// HELPER FUNCTIONS ///////////////
-
 /* flush_tlb()
  * 
  * DESCRIPTION:   flushes TLB
@@ -159,7 +166,7 @@ int32_t squash_process(uint8_t status) {
  * RETURNS:       none
  * SIDE EFFECTS:  resets cr3 to point to page directory (so nothing should change here), flushes TLB
  */
-static inline void flush_tlb() {
+inline void flush_tlb() {
     asm volatile(
     	"movl %0, %%eax;"
     	"movl %%eax, %%cr3;"
@@ -168,6 +175,17 @@ static inline void flush_tlb() {
     	: "%eax"
 	);
 }
+
+
+
+int32_t switch_terminal(uint8_t term_id) {
+    // TODO
+    curr_term = term_id;
+    return 0;
+}
+
+
+//////////// HELPER FUNCTIONS ///////////////
 
 
 /* get_next_pid()
@@ -191,7 +209,7 @@ static inline int32_t get_next_pid(int32_t pid) {
  * DESCRIPTION:   parses through terminal read buffer, gets executable argument
  * INPUTS:        arg - input from terminal
  * OUTPUTS:       buf - buffer to store executable command
- * RETURNS:       bytes loaded into buffer
+ * RETURNS:       bytes loaded into buffer, -1 on failure
  * SIDE EFFECTS:  loads buffer with just the executable command from argument
  */
 int32_t parse_args(const int8_t* arg, int8_t* const buf) {
@@ -205,11 +223,14 @@ int32_t parse_args(const int8_t* arg, int8_t* const buf) {
     while ((arg[start_pos + idx] != ' ') && (arg[start_pos + idx] != '\0')) {
 	    buf[idx] = arg[start_pos + idx];
 	    idx++;
+	    if (start_pos + idx >= FILENAME_LEN) { // input too long for filename
+		return -1;
+	    }
     }
      
-    start_pos += idx;           //new start position for args
+    start_pos += idx;           // new start position for args
     while ((arg[start_pos] == ' ') || (arg[start_pos] == '\0')) {
-        if(arg[start_pos]=='\0'){
+        if(arg[start_pos]=='\0') {
             buf[idx] = '\0';
             return idx;
         }
@@ -360,6 +381,16 @@ void clear_fd_array(int32_t pid) {
     }
 }
 
+
+/* get_command_line_args()
+ * 
+ * DESCRIPTION:   get command line arguments from user input
+ * INPUTS:        buf     - buffer to copy args into
+ *                nbytes  - number of bytes of args to read into buf
+ * OUTPUTS:       none
+ * RETURNS:       none
+ * SIDE EFFECTS:  overwrites given buffer
+ */
 int32_t get_command_line_args(int8_t* buf, int32_t nbytes){
     if (buf == NULL || strlen(command_line) > nbytes || strlen(command_line) == 0) {
         return -1;
@@ -367,3 +398,5 @@ int32_t get_command_line_args(int8_t* buf, int32_t nbytes){
     strncpy(buf, pcb_arr[curr_pid]->command_line_args, CMD_ARG_LEN);
     return 0;
 }
+
+

@@ -6,6 +6,8 @@
 
 #define MAXFILES_PER_TASK 8
 #define NUM_PROCESS 6
+#define MAX_TERMINAL 3
+#define KEYBUF_MAX_SIZE 128
 // physical addresses //
 #define PROCCESS_0_ADDR KERNEL_END_ADDR
 #define PROCCESS_1_ADDR 0xC00000
@@ -53,11 +55,26 @@ typedef struct pcb {
 } pcb_t;
 
 
+/* terminal info struct. stores info about current state of a terminal
+ * to allow recovering terminal state when switching to it */
+typedef struct term_info {
+    uint8_t term_id;		     /* unique id for terminal (8 bits - support up to 63 open terminals) */
+    int32_t cursor_x;		     /* x-pos of cursor on screen */
+    int32_t cursor_y;		     /* y-pos of cursor on screen */
+    char keybuf[KEYBUF_MAX_SIZE];    /* characters in terminal's keyboard buffer */
+} term_info_t;
+
+
 //////////////// Variables to track the current state of running processes ////////////////////
 
 extern pcb_t* pcb_arr[NUM_PROCESS];
+
+extern term_info_t terminals[MAX_TERMINAL];
+
 /* pid of most recently created process */
 extern int32_t curr_pid;
+/* currently active terminal id */
+extern uint8_t curr_term;
 
 extern volatile uint32_t exception_flag;
 
@@ -71,4 +88,10 @@ extern int32_t start_process(const int8_t* cmd);
 extern int32_t squash_process(uint8_t status);
 
 extern int32_t get_command_line_args(int8_t* buf, int32_t nbytes);
+
+/* switch active terminal to terminal with given id */
+extern int32_t switch_terminal(uint8_t term_id);
+
+extern inline void flush_tlb();
+
 #endif /* endif PROCESS_H */

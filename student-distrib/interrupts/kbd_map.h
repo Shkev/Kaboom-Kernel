@@ -4,8 +4,8 @@
 /* store all mappings from keyboard keys to opcodes */
 
 #define KBD_PORT 0x60
-#define KEYBUF_MAX_SIZE 128
 #define TABSIZE 4
+
 #define LSHIFT_RELEASE 0xAA
 #define RSHIFT_RELEASE 0xB6
 #define BACKSPACE_PRESSED 0x0E
