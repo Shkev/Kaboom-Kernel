@@ -1,11 +1,11 @@
 #ifndef IDT_FNCS_H
 #define IDT_FNCS_H
 
-#include "../init_devices.h"
+#include "../devices/init_devices.h"
 #include "../types.h"
 #include "syscallnums.h"
 #include "kbd_map.h"
-#include "process.h"
+#include "../process/process.h"
 
 /* has rtc encountered interrupt */
 extern volatile uint32_t rtc_flag;
@@ -195,7 +195,7 @@ extern void rtc_linkage(); //RTC
 
 extern void kbd_linkage(); //Keyboard 
 
-/* acts as dispatcher for system calls */
+/* acts as dispatcher for system calls (see asm file) */
 extern int32_t __attribute__((fastcall)) syscall_linkage(int32_t syscall_num);
 
 #endif // IDT_FNCS_H

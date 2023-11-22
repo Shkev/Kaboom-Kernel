@@ -1,4 +1,7 @@
 #ifndef INIT_DEV_H
+
+#include "../lib.h"
+
 #define INIT_DEV_H
 
 #define RTC_IRQ 8

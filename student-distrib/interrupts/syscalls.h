@@ -2,7 +2,7 @@
 #define SYSCALL_H
 
 #include "../types.h"
-#include "process.h"
+#include "../process/process.h"
 #include "../filesystems/filesystem.h"
 #include "../paging/paging.h"
 

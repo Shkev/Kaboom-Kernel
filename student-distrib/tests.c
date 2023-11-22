@@ -2,10 +2,10 @@
 #include "x86_desc.h"
 #include "lib.h"
 #include "filesystems/filesystem.h"
-#include "terminaldrivers/terminaldriver.h"
-#include "./interrupts/idt_handlers.h"
-#include "init_devices.h"
-#include "rtcdrivers/rtcdrivers.h"
+#include "devices/terminaldriver.h"
+#include "interrupts/idt_handlers.h"
+#include "devices/init_devices.h"
+#include "devices/rtcdrivers.h"
 
 /* set GRAPHICS to 1 to include print statements for large files/images (i.e., frame1) in test cases */
 #define GRAPHICS 1

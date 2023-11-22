@@ -7,7 +7,7 @@
 #include "interrupts/idt_handlers.h"
 #include "lib.h"
 #include "i8259.h"
-#include "init_devices.h"
+#include "devices/init_devices.h"
 #include "debug.h"
 #include "tests.h"
 #include "paging/paging.h"

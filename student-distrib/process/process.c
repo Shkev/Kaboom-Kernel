@@ -1,7 +1,7 @@
 #include "process.h"
 #include "../x86_desc.h"
 #include "../filesystems/filesystem.h"
-#include "syscalls.h"
+#include "../interrupts/syscalls.h"
 
 /////// EXTERNALLY VISIBLE VARIABLES ////////
 int32_t curr_pid = -1;

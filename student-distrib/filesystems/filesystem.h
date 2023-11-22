@@ -3,9 +3,9 @@
 
 #include "../types.h"
 #include "../lib.h"
-#include "../rtcdrivers/rtcdrivers.h"
-#include "../terminaldrivers/terminaldriver.h"
-#include "../interrupts/process.h"
+#include "../devices/rtcdrivers.h"
+#include "../devices/terminaldriver.h"
+#include "../process/process.h"
 
 #define STDIN_FD 0
 #define STDOUT_FD 1
