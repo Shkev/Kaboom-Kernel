@@ -28,3 +28,13 @@ void init_kbd() {
     // enable irq 1 (keyboard irq line)
     enable_irq(KBD_IRQ);
 }
+
+
+void init_pit() {
+    outb(0x36, PIT_MODE_REG); 	/* channel 0; lobyte/hibyte; mode 3 (square wave gen) */
+    /* set counter to have interrupts approx every 10ms */
+    outb((uint8_t)(PIT_COUNTER & 0xFF), PIT_CHAN0_DATA);
+    outb((uint8_t)(PIT_COUNTER >> 8), PIT_CHAN0_DATA);
+    // enable irq 0 (PIT irq line)
+    enable_irq(PIT_IRQ);
+}
