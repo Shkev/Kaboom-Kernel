@@ -77,6 +77,8 @@ INTR_LINK(rtc_linkage, rtc_handler)
 
 INTR_LINK(kbd_linkage, kbd_handler)
 
+INTR_LINK(pit_linkage, pit_handler)
+
 #### System Calls
 
 .globl syscall_linkage, syscall_jtab

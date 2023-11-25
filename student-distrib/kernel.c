@@ -169,15 +169,18 @@ void entry(unsigned long magic, unsigned long addr) {
         for(idt_init = 0x00; idt_init < 0x1F; idt_init++){
             idt[idt_init].present = 1;
         }
+	
+	// change to interrupt gates (kbd, rtc, pit)
+	idt[0x20].reserved3 = 0;
+	idt[0x21].reserved3 = 0;
+	idt[0x28].reserved3 = 0;
 
-	    // change 0x21, 0x28 to interrupt gates (kbd and rtc for now; add more later?)
-	    idt[0x21].reserved3 = 0;
-	    idt[0x28].reserved3 = 0;
+	idt[0x20].present = 1;	/* pit interrupts */
+        idt[0x21].present = 1;	/* keyboard interrupts */
+        idt[0x28].present = 1;	/* RTC interrupts */
 
-        idt[0x21].present = 1;      //keyboard interrupts
-        idt[0x28].present = 1;      //RTC interrupts
-        
-        idt[0x80].present = 1;      //system calls (has lowest privledge level (3))
+	// system calls (has lowest privledge level 3)
+        idt[0x80].present = 1;
         idt[0x80].dpl = 3;
 
         /* Set all exception handlers in the IDT*/
@@ -206,7 +209,8 @@ void entry(unsigned long magic, unsigned long addr) {
         SET_IDT_ENTRY(idt[0x1D], vmm_comm_linkage);
         SET_IDT_ENTRY(idt[0x1E], security_linkage);
 
-        /* Set all interrupt handlers in the IDT*/
+        /* Set all interrupt handlers in the IDT */
+	SET_IDT_ENTRY(idt[0x20], pit_linkage);
         SET_IDT_ENTRY(idt[0x21], kbd_linkage);
         SET_IDT_ENTRY(idt[0x28], rtc_linkage);
 
@@ -220,10 +224,12 @@ void entry(unsigned long magic, unsigned long addr) {
     //disable_all_irq();
     i8259_init();
 
+    clear();
+    
     /* initialize devices. Turn on IRQs for these devices */
     /*IRQ2 is enabled to account for secondary PIC*/
     enable_irq(2);
-    clear();
+    init_pit();
     init_rtc();
     init_kbd();
 

@@ -104,7 +104,8 @@ extern void rtc_handler();
 /* Keyboard handler */
 extern void kbd_handler();
 
-
+/* PIT handler */
+extern void pit_handler();
 
 /* SYSTEM CALLS - See syscalls.h/c */
 
@@ -191,9 +192,11 @@ extern void security_linkage();
 
 /* linkage for interrupts */
 
-extern void rtc_linkage(); //RTC
+extern void pit_linkage(); // PIT
 
-extern void kbd_linkage(); //Keyboard 
+extern void rtc_linkage(); // RTC
+
+extern void kbd_linkage(); // Keyboard 
 
 /* acts as dispatcher for system calls (see asm file) */
 extern int32_t __attribute__((fastcall)) syscall_linkage(int32_t syscall_num);
