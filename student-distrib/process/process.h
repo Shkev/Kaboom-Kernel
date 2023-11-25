@@ -10,7 +10,6 @@
 #define KEYBUF_MAX_SIZE 128
 // physical addresses //
 #define PROCCESS_0_ADDR KERNEL_END_ADDR
-#define PROCCESS_1_ADDR 0xC00000
 /////////////////////////
 #define PROGRAM_VIRTUAL_ADDR 0x08048000
 #define PCB_SIZE (1 << 13)
@@ -55,27 +54,15 @@ typedef struct pcb {
 } pcb_t;
 
 
-/* terminal info struct. stores info about current state of a terminal
- * to allow recovering terminal state when switching to it */
-typedef struct term_info {
-    uint8_t term_id;		     /* unique id for terminal (8 bits - support up to 255 open terminals) */
-    int32_t cursor_x;		     /* x-pos of cursor on screen */
-    int32_t cursor_y;		     /* y-pos of cursor on screen */
-    char keybuf[KEYBUF_MAX_SIZE];    /* characters in terminal's keyboard buffer */
-} term_info_t;
-
-
 //////////////// Variables to track the current state of running processes ////////////////////
 
 extern pcb_t* pcb_arr[NUM_PROCESS];
 
-extern term_info_t terminals[MAX_TERMINAL];
 
 /* pid of most recently created process */
 extern int32_t curr_pid;
-/* currently active terminal id */
-extern uint8_t curr_term;
 
+/* track whether an exception has been thrown in current process */
 extern volatile uint32_t exception_flag;
 
 //////////////////////////////// PROCEESS HANDLING FUNCTIONS ////////////////////////////////////

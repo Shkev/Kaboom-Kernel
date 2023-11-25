@@ -25,12 +25,13 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes)
     sti();
     while (enterflag == 0);
     
+    cli();
     memcpy((int8_t*)buf, terminals[curr_term].keybuf, nbytes);
-
     enterflag = 0;
     count = keybuffbackup; //copy the count
     fill_buffer(terminals[curr_term].keybuf, '\0', 128); //clear the buffer
-
+    sti();
+    
     return count;
 }
 
