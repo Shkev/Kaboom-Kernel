@@ -608,9 +608,15 @@ void kbd_handler() {
     }
 
     /*Sends en of interrupt signal for IRQ1*/
-    send_eoi(1);
+    send_eoi(KBD_IRQ);
 
     sti();
+}
+
+
+void pit_handler() {
+    // TODO : Implement scheduling here...
+    send_eoi(PIT_IRQ);
 }
 
 
