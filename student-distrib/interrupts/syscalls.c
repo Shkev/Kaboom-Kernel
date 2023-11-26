@@ -107,7 +107,6 @@ int32_t sys_vidmap(int8_t** screen_start) {
     pt1[USER_VIDEO_PT_IDX].rw = 1;
     pt1[USER_VIDEO_PT_IDX].us = 1;
     pt1[USER_VIDEO_PT_IDX].page_baseaddr = VIDEO >> 12;
-    pcb_arr[curr_pid]->using_video = 1;
     *screen_start = (int8_t*)USER_VIDEO;
     flush_tlb();
     return 0;

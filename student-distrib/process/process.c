@@ -3,11 +3,10 @@
 #include "../filesystems/filesystem.h"
 #include "../interrupts/syscalls.h"
 
+
 /////// EXTERNALLY VISIBLE VARIABLES ////////
 int32_t curr_pid = -1;
-uint8_t curr_term = 0;
 pcb_t* pcb_arr[NUM_PROCESS];
-term_info_t terminals[MAX_TERMINAL];
 
 volatile uint32_t exception_flag = 0;
 /////////////////////////////////////////////
@@ -302,8 +301,6 @@ pcb_t* create_new_pcb() {
 	
     //Sets PCB status to active
     pcb_arr[next_pid]->state = ACTIVE;
-    // default to video not used
-    pcb_arr[next_pid]->using_video = 0;
 
     return pcb_arr[next_pid];
 }

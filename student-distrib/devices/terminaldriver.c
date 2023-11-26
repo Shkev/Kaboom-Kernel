@@ -1,5 +1,6 @@
 #include "terminaldriver.h"
 #include "../interrupts/idt_handlers.h"
+#include "../process/sched.h"
 
 /* terminal_read()
  * 

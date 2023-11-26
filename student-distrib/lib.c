@@ -3,8 +3,6 @@
 
 #include "lib.h"
 
-#define NUM_COLS    80
-#define NUM_ROWS    25
 #define ATTRIB      0x2 
 
 static int screen_x;
@@ -17,7 +15,7 @@ static char* video_mem = (char *)VIDEO;
  * Function: Clears video memory */
 void clear(void) {
     int32_t i;
-    for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
+    for (i = 0; i < NUM_VIDEO_ROW * NUM_VIDEO_COL; i++) {
         *(uint8_t *)(video_mem + (i << 1)) = ' ';
         *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
     }
@@ -173,43 +171,43 @@ void putc(uint8_t c) {
     if((c == '\n' || c == '\r')) {
         screen_y++;
         screen_x = 0;
-        if (screen_y >= NUM_ROWS)
+        if (screen_y >= NUM_VIDEO_ROW)
         {
             scrolling(); //scroll if at the bottom of the screen
-            screen_y = NUM_ROWS - 1;
+            screen_y = NUM_VIDEO_ROW - 1;
         }
     } else if (c == '\b') {
         if (screen_x >= 1)
         {
             screen_x--; //backspace logic
-            *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
-            *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
         } else if ((screen_x == 0) && (screen_y >= 1)){
-            screen_x = 80;
-            screen_y = screen_y - 1; //go to the back row of the last screen
+            screen_x = NUM_VIDEO_COL-1;
+            screen_y--; //go to the back row of the last screen
         } else {
             screen_x = 0;
         }
+	*(uint8_t *)(video_mem + ((NUM_VIDEO_COL * screen_y + screen_x) << 1)) = ' ';
+	*(uint8_t *)(video_mem + ((NUM_VIDEO_COL * screen_y + screen_x) << 1) + 1) = ATTRIB;
     } else if (c == '\t') { //tab logic
         screen_x = screen_x + 4;
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
+        *(uint8_t *)(video_mem + ((NUM_VIDEO_COL * screen_y + screen_x) << 1)) = ' ';
+        *(uint8_t *)(video_mem + ((NUM_VIDEO_COL * screen_y + screen_x) << 1) + 1) = ATTRIB;
     } else {
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
+        *(uint8_t *)(video_mem + ((NUM_VIDEO_COL * screen_y + screen_x) << 1)) = c;
+        *(uint8_t *)(video_mem + ((NUM_VIDEO_COL * screen_y + screen_x) << 1) + 1) = ATTRIB;
         screen_x++;
-        if (screen_x == NUM_COLS)
+        if (screen_x == NUM_VIDEO_COL)
         {
             screen_x = 0;
             screen_y++;
-            if (screen_y >= NUM_ROWS)
+            if (screen_y >= NUM_VIDEO_ROW)
             {
                 scrolling();
-                screen_y = NUM_ROWS - 1;
+                screen_y = NUM_VIDEO_ROW - 1;
             }
         } else {
-            screen_x %= NUM_COLS;
-            screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
+            screen_x %= NUM_VIDEO_COL;
+            screen_y = (screen_y + (screen_x / NUM_VIDEO_COL)) % NUM_VIDEO_ROW;
         }
     }
     update_cursor(screen_x, screen_y); //update the cursor location
@@ -517,7 +515,7 @@ int8_t strings_equal(const int8_t* a, const int8_t* b) {
  * Function: increments video memory. To be used to test rtc */
 void test_interrupts(void) {
     int32_t i;
-    for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
+    for (i = 0; i < NUM_VIDEO_ROW * NUM_VIDEO_COL; i++) {
         video_mem[i << 1]++;
     }
 }
@@ -528,7 +526,7 @@ void test_interrupts(void) {
  * Function: Updates cursor location to where typing */
 void update_cursor(int xloc, int yloc)
 {
-	uint16_t pos = yloc * NUM_COLS + xloc; //find the location and update it by doing math
+	uint16_t pos = yloc * NUM_VIDEO_COL + xloc; //find the location and update it by doing math
     outb(0x0F, 0x3D4);
     outb((uint8_t) (pos & 0xFF), 0x3D5);
     outb(0x0E, 0x3D4);
@@ -543,19 +541,19 @@ void scrolling()
     int i;
     int j;
     int k;
-    for (i = 0; i < NUM_ROWS - 1; i++) //loop through rows and columns
+    for (i = 0; i < NUM_VIDEO_ROW - 1; i++) //loop through rows and columns
     {
-        for (j = 0; j < NUM_COLS - 1; j++)
+        for (j = 0; j < NUM_VIDEO_COL - 1; j++)
         {
             // move terminal screen one row up
-            *(uint8_t *)(video_mem + ((NUM_COLS * i + j) << 1)) = *(uint8_t *)(video_mem + ((NUM_COLS * (i + 1) + j) << 1));
-            *(uint8_t *)(video_mem + ((NUM_COLS * i + j) << 1) + 1) = ATTRIB;
+            *(uint8_t *)(video_mem + ((NUM_VIDEO_COL * i + j) << 1)) = *(uint8_t *)(video_mem + ((NUM_VIDEO_COL * (i + 1) + j) << 1));
+            *(uint8_t *)(video_mem + ((NUM_VIDEO_COL * i + j) << 1) + 1) = ATTRIB;
         }
     }
-    for (k = 0; k < NUM_COLS; k++)
+    for (k = 0; k < NUM_VIDEO_COL; k++)
     {
-        *(uint8_t *)(video_mem + ((NUM_COLS * (NUM_ROWS - 1) + k) << 1)) = ' ';
-        *(uint8_t *)(video_mem + ((NUM_COLS * (NUM_ROWS - 1) + k) << 1) + 1) = ATTRIB;
+        *(uint8_t *)(video_mem + ((NUM_VIDEO_COL * (NUM_VIDEO_ROW - 1) + k) << 1)) = ' ';
+        *(uint8_t *)(video_mem + ((NUM_VIDEO_COL * (NUM_VIDEO_ROW - 1) + k) << 1) + 1) = ATTRIB;
     }
 }
 /* uint32_t max(uint32_t, uint32_t)

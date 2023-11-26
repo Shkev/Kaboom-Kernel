@@ -3,11 +3,10 @@
 
 #include "../types.h"
 #include "../paging/paging.h"
+#include "sched.h"
 
 #define MAXFILES_PER_TASK 8
 #define NUM_PROCESS 6
-#define MAX_TERMINAL 3
-#define KEYBUF_MAX_SIZE 128
 // physical addresses //
 #define PROCCESS_0_ADDR KERNEL_END_ADDR
 /////////////////////////
@@ -49,7 +48,6 @@ typedef struct pcb {
     uint32_t stack_ptr;
     uint32_t stack_base_ptr;
     enum task_state state;
-    uint8_t using_video : 1;    /* set to 1 if process using video memory, else 0 by default */
     int8_t command_line_args[CMD_ARG_LEN];
 } pcb_t;
 

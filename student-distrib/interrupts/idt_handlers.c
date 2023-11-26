@@ -2,6 +2,7 @@
 #include "syscalls.h"
 #include "../lib.h"
 #include "../i8259.h"
+#include "../process/sched.h"
 
 #define PRINT_HANDLER(task) printf("EXCEPTION: " task "error\n")
 
@@ -471,7 +472,7 @@ void kbd_handler() {
 	    putc('\b');
 	    terminals[curr_term].keybuf[--keybuffcount] = '\0';
 	}
-    } else if (keybuffcount < KEYBUF_MAX_SIZE-1) { // if buffer not full, handle other key presses
+    } else if (keybuffcount < KEYBUF_MAX_SIZE-1) { // if buffer not full, handle other key presses (-1 to leave space for \n)
         if (tab == 1) {
             if (keybuffcount < KEYBUF_MAX_SIZE - TABSIZE - 1) { // if can fit a tab, add it to buffer
                 putc('\t');
