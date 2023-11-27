@@ -64,6 +64,8 @@ extern int32_t curr_pid;
 
 //////////////////////////////// PROCEESS HANDLING FUNCTIONS ////////////////////////////////////
 
+/* initialize PCBs in pcb_arr */
+extern void init_pcb_arr();
 
 /* start up a process */
 extern int32_t start_process(const int8_t* cmd);

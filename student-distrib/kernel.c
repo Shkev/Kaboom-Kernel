@@ -13,6 +13,7 @@
 #include "paging/paging.h"
 #include "filesystems/filesystem.h"
 #include "interrupts/syscalls.h"
+#include "process/process.h"
 #include "process/sched.h"
 
 #define RUN_TESTS 0
@@ -238,6 +239,7 @@ void entry(unsigned long magic, unsigned long addr) {
     
     paging_init();
 
+    init_pcb_arr();
     // initialize three terminals
     (void)init_term();
     (void)init_term();

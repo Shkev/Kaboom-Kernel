@@ -44,6 +44,15 @@ static void clear_fd_array(int32_t pid);
 
 ///////////////////////////////////////////////////////////////////////
 
+
+void init_pcb_arr() {
+    unsigned int i;
+    for (i = 0; i < NUM_PROCESS; ++i) {
+	pcb_arr[i] = NULL;
+    }
+}
+
+
 /* start_process()
  * 
  * DESCRIPTION:   helper function for sys_execute, starts a process for command with given name
@@ -62,7 +71,8 @@ int32_t start_process(const int8_t* cmd) {
     // empty command line arg
     memset(command_line, '\0', CMD_ARG_LEN);
 
-    if (get_next_pid(curr_pid) >= NUM_PROCESS) {
+    int32_t next_pid = get_next_pid(curr_pid);
+    if (next_pid < 0) {
         // max num processes reached, can't create more
         return -1;
     }
@@ -71,7 +81,7 @@ int32_t start_process(const int8_t* cmd) {
     if (res < 0) {
 	return -1;
     }
-    setup_process_page(get_next_pid(curr_pid));
+    setup_process_page(next_pid);
     flush_tlb();
 
     // Obtain directory entry info for file
@@ -96,8 +106,8 @@ int32_t start_process(const int8_t* cmd) {
 	    return -1;
     }
     //init new pcb struct
-    (void)create_new_pcb();
-    curr_pid = get_next_pid(curr_pid);
+    (void)create_new_pcb(next_pid);
+    curr_pid = next_pid;
     set_process_tss(curr_pid);
 
     // set up stack for iret
@@ -128,10 +138,12 @@ int32_t squash_process(uint8_t status) {
         // disable user video mem for program
         pd[USER_VIDEO_PD_IDX].kb.present = 0;
         pt1[USER_VIDEO_PT_IDX].present = 0;
+
+	pcb_arr[curr_pid]->state = STOPPED;
         setup_process_page(pcb_arr[curr_pid]->parent_pid);
         flush_tlb();
         set_process_tss(pcb_arr[curr_pid]->parent_pid);
-	    curr_pid = pcb_arr[curr_pid]->parent_pid;
+	curr_pid = pcb_arr[curr_pid]->parent_pid;
 
         if(pcb_arr[curr_pid]->exception_flag == 1) {
 	    pcb_arr[curr_pid]->exception_flag = 0;
@@ -140,9 +152,9 @@ int32_t squash_process(uint8_t status) {
             return_status = (uint32_t)status;
         }
         // restore saved ebp and esp from before running execute
-	    uint32_t saved_ebp = pcb_arr[curr_pid]->stack_base_ptr;
-	    uint32_t saved_esp = pcb_arr[curr_pid]->stack_ptr; 
-	    asm volatile(
+	uint32_t saved_ebp = pcb_arr[curr_pid]->stack_base_ptr;
+	uint32_t saved_esp = pcb_arr[curr_pid]->stack_ptr; 
+	asm volatile(
             "movl %0, %%ebp;"
             "movl %1, %%esp;"
             :   
@@ -187,14 +199,20 @@ int32_t switch_terminal(uint8_t term_id) {
 
 /* get_next_pid()
  * 
- * DESCRIPTION:   increments pid
+ * DESCRIPTION:   gets next available pid
  * INPUTS:        none
  * OUTPUTS:       none
- * RETURNS:       incremented value of pid
+ * RETURNS:       next available pid. Returns -1 if none available
  * SIDE EFFECTS:  none
  */
 static inline int32_t get_next_pid(int32_t pid) {
-    return pid+1;
+    unsigned int i;
+    for (i = 0; i < NUM_PROCESS; ++i) {
+	if (pcb_arr[i] == NULL || pcb_arr[i]->state == STOPPED) {
+	    return i;
+	}
+    }
+    return -1;
 }
 
 /* EXECUTE helper functions */
@@ -272,38 +290,36 @@ void setup_process_page(int32_t pid) {
 /* create_new_pcb()
  * 
  * DESCRIPTION:   creates new entry in pcb array for new process forking off current process
- * INPUTS:        none
+ * INPUTS:        pid  -  pid to use for new pcb
  * OUTPUTS:       none
  * RETURNS:       new pcb_t struct object
  * SIDE EFFECTS:  initalizes new pcb_t struct object, and adds it to pcb array
  */
-pcb_t* create_new_pcb() {
-    int32_t next_pid = get_next_pid(curr_pid);
-    
-    uint32_t pcb_bottom_addr = KERNEL_END_ADDR - (next_pid)*PCB_SIZE;
-    pcb_arr[next_pid] = (pcb_t*)(pcb_bottom_addr - PCB_SIZE);
+pcb_t* create_new_pcb(int32_t pid) {
+    uint32_t pcb_bottom_addr = KERNEL_END_ADDR - (pid)*PCB_SIZE;
+    pcb_arr[pid] = (pcb_t*)(pcb_bottom_addr - PCB_SIZE);
 
-    pcb_arr[next_pid]->pid = next_pid;
-    pcb_arr[next_pid]->parent_pid = curr_pid;
-    strcpy(pcb_arr[next_pid]->command_line_args, command_line);
+    pcb_arr[pid]->pid = pid;
+    pcb_arr[pid]->parent_pid = curr_pid;
+    strcpy(pcb_arr[pid]->command_line_args, command_line);
 	
     //Initializes fd array for PCB with stdin and stdout
-    SET_FD_FLAG_INUSE(pcb_arr[next_pid]->fd_arr[STDIN_FD].flags); // stdin
-    fill_stdin_ops(&pcb_arr[next_pid]->fd_arr[STDIN_FD].ops_jtab);
-    SET_FD_FLAG_INUSE(pcb_arr[next_pid]->fd_arr[STDOUT_FD].flags); // stdout
-    fill_stdout_ops(&pcb_arr[next_pid]->fd_arr[STDOUT_FD].ops_jtab);
+    SET_FD_FLAG_INUSE(pcb_arr[pid]->fd_arr[STDIN_FD].flags); // stdin
+    fill_stdin_ops(&pcb_arr[pid]->fd_arr[STDIN_FD].ops_jtab);
+    SET_FD_FLAG_INUSE(pcb_arr[pid]->fd_arr[STDOUT_FD].flags); // stdout
+    fill_stdout_ops(&pcb_arr[pid]->fd_arr[STDOUT_FD].ops_jtab);
 
     //Saves Kernel stack pointer
-    pcb_arr[next_pid]->stack_base_ptr = pcb_bottom_addr - sizeof(uint32_t);
-    pcb_arr[next_pid]->stack_ptr = pcb_bottom_addr - sizeof(uint32_t);
+    pcb_arr[pid]->stack_base_ptr = pcb_bottom_addr - sizeof(uint32_t);
+    pcb_arr[pid]->stack_ptr = pcb_bottom_addr - sizeof(uint32_t);
 	
     //Sets PCB status to active
-    pcb_arr[next_pid]->state = ACTIVE;
+    pcb_arr[pid]->state = ACTIVE;
 
-    pcb_arr[next_pid]->exception_flag = 0;
-    pcb_arr[next_pid]->term_id = curr_term;
+    pcb_arr[pid]->exception_flag = 0;
+    pcb_arr[pid]->term_id = curr_term;
     
-    return pcb_arr[next_pid];
+    return pcb_arr[pid];
 }
 
 /* switch_to_user()
