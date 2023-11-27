@@ -13,7 +13,7 @@
 #include "paging/paging.h"
 #include "filesystems/filesystem.h"
 #include "interrupts/syscalls.h"
-//#include "interrupts/syscalls.h"
+#include "process/sched.h"
 
 #define RUN_TESTS 0
 
@@ -237,6 +237,12 @@ void entry(unsigned long magic, unsigned long addr) {
     init_ext2_filesys(ext2_filesys->mod_start);
     
     paging_init();
+
+    // initialize three terminals
+    (void)init_term();
+    (void)init_term();
+    (void)init_term();
+    
     // ==============================================================
 
     /* Enable interrupts */

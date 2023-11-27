@@ -301,6 +301,7 @@ pcb_t* create_new_pcb() {
     pcb_arr[next_pid]->state = ACTIVE;
 
     pcb_arr[next_pid]->exception_flag = 0;
+    pcb_arr[next_pid]->term_id = curr_term;
     
     return pcb_arr[next_pid];
 }

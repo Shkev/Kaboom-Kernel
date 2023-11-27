@@ -22,10 +22,12 @@ typedef struct term_info {
     uint8_t term_id;		     /* unique id for terminal (8 bits - support up to 255 open terminals) */
     int32_t cursor_x;		     /* x-pos of cursor on screen */
     int32_t cursor_y;		     /* y-pos of cursor on screen */
-    char keybuf[KEYBUF_MAX_SIZE];    /* characters in terminal's keyboard buffer */
+    uint32_t nprocess;		     /* number of processes running on the terminal */
+    uint32_t vidmem_addr;	     /* virtual mem addr for video memory terminal will write to */
     uint32_t keybufcnt;		     /* count characters typed in buffer */
     uint32_t prev_keybufcnt;	     /* num chars typed in previous buffer (before enter pressed) */
     uint8_t key_flags;               /* flags indicating whether key is pressed */
+    char keybuf[KEYBUF_MAX_SIZE];    /* characters in terminal's keyboard buffer */
 } term_info_t;
 
 
@@ -34,5 +36,8 @@ extern uint8_t curr_term;
 
 /* store info about all terminals in system */
 extern term_info_t terminals[MAX_TERMINAL];
+
+/* initialize a new terminal and return terminal id */
+extern int32_t init_term();
 
 #endif	/* SCHED_H */
