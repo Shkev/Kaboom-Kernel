@@ -12,7 +12,6 @@ extern volatile uint32_t rtc_flag;
 
 
 extern int enterflag; 			/* has ENTER been pressed on keyboard? */
-extern int keybuffbackup;		/* track how many bytes written to keyboard buffer before new buffer started */
 
 extern void fill_buffer(int8_t* buf, int8_t val, uint32_t nbytes);
 

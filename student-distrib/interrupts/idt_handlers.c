@@ -11,7 +11,6 @@
 volatile uint32_t rtc_flag = 0;
 
 int enterflag = 0;
-int keybuffbackup = 0;
 
 
 /*divide_zero_handler()
@@ -458,7 +457,7 @@ void kbd_handler() {
     else if (enterflag == 1) { // if enter pressed
 	terminals[curr_term].keybuf[terminals[curr_term].keybufcnt++] = '\n';
 	putc('\n');
-	keybuffbackup = terminals[curr_term].keybufcnt;
+	terminals[curr_term].prev_keybufcnt = terminals[curr_term].keybufcnt;
 	terminals[curr_term].keybufcnt = 0; 
     } else if (backspace == 1) { // handle backspace pressed
 	if (terminals[curr_term].keybufcnt != 0) {

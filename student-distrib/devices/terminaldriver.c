@@ -29,7 +29,7 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes)
     cli();
     memcpy((int8_t*)buf, terminals[curr_term].keybuf, nbytes);
     enterflag = 0;
-    count = keybuffbackup; // copy the count
+    count = terminals[curr_term].prev_keybufcnt; // copy the count
     fill_buffer(terminals[curr_term].keybuf, '\0', 128); //clear the buffer
     sti();
     
