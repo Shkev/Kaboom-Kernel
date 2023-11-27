@@ -40,15 +40,16 @@ enum task_state {
     STOPPED
 };
 
-/* Process control block stored in kernel*/
+/* Process control block stored in kernel for each running process */
 typedef struct pcb {
     int32_t pid;
     int32_t parent_pid;
+    uint32_t stack_ptr;		/* ESP */
+    uint32_t stack_base_ptr;	/* EBP */
     fd_arr_entry_t fd_arr[MAXFILES_PER_TASK];  /* file descriptor array. A given file descriptor indexes into this array to get info about the file. */
-    uint32_t stack_ptr;
-    uint32_t stack_base_ptr;
     enum task_state state;
-    int8_t command_line_args[CMD_ARG_LEN];
+    char command_line_args[CMD_ARG_LEN];
+    volatile uint8_t exception_flag;           /* track whether exception thrown in process (1 if excp occured, 0 otherwise) */
 } pcb_t;
 
 
@@ -59,9 +60,6 @@ extern pcb_t* pcb_arr[NUM_PROCESS];
 
 /* pid of most recently created process */
 extern int32_t curr_pid;
-
-/* track whether an exception has been thrown in current process */
-extern volatile uint32_t exception_flag;
 
 //////////////////////////////// PROCEESS HANDLING FUNCTIONS ////////////////////////////////////
 

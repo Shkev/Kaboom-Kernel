@@ -8,7 +8,6 @@
 int32_t curr_pid = -1;
 pcb_t* pcb_arr[NUM_PROCESS];
 
-volatile uint32_t exception_flag = 0;
 /////////////////////////////////////////////
 
 static uint32_t return_status = 0;
@@ -134,9 +133,9 @@ int32_t squash_process(uint8_t status) {
         set_process_tss(pcb_arr[curr_pid]->parent_pid);
 	    curr_pid = pcb_arr[curr_pid]->parent_pid;
 
-        if(exception_flag == 1) {
-            exception_flag = 0;
-            return_status = 256; //256 - Exception return value
+        if(pcb_arr[curr_pid]->exception_flag == 1) {
+	    pcb_arr[curr_pid]->exception_flag = 0;
+            return_status = 256; // 256 - Exception return value
         } else {
             return_status = (uint32_t)status;
         }
@@ -148,7 +147,6 @@ int32_t squash_process(uint8_t status) {
             "movl %1, %%esp;"
             :   
             : "r"(saved_ebp), "r"(saved_esp)
-            : "%eax"
             );
         sti();
         return return_status;
@@ -302,6 +300,8 @@ pcb_t* create_new_pcb() {
     //Sets PCB status to active
     pcb_arr[next_pid]->state = ACTIVE;
 
+    pcb_arr[next_pid]->exception_flag = 0;
+    
     return pcb_arr[next_pid];
 }
 

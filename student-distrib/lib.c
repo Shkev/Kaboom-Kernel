@@ -556,6 +556,8 @@ void scrolling()
         *(uint8_t *)(video_mem + ((NUM_VIDEO_COL * (NUM_VIDEO_ROW - 1) + k) << 1) + 1) = ATTRIB;
     }
 }
+
+
 /* uint32_t max(uint32_t, uint32_t)
  * DESCRIPTION: Get minimum of two values
  * INPUTS: a, b - values to find min of
@@ -563,8 +565,49 @@ void scrolling()
  * RETURNS: min of a and b
  * SIDE EFFECTS: none
  */
-uint32_t min(uint32_t a, uint32_t b) {
+inline uint32_t min(uint32_t a, uint32_t b) {
     return a < b ? a : b;
 }
 
+
+/* get_bit()
+ * 
+ * DESCRIPTION:   get specified bit in given 32-bit value
+ * INPUTS:        val - value to get bit in
+ *                bit - index of bit to get (0-indexed starting from least sig)
+ * OUTPUTS:       none
+ * RETURNS:       specified bit in given val
+ * SIDE EFFECTS:  none
+ */
+inline uint8_t get_bit(uint32_t val, uint8_t bit) {
+    return (val & (1 << bit)) >> bit;
+}
+
+
+/* set_bit()
+ * 
+ * DESCRIPTION:   set given bit in given 32-bit value to 1 and return the new value
+ * INPUTS:        val - value to set bit in
+ *                bit - index of bit to set in given val (0-indexed starting from least sig)
+ * OUTPUTS:       none
+ * RETURNS:       value with given bit set
+ * SIDE EFFECTS:  none. Note that the given value is not modified.
+ */
+inline uint32_t set_bit(uint32_t val, uint8_t bit) {
+    return val |= 1 << bit;
+}
+
+
+/* unset_bit()
+ * 
+ * DESCRIPTION:   set given bit in given 32-bit value to 0 and return the new value
+ * INPUTS:        val - value to unset bit in
+ *                bit - index of bit to unset in given val (0-indexed starting from least sig)
+ * OUTPUTS:       none
+ * RETURNS:       value with given bit unset
+ * SIDE EFFECTS:  none. Note that the given value is not modified.
+ */
+inline uint32_t unset_bit(uint32_t val, uint8_t bit) {
+    return val &= ~(1 << bit);
+}
 

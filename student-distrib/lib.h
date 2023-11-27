@@ -36,10 +36,15 @@ int32_t safe_strncpy(int8_t* dest, const int8_t* src, int32_t n);
 
 void test_interrupts(void);
 
-uint32_t min(uint32_t a, uint32_t b);
-
 void update_cursor(int screen_x, int screen_y);
 void scrolling();
+
+inline uint32_t min(uint32_t a, uint32_t b);
+
+inline uint8_t get_bit(uint32_t val, uint8_t bit);
+inline uint32_t set_bit(uint32_t val, uint8_t bit);
+inline uint32_t unset_bit(uint32_t val, uint8_t bit);
+
 
 /* Port read functions */
 /* Inb reads a byte and returns its value as a zero-extended 32-bit

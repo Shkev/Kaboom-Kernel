@@ -2,6 +2,7 @@
 #include "syscalls.h"
 #include "../lib.h"
 #include "../i8259.h"
+
 #include "../process/sched.h"
 
 #define PRINT_HANDLER(task) printf("EXCEPTION: " task "error\n")
@@ -190,7 +191,7 @@ void gen_protect_flt_handler() {
 */
 void pg_fault_handler() {
     PRINT_HANDLER("pg");
-    exception_flag = 1;
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt(1);
 }
 
@@ -315,8 +316,6 @@ void security_handler() {
 * SIDE EFFECTS: handles rtc, sends EOI when done
 */
 void rtc_handler() {
-    cli();
-
     /* We read register C to see what type of interrupt occured.
     * If register C not read RTC will not send future interrupts */
     // select register C on RTC
@@ -327,18 +326,8 @@ void rtc_handler() {
     // send end of interrupt for IRQ8
     send_eoi(RTC_IRQ);
     rtc_flag = 1;   //raise RTC flag when interrupt signal is recieved
-    sti();
 }
 
-
-/* flags indicating whether key is pressed */
-static int shift = 0;
-static int capslock = 0;
-static int backspace = 0;
-static int tab = 0;
-static int ctrl = 0;
-static int alt = 0;
-static int keybuffcount = 0;
 
 /*kbd_handler()
 * DESCRIPTION: processes keyboard interrupts
@@ -348,8 +337,6 @@ static int keybuffcount = 0;
 * SIDE EFFECTS: handles keyboard, sends EOI when done
 */
 void kbd_handler() {
-    cli();
-    
     enterflag = 0;
     /* array of characters corresponding to the scancode as the index */
     /* only characters in the scancode 1 are included for checkpoint 1 purposes*/
@@ -384,24 +371,24 @@ void kbd_handler() {
     uint8_t schar_case_key = schar[scan_code];
 
     //SHIFT RELEASE LOGIC
-    if (((scan_code == LSHIFT_RELEASE) || (scan_code == RSHIFT_RELEASE)) && (shift == 1)) {
-        shift = 0;
+    if ((scan_code == LSHIFT_RELEASE) || (scan_code == RSHIFT_RELEASE)) {
+	terminals[curr_term].key_flags = unset_bit(terminals[curr_term].key_flags, SHIFT_FLAG_BITNUM);
     }
 
     //BACKSPACE LOGIC
     if (scan_code == BACKSPACE_PRESSED) {
-        backspace = 1;
+	terminals[curr_term].key_flags = set_bit(terminals[curr_term].key_flags, BKSPC_FLAG_BITNUM);
     } else if (scan_code == BACKSPACE_RELEASE) {
         // release
-        backspace = 0;
+	terminals[curr_term].key_flags = unset_bit(terminals[curr_term].key_flags, BKSPC_FLAG_BITNUM);
     }
 
     //TAB LOGIC
     if (scan_code == TAB_PRESSED) {
-        tab = 1;
+	terminals[curr_term].key_flags = set_bit(terminals[curr_term].key_flags, TAB_FLAG_BITNUM);
     } else if (scan_code == TAB_RELEASE) {
         // release
-        tab = 0;
+	terminals[curr_term].key_flags = unset_bit(terminals[curr_term].key_flags, TAB_FLAG_BITNUM);
     }
 
     //ENTER LOGIC
@@ -415,32 +402,38 @@ void kbd_handler() {
 
     //CTRL LOGIC
     if (scan_code == LEFTCTRL_PRESSED) {
-        ctrl = 1;
+	terminals[curr_term].key_flags = set_bit(terminals[curr_term].key_flags, CTRL_FLAG_BITNUM);
     } else if (scan_code == LEFTCTRL_RELEASE) {
         // release
-        ctrl = 0;
+	terminals[curr_term].key_flags = unset_bit(terminals[curr_term].key_flags, CTRL_FLAG_BITNUM);
     }
 
     // ALT LOGIC
     if (scan_code == LEFTALT_PRESSED) {
-        alt = 1;
-    } else if (scan_code == LEFTALT_RELEASE) {
-        alt = 0;
+	terminals[curr_term].key_flags = set_bit(terminals[curr_term].key_flags, ALT_FLAG_BITNUM);
+    } else if (scan_code == LEFTALT_RELEASE) {	
+	terminals[curr_term].key_flags = unset_bit(terminals[curr_term].key_flags, ALT_FLAG_BITNUM);
     }
+
+    uint8_t shift = get_bit(terminals[curr_term].key_flags, SHIFT_FLAG_BITNUM);
+    uint8_t capslock = get_bit(terminals[curr_term].key_flags, CAPSLOCK_FLAG_BITNUM);
+    uint8_t backspace = get_bit(terminals[curr_term].key_flags, BKSPC_FLAG_BITNUM);
+    uint8_t tab = get_bit(terminals[curr_term].key_flags, TAB_FLAG_BITNUM);
+    uint8_t ctrl = get_bit(terminals[curr_term].key_flags, CTRL_FLAG_BITNUM);
+    uint8_t alt = get_bit(terminals[curr_term].key_flags, ALT_FLAG_BITNUM);
     
     /* keyboard commands logic (ctrl-L, ctrl-C, etc.) */
     if ((ctrl == 1) && (scan_code == L_PRESS)) {
 	// CTRL-L logic to clear screen
 	clear();
-	keybuffcount = 0;
+	terminals[curr_term].keybufcnt = 0;
 	fill_buffer(terminals[curr_term].keybuf, '\0', KEYBUF_MAX_SIZE);
     } else if ((ctrl == 1) && (scan_code == C_PRESS)) {
 	// CTRL-C logic to halt current program
 	fill_buffer(terminals[curr_term].keybuf, '\0', KEYBUF_MAX_SIZE);
-	keybuffcount = 0;
+	terminals[curr_term].keybufcnt = 0;
 	if (curr_pid >= 0) { // if there is a process running terminate it
 	    send_eoi(1);
-	    sti();
 	    // halt acts like a soft interrupt here
 	    sys_halt(1);
 	}
@@ -463,35 +456,35 @@ void kbd_handler() {
     }
     // PRESSING LOGIC (lots of cases to consider...)
     else if (enterflag == 1) { // if enter pressed
-	terminals[curr_term].keybuf[keybuffcount++] = '\n';
+	terminals[curr_term].keybuf[terminals[curr_term].keybufcnt++] = '\n';
 	putc('\n');
-	keybuffbackup = keybuffcount;
-	keybuffcount = 0; 
+	keybuffbackup = terminals[curr_term].keybufcnt;
+	terminals[curr_term].keybufcnt = 0; 
     } else if (backspace == 1) { // handle backspace pressed
-	if (keybuffcount != 0) {
+	if (terminals[curr_term].keybufcnt != 0) {
 	    putc('\b');
-	    terminals[curr_term].keybuf[--keybuffcount] = '\0';
+	    terminals[curr_term].keybuf[--terminals[curr_term].keybufcnt] = '\0';
 	}
-    } else if (keybuffcount < KEYBUF_MAX_SIZE-1) { // if buffer not full, handle other key presses (-1 to leave space for \n)
+    } else if (terminals[curr_term].keybufcnt < KEYBUF_MAX_SIZE-1) { // if buffer not full, handle other key presses (-1 to leave space for \n)
         if (tab == 1) {
-            if (keybuffcount < KEYBUF_MAX_SIZE - TABSIZE - 1) { // if can fit a tab, add it to buffer
+            if (terminals[curr_term].keybufcnt < KEYBUF_MAX_SIZE - TABSIZE - 1) { // if can fit a tab, add it to buffer
                 putc('\t');
-                terminals[curr_term].keybuf[keybuffcount++] = ' ';
-                terminals[curr_term].keybuf[keybuffcount++] = ' ';
-                terminals[curr_term].keybuf[keybuffcount++] = ' ';
-                terminals[curr_term].keybuf[keybuffcount++] = ' ';
+                terminals[curr_term].keybuf[terminals[curr_term].keybufcnt++] = ' ';
+                terminals[curr_term].keybuf[terminals[curr_term].keybufcnt++] = ' ';
+                terminals[curr_term].keybuf[terminals[curr_term].keybufcnt++] = ' ';
+                terminals[curr_term].keybuf[terminals[curr_term].keybufcnt++] = ' ';
             }
         } else {
             if (scan_code <= F12_PRESSED) {
                 if(scan_code == CAPSLOCK_PRESSED && capslock == 0) {
 		    // toggle caps lock on
-                    capslock = 1;
+		    terminals[curr_term].key_flags = set_bit(terminals[curr_term].key_flags, CAPSLOCK_FLAG_BITNUM);
                 } else if (scan_code == CAPSLOCK_PRESSED && capslock == 1) {
 		    // toggle caps lock off
-                    capslock = 0;
+		    terminals[curr_term].key_flags = unset_bit(terminals[curr_term].key_flags, CAPSLOCK_FLAG_BITNUM);
                 } else if (((scan_code == LEFTSHIFT_PRESSED) || (scan_code == RIGHTSHIFT_PRESSED)) && (shift == 0)) {
 		    // shift pressed
-                    shift = 1;
+		    terminals[curr_term].key_flags = set_bit(terminals[curr_term].key_flags, SHIFT_FLAG_BITNUM);
                 }
 		else {
                     // support for keys we don't need for now... does nothing for now but adds a long list of ifs :)
@@ -581,26 +574,26 @@ void kbd_handler() {
                                 if ((scan_code == BACKTICK_PRESSED) || (scan_code == ONE_PRESSED) || (scan_code == TWO_PRESSED) || (scan_code == THREE_PRESSED) || (scan_code == FOUR_PRESSED) || (scan_code == FIVE_PRESSED) || (scan_code == SIX_PRESSED) || (scan_code == SEVEN_PRESSED) || (scan_code == EIGHT_PRESSED) || (scan_code == NINE_PRESSED) || (scan_code == ZERO_PRESSED) || (scan_code == MINUS_PRESSED) || (scan_code == EQUAL_PRESSED) || (scan_code == LEFTBRACKET_PRESSED) || (scan_code == RIGHTBRACKET_PRESSED) || (scan_code == BACKSLASH_PRESSED) || (scan_code == SEMICOLON_PRESSED) || (scan_code == SINGLEQUOTE_PRESSED) || (scan_code == COMMA_PRESSED) || (scan_code == PERIOD_PRESSED) || (scan_code == FORWARDSLASH_PRESSED))
                                 {
                                     printf("%c", schar_case_key);
-                                    terminals[curr_term].keybuf[keybuffcount] = schar_case_key;
-                                    keybuffcount++;
+                                    terminals[curr_term].keybuf[terminals[curr_term].keybufcnt] = schar_case_key;
+                                    terminals[curr_term].keybufcnt++;
                                 } else {
                                     printf("%c", lower_case_key);
-                                    terminals[curr_term].keybuf[keybuffcount] = lower_case_key;
-                                    keybuffcount++;
+                                    terminals[curr_term].keybuf[terminals[curr_term].keybufcnt] = lower_case_key;
+                                    terminals[curr_term].keybufcnt++;
                                 }
                             } else if (shift == 1) {
                                 printf("%c", schar_case_key);
-                                terminals[curr_term].keybuf[keybuffcount] = schar_case_key;
-                                keybuffcount++;
+                                terminals[curr_term].keybuf[terminals[curr_term].keybufcnt] = schar_case_key;
+                                terminals[curr_term].keybufcnt++;
                             } else {
                                 printf("%c", upper_case_key);
-                                terminals[curr_term].keybuf[keybuffcount] = upper_case_key;
-                                keybuffcount++;
+                                terminals[curr_term].keybuf[terminals[curr_term].keybufcnt] = upper_case_key;
+                                terminals[curr_term].keybufcnt++;
                             }
                         } else {
                             printf("%c", lower_case_key);
-                            terminals[curr_term].keybuf[keybuffcount] = lower_case_key;
-                            keybuffcount++;
+                            terminals[curr_term].keybuf[terminals[curr_term].keybufcnt] = lower_case_key;
+                            terminals[curr_term].keybufcnt++;
                         }
                     }
                 }
@@ -610,8 +603,6 @@ void kbd_handler() {
 
     /*Sends en of interrupt signal for IRQ1*/
     send_eoi(KBD_IRQ);
-
-    sti();
 }
 
 
