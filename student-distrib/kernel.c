@@ -246,7 +246,7 @@ void entry(unsigned long magic, unsigned long addr) {
     (void)init_term();
     (void)init_term();
     // start at terminal 0
-    curr_term = 0;
+    (void)switch_terminal(0);
     
     // ==============================================================
 

@@ -4,6 +4,8 @@
 #include "../types.h"
 #include "process.h"
 
+//////////////////// TERMINAL STUFF /////////////////////
+
 #define MAX_TERMINAL 3
 #define KEYBUF_MAX_SIZE 128
 #define TERM0_VIDMEM_ADDR 0xB8800
@@ -40,5 +42,17 @@ extern term_info_t terminals[MAX_TERMINAL];
 
 /* initialize a new terminal and return terminal id */
 extern int32_t init_term();
+
+/* switch active terminal to terminal with given id */
+extern int32_t switch_terminal(uint8_t term_id);
+
+////////////////////////////////////////////////////////
+
+///////////////// PROCESS HANDLING STUFF ///////////////
+
+
+
+
+////////////////////////////////////////////////////////
 
 #endif	/* SCHED_H */

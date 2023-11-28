@@ -193,14 +193,6 @@ inline void flush_tlb() {
 }
 
 
-
-int32_t switch_terminal(uint8_t term_id) {
-    // TODO
-    curr_term = term_id;
-    return 0;
-}
-
-
 //////////// HELPER FUNCTIONS ///////////////
 
 

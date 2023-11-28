@@ -75,8 +75,6 @@ extern int32_t squash_process(uint8_t status);
 
 extern int32_t get_command_line_args(int8_t* buf, int32_t nbytes);
 
-/* switch active terminal to terminal with given id */
-extern int32_t switch_terminal(uint8_t term_id);
 
 extern inline void flush_tlb();
 

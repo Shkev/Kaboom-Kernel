@@ -40,3 +40,9 @@ int32_t init_term() {
     return num_term-1;
 }
 
+
+int32_t switch_terminal(uint8_t term_id) {
+    // TODO
+    curr_term = term_id;
+    return 0;
+}
