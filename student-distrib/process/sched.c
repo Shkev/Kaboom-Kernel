@@ -8,40 +8,48 @@ term_info_t terminals[MAX_TERMINAL];
 /* init_term()
  * 
  * DESCRIPTION:   initialize new terminal and set curr_term to its terminal id
- * INPUTS:        none
+ * INPUTS:        term_id  -  id of new terminal to initialize
  * OUTPUTS:       none
- * RETURNS:       terminal id of new terminal; negative value if failed
+ * RETURNS:       0 on success, negative value on failure
  * SIDE EFFECTS:  new term info struct populated in global terminals state.
- *                modifies curr_term
  */
-int32_t init_term() {
-    // TODO
-    static uint8_t num_term = 0;
-
-    if (num_term >= MAX_TERMINAL) {
+int32_t init_term(term_id_t term_id) {
+    if (invalid_term_id(term_id)) {
 	return -1;
     }
     
-    const uint32_t term_vidmem_addr = TERM0_VIDMEM_ADDR + num_term*PAGE_SIZE_4KB;
+    const uint32_t term_vidmem_addr = TERM0_VIDMEM_ADDR + term_id*PAGE_SIZE_4KB;
     
     // set page to present
     pt0[term_vidmem_addr].present = 1;
-    terminals[num_term].vidmem_addr = term_vidmem_addr;
-    terminals[num_term].cursor_x = 0;
-    terminals[num_term].cursor_y = 0;
-    terminals[num_term].term_id = num_term;
-    terminals[num_term].nprocess = 0;
-    terminals[num_term].keybufcnt = 0;
-    terminals[num_term].prev_keybufcnt = 0;
-    terminals[num_term].key_flags = 0;
-    memset(terminals[num_term].keybuf, '\0', KEYBUF_MAX_SIZE);
-    
-    num_term++;
-    return num_term-1;
+    terminals[term_id].vidmem_addr = term_vidmem_addr;
+    terminals[term_id].cursor_x = 0;
+    terminals[term_id].cursor_y = 0;
+    terminals[term_id].term_id = term_id;
+    terminals[term_id].nprocess = 0;
+    terminals[term_id].keybufcnt = 0;
+    terminals[term_id].prev_keybufcnt = 0;
+    terminals[term_id].key_flags = 0;
+    memset(terminals[term_id].keybuf, '\0', KEYBUF_MAX_SIZE);
+
+    return 0;
 }
 
 
-int32_t switch_terminal(uint8_t term_id) {
+/* invalid_term_id()
+ * 
+ * DESCRIPTION:   determines whether given terminal id is considered invalid
+ * INPUTS:        term_id  -  id of new terminal to check
+ * OUTPUTS:       none
+ * RETURNS:       nonzero value if given id is invalid, otherwise 0.
+ * SIDE EFFECTS:  new term info struct populated in global terminals state.
+ */
+int32_t invalid_term_id(term_id_t term_id) {
+    return term_id >= MAX_TERMINAL;
+}
+
+
+int32_t switch_terminal(term_id_t term_id) {
     // TODO
     curr_term = term_id;
     return 0;

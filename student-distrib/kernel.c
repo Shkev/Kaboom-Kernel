@@ -242,9 +242,9 @@ void entry(unsigned long magic, unsigned long addr) {
 
     init_pcb_arr();
     // initialize three terminals
-    (void)init_term();
-    (void)init_term();
-    (void)init_term();
+    (void)init_term(0);
+    (void)init_term(1);
+    (void)init_term(2);
     // start at terminal 0
     (void)switch_terminal(0);
     

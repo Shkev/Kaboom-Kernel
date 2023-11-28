@@ -610,10 +610,3 @@ void pit_handler() {
     send_eoi(PIT_IRQ);
 }
 
-
-void fill_buffer(int8_t* buf, int8_t val, uint32_t nbytes) {
-    int i;
-    for (i = 0; i < nbytes; ++i) {
-        buf[i] = val;
-    }
-}

@@ -299,7 +299,14 @@ pcb_t* create_new_pcb(int32_t pid) {
     pcb_arr[pid] = (pcb_t*)(pcb_bottom_addr - PCB_SIZE);
 
     pcb_arr[pid]->pid = pid;
-    pcb_arr[pid]->parent_pid = curr_pid;
+
+    /* if this is curr terminals first process, it has to parent process
+     * in this terminal */
+    if (terminals[curr_term].nprocess == 0) {
+	pcb_arr[pid]->parent_pid = -1;
+    } else {
+	pcb_arr[pid]->parent_pid = curr_pid;
+    }
     strcpy(pcb_arr[pid]->command_line_args, command_line);
 	
     //Initializes fd array for PCB with stdin and stdout
@@ -332,7 +339,7 @@ pcb_t* create_new_pcb(int32_t pid) {
 static void switch_to_user(uint32_t user_eip) {
     /* no need for stack pointer later if there is no parent process since in that case halt
      * will just restart shell and not return to execute/syscall linkage */
-    if (pcb_arr[curr_pid]->parent_pid >= 0) {
+    if (pcb_arr[curr_pid]->parent_pid != -1) {
         uint32_t saved_ebp;
         uint32_t saved_esp;
         // save current ebp and esp

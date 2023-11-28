@@ -6,6 +6,10 @@
 
 #define ATTRIB      0x2 
 
+// TODO
+// use curr terminals vidmem addr instead of this
+// then implement switch_terminals so the vidmem addr is updated on switch
+// and make sure the active terminal's vidmem addr points to the physical vidmem addr
 static char* video_mem = (char *)VIDEO;
 
 /* void clear(void);
