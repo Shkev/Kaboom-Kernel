@@ -594,7 +594,7 @@ inline uint8_t get_bit(uint32_t val, uint8_t bit) {
  * SIDE EFFECTS:  none. Note that the given value is not modified.
  */
 inline uint32_t set_bit(uint32_t val, uint8_t bit) {
-    return val |= 1 << bit;
+    return val | (1 << bit);
 }
 
 
@@ -608,6 +608,6 @@ inline uint32_t set_bit(uint32_t val, uint8_t bit) {
  * SIDE EFFECTS:  none. Note that the given value is not modified.
  */
 inline uint32_t unset_bit(uint32_t val, uint8_t bit) {
-    return val &= ~(1 << bit);
+    return val & ~(1 << bit);
 }
 
