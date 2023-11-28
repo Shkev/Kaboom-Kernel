@@ -89,8 +89,8 @@ int32_t start_process(const int8_t* cmd) {
     res = read_dentry_by_name(fname, &file_dentry);
     if (res < 0) {
 	// reverse paging back to current process's page before returning
-	    setup_process_page(curr_pid);
-	    return -1;
+	setup_process_page(curr_pid);
+	return -1;
     }
 
     // reads file contents
@@ -110,6 +110,8 @@ int32_t start_process(const int8_t* cmd) {
     curr_pid = next_pid;
     set_process_tss(curr_pid);
 
+    terminals[curr_term].nprocess++;
+    
     // set up stack for iret
     uint32_t *first_instr_addr = (uint32_t*)(PROGRAM_VIRTUAL_ADDR + 24);
     switch_to_user(*first_instr_addr);
@@ -128,17 +130,22 @@ int32_t start_process(const int8_t* cmd) {
  *                sets ebp and esp registers
  */
 int32_t squash_process(uint8_t status) {
-    if (curr_pid == 0) {
+    if (terminals[pcb_arr[curr_pid]->term_id].nprocess == 1) {
+	terminals[curr_term].nprocess--;
+	pcb_arr[curr_pid]->state = STOPPED;
         curr_pid = pcb_arr[curr_pid]->parent_pid;
-        // always start shell if nothing else running
+        // always start shell if nothing else running in the terminal
         sys_execute("shell");
     } else {
         cli();
         clear_fd_array(curr_pid);
+
         // disable user video mem for program
         pd[USER_VIDEO_PD_IDX].kb.present = 0;
         pt1[USER_VIDEO_PT_IDX].present = 0;
 
+	terminals[curr_term].nprocess--;
+	
 	pcb_arr[curr_pid]->state = STOPPED;
         setup_process_page(pcb_arr[curr_pid]->parent_pid);
         flush_tlb();

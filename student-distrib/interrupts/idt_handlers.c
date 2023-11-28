@@ -395,7 +395,7 @@ void kbd_handler() {
         enterflag = 1;
     } else if (scan_code == ENTER_RELEASE) {
         // release
-        fill_buffer(terminals[curr_term].keybuf, '\0', KEYBUF_MAX_SIZE);
+        memset(terminals[curr_term].keybuf, '\0', KEYBUF_MAX_SIZE);
         enterflag = 0;
     }
 
@@ -426,10 +426,10 @@ void kbd_handler() {
 	// CTRL-L logic to clear screen
 	clear();
 	terminals[curr_term].keybufcnt = 0;
-	fill_buffer(terminals[curr_term].keybuf, '\0', KEYBUF_MAX_SIZE);
+	memset(terminals[curr_term].keybuf, '\0', KEYBUF_MAX_SIZE);
     } else if ((ctrl == 1) && (scan_code == C_PRESS)) {
 	// CTRL-C logic to halt current program
-	fill_buffer(terminals[curr_term].keybuf, '\0', KEYBUF_MAX_SIZE);
+	memset(terminals[curr_term].keybuf, '\0', KEYBUF_MAX_SIZE);
 	terminals[curr_term].keybufcnt = 0;
 	if (curr_pid >= 0) { // if there is a process running terminate it
 	    send_eoi(1);

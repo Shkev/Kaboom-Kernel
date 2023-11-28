@@ -1,6 +1,7 @@
 #include "paging.h"
 
-
+pagedir_entry_t pd[PAGEDIR_SIZE];
+page_table_entry_t pt0[PAGETABLE_SIZE];
 page_table_entry_t pt1[PAGETABLE_SIZE];
 
 /*
@@ -19,23 +20,20 @@ void paging_init()
      * Note: all entries in pd and pt0 are set to 0 in x86_desc.S
      */
     for (j = 0; j < PAGEDIR_SIZE; j++) {
-	    /* first 4MB block in physical mem. Uses 4KB pages */
-        if (j == 0) {
-	        ZERO_PAGEDIR_KB(pd[j].kb);
-            pd[j].kb.present = 1;
-            pd[j].kb.pt_baseaddr = ((unsigned int)pt0) >> 12;
-	        pd[j].kb.rw = 1;
-        } else if (j == 1) { // 2nd 4MB physical mem block for kernel
-	        ZERO_PAGEDIR_MB(pd[j].mb);
-            pd[j].mb.present = 1;
-            pd[j].mb.ps1 = 1;
-	        pd[j].mb.rw = 1;
-            pd[j].mb.global = 1;
-            pd[j].mb.page_baseaddr_bit31_22 = KERNEL_ADDR >> 22;
-        } else { // eveything else allocated as needed by programs
-	        ZERO_PAGEDIR_KB(pd[j].kb);
-	    }
+	ZERO_PAGEDIR_MB(pd[j].mb);
     }
+
+    /* first 4MB block in physical mem. Uses 4KB pages */
+    pd[0].kb.present = 1;
+    pd[0].kb.pt_baseaddr = ((unsigned int)pt0) >> 12;
+    pd[0].kb.rw = 1;
+
+    /* 2nd 4MB physical mem block for kernel */
+    pd[1].mb.present = 1;
+    pd[1].mb.ps1 = 1;
+    pd[1].mb.rw = 1;
+    pd[1].mb.global = 1;
+    pd[1].mb.page_baseaddr_bit31_22 = KERNEL_ADDR >> 22;
     
     // set up process image page (base address changed dynamically as new processes created)
     ZERO_PAGEDIR_MB(pd[PROCESS_DIR_IDX].mb);
@@ -44,7 +42,7 @@ void paging_init()
     pd[PROCESS_DIR_IDX].mb.rw = 1;
     pd[PROCESS_DIR_IDX].mb.us = 1;
 
-    // initializing page table 0 and 1 for first 4MB block
+    // initializing page table 0 and 1
     for (j = 0; j < PAGETABLE_SIZE; j++)
     {
         ZERO_PAGETAB_ENTRY(pt0[j]);
@@ -52,14 +50,22 @@ void paging_init()
         pt0[j].rw = 1;
         pt1[j].rw = 1;
         pt0[j].page_baseaddr = j;
-        /* if page not for video memory */
-        if (j == (VIDEO >> 12)) { // for video mem
-            pt0[j].present = 1;
-        }
     }
+    // set video mem page to present
+    pt0[VIDEO >> 12].present = 1;
 
     // assembly stuff
     load_page_directory((unsigned int*)pd);
     allow_mixed_pages();
     enable_paging();
+}
+
+
+inline uint32_t get_pd_idx(uint32_t vmem_addr) {
+    return vmem_addr >> 22;
+}
+
+
+inline uint32_t get_pt_idx(uint32_t vmem_addr) {
+    return (vmem_addr >> 12) & 0x3FF;
 }

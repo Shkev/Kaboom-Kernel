@@ -22,6 +22,7 @@
 /* Check if the bit BIT in FLAGS is set. */
 #define CHECK_FLAG(flags, bit)   ((flags) & (1 << (bit)))
 
+
 /* Check if MAGIC is valid and print the Multiboot information structure
    pointed by ADDR. */
 void entry(unsigned long magic, unsigned long addr) {
@@ -244,6 +245,8 @@ void entry(unsigned long magic, unsigned long addr) {
     (void)init_term();
     (void)init_term();
     (void)init_term();
+    // start at terminal 0
+    curr_term = 0;
     
     // ==============================================================
 
