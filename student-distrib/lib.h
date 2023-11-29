@@ -40,7 +40,7 @@ int32_t safe_strncpy(int8_t* dest, const int8_t* src, int32_t n);
 void test_interrupts(void);
 
 void update_cursor(int screen_x, int screen_y);
-void scrolling();
+void scrolling(term_id_t term_id);
 
 inline uint32_t min(uint32_t a, uint32_t b);
 

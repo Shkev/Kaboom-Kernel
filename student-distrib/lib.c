@@ -189,7 +189,7 @@ void putc_term(unsigned char c, term_id_t term_id) {
         terminals[term_id].cursor_x = 0;
         if (terminals[term_id].cursor_y >= NUM_VIDEO_ROW)
         {
-            scrolling(); //scroll if at the bottom of the screen
+            scrolling(term_id); //scroll if at the bottom of the screen
             terminals[term_id].cursor_y = NUM_VIDEO_ROW - 1;
         }
     } else if (c == '\b') {
@@ -218,7 +218,7 @@ void putc_term(unsigned char c, term_id_t term_id) {
             terminals[term_id].cursor_y++;
             if (terminals[term_id].cursor_y >= NUM_VIDEO_ROW)
             {
-                scrolling();
+                scrolling(term_id);
                 terminals[term_id].cursor_y = NUM_VIDEO_ROW - 1;
             }
         } else {
@@ -552,27 +552,25 @@ void update_cursor(int xloc, int yloc)
 }
 
 /* void scrolling()
+ * Inputs:   term_id - terminal to do scrolling in
  * Return Value: NONE
  * Function: Scrolls screen up to make more space in terminal */
-void scrolling()
+void scrolling(term_id_t term_id)
 {
     int i, j, k;
-    if (!sentinel) {
-	process_term = pcb_arr[curr_pid]->term_id;
-    }
     for (i = 0; i < NUM_VIDEO_ROW - 1; i++) //loop through rows and columns
     {
         for (j = 0; j < NUM_VIDEO_COL - 1; j++)
         {
             // move terminal screen one row up
-            *(uint8_t *)(terminals[process_term].vidmem_addr + ((NUM_VIDEO_COL * i + j) << 1)) = *(uint8_t *)(terminals[process_term].vidmem_addr + ((NUM_VIDEO_COL * (i + 1) + j) << 1));
-            *(uint8_t *)(terminals[process_term].vidmem_addr + ((NUM_VIDEO_COL * i + j) << 1) + 1) = ATTRIB;
+            *(uint8_t *)(terminals[term_id].vidmem_addr + ((NUM_VIDEO_COL * i + j) << 1)) = *(uint8_t *)(terminals[term_id].vidmem_addr + ((NUM_VIDEO_COL * (i + 1) + j) << 1));
+            *(uint8_t *)(terminals[term_id].vidmem_addr + ((NUM_VIDEO_COL * i + j) << 1) + 1) = ATTRIB;
         }
     }
     for (k = 0; k < NUM_VIDEO_COL; k++)
     {
-        *(uint8_t *)(terminals[process_term].vidmem_addr + ((NUM_VIDEO_COL * (NUM_VIDEO_ROW - 1) + k) << 1)) = ' ';
-        *(uint8_t *)(terminals[process_term].vidmem_addr + ((NUM_VIDEO_COL * (NUM_VIDEO_ROW - 1) + k) << 1) + 1) = ATTRIB;
+        *(uint8_t *)(terminals[term_id].vidmem_addr + ((NUM_VIDEO_COL * (NUM_VIDEO_ROW - 1) + k) << 1)) = ' ';
+        *(uint8_t *)(terminals[term_id].vidmem_addr + ((NUM_VIDEO_COL * (NUM_VIDEO_ROW - 1) + k) << 1) + 1) = ATTRIB;
     }
 }
 
