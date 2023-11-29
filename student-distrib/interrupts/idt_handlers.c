@@ -631,6 +631,11 @@ void pit_handler() {
 	    send_eoi(PIT_IRQ);
 	    sys_execute("shell");
 	    break;
+	case (3):
+	    switch_terminal(0);
+	    // add 1 so it doesn't go here again
+	    nterm_started++;
+	    // intentional fall-through
         default:
 	    send_eoi(PIT_IRQ);
 	    schedule();
