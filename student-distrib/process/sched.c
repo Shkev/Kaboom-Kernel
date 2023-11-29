@@ -68,8 +68,6 @@ void switch_terminal(term_id_t term_id) {
     // TODO
     swap_out_curr_term();
     swap_in_next_term(term_id);
-    curr_term = term_id;
-    terminals[term_id].vidmem_addr = VIDEO;
 }
 
 
@@ -92,11 +90,19 @@ static void setup_term_page(term_id_t term_id) {
 
 
 void swap_out_curr_term() {
-    
+    // saving screen x, y done through lib.c function (i.e., printf, putc, etc.)
+    // doing video memory copying stuff here...
+    const uint32_t term_vidmem_addr = TERM0_VIDMEM_ADDR + curr_term*PAGE_SIZE_4KB;
+    terminals[curr_term].vidmem_addr = term_vidmem_addr;
+    memcpy((char*)term_vidmem_addr, (char*)VIDEO, PAGE_SIZE_4KB);
 }
 
 
 void swap_in_next_term(term_id_t term_id) {
-    
+    curr_term = term_id; 	/* handles restoring cursor position */
+    const uint32_t term_vidmem_addr = TERM0_VIDMEM_ADDR + term_id*PAGE_SIZE_4KB;
+    memcpy((char*)VIDEO, (char*)term_vidmem_addr, PAGE_SIZE_4KB);
+    terminals[term_id].vidmem_addr = VIDEO;
+    update_cursor(terminals[term_id].cursor_x, terminals[term_id].cursor_y);
 }
 
