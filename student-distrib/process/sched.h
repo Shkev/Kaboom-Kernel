@@ -13,11 +13,10 @@
 
 /* term info key pressed flag bitnumber for each key */
 #define SHIFT_FLAG_BITNUM 0
-#define CAPSLOCK_FLAG_BITNUM 1
-#define BKSPC_FLAG_BITNUM 2
-#define TAB_FLAG_BITNUM 3
-#define CTRL_FLAG_BITNUM 4
-#define ALT_FLAG_BITNUM 5
+#define BKSPC_FLAG_BITNUM 1
+#define TAB_FLAG_BITNUM 2
+#define CTRL_FLAG_BITNUM 3
+#define ALT_FLAG_BITNUM 4
 
 /* terminal info struct. stores info about current state of a terminal
  * to allow recovering terminal state when switching to it */

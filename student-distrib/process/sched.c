@@ -70,7 +70,6 @@ void switch_terminal(term_id_t term_id) {
     swap_in_next_term(term_id);
     curr_term = term_id;
     terminals[term_id].vidmem_addr = VIDEO;
-    return 0;
 }
 
 
@@ -89,5 +88,15 @@ static void setup_term_page(term_id_t term_id) {
     pt0[pt_idx].rw = 1;
     // vmem and physical address are the same (like for actual vidmem and kernel)
     pt0[pt_idx].page_baseaddr = terminals[term_id].vidmem_addr >> 12;
+}
+
+
+void swap_out_curr_term() {
+    
+}
+
+
+void swap_in_next_term(term_id_t term_id) {
+    
 }
 

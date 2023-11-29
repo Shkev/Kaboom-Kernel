@@ -336,6 +336,8 @@ void rtc_handler() {
 * SIDE EFFECTS: handles keyboard, sends EOI when done
 */
 void kbd_handler() {
+    static unsigned int capslock = 0;
+    
     enterflag = 0;
     /* array of characters corresponding to the scancode as the index */
     /* only characters in the scancode 1 are included for checkpoint 1 purposes*/
@@ -415,7 +417,6 @@ void kbd_handler() {
     }
 
     uint8_t shift = get_bit(terminals[curr_term].key_flags, SHIFT_FLAG_BITNUM);
-    uint8_t capslock = get_bit(terminals[curr_term].key_flags, CAPSLOCK_FLAG_BITNUM);
     uint8_t backspace = get_bit(terminals[curr_term].key_flags, BKSPC_FLAG_BITNUM);
     uint8_t tab = get_bit(terminals[curr_term].key_flags, TAB_FLAG_BITNUM);
     uint8_t ctrl = get_bit(terminals[curr_term].key_flags, CTRL_FLAG_BITNUM);
@@ -477,10 +478,10 @@ void kbd_handler() {
             if (scan_code <= F12_PRESSED) {
                 if(scan_code == CAPSLOCK_PRESSED && capslock == 0) {
 		    // toggle caps lock on
-		    terminals[curr_term].key_flags = set_bit(terminals[curr_term].key_flags, CAPSLOCK_FLAG_BITNUM);
+		    capslock = 1;
                 } else if (scan_code == CAPSLOCK_PRESSED && capslock == 1) {
 		    // toggle caps lock off
-		    terminals[curr_term].key_flags = unset_bit(terminals[curr_term].key_flags, CAPSLOCK_FLAG_BITNUM);
+		    capslock = 0;
                 } else if (((scan_code == LEFTSHIFT_PRESSED) || (scan_code == RIGHTSHIFT_PRESSED)) && (shift == 0)) {
 		    // shift pressed
 		    terminals[curr_term].key_flags = set_bit(terminals[curr_term].key_flags, SHIFT_FLAG_BITNUM);
