@@ -226,8 +226,6 @@ void entry(unsigned long magic, unsigned long addr) {
     //disable_all_irq();
     i8259_init();
 
-    clear();
-    
     /* initialize devices. Turn on IRQs for these devices */
     /*IRQ2 is enabled to account for secondary PIC*/
     enable_irq(2);
@@ -247,7 +245,8 @@ void entry(unsigned long magic, unsigned long addr) {
     (void)init_term(2);
     // start at terminal 0
     (void)switch_terminal(0);
-    
+
+    clear();
     // ==============================================================
 
     /* Enable interrupts */

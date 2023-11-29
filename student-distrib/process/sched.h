@@ -8,7 +8,8 @@
 
 #define MAX_TERMINAL 3
 #define KEYBUF_MAX_SIZE 128
-#define TERM0_VIDMEM_ADDR 0xB8800
+// start terminals' vidmem after actual vidmem in vmem (with a single page gap in between)
+#define TERM0_VIDMEM_ADDR 0xBA000
 
 /* term info key pressed flag bitnumber for each key */
 #define SHIFT_FLAG_BITNUM 0

@@ -4,6 +4,12 @@
 uint8_t curr_term = 0;
 term_info_t terminals[MAX_TERMINAL];
 
+/////////// HELPER FUNCTIONS ///////////////////
+
+static void setup_term_page(term_id_t term_id);
+
+////////////////////////////////////////////////
+
 
 /* init_term()
  * 
@@ -19,10 +25,9 @@ int32_t init_term(term_id_t term_id) {
     }
     
     const uint32_t term_vidmem_addr = TERM0_VIDMEM_ADDR + term_id*PAGE_SIZE_4KB;
-    
-    // set page to present
-    pt0[term_vidmem_addr].present = 1;
     terminals[term_id].vidmem_addr = term_vidmem_addr;
+    setup_term_page(term_id);
+    
     terminals[term_id].cursor_x = 0;
     terminals[term_id].cursor_y = 0;
     terminals[term_id].term_id = term_id;
@@ -52,5 +57,16 @@ int32_t invalid_term_id(term_id_t term_id) {
 int32_t switch_terminal(term_id_t term_id) {
     // TODO
     curr_term = term_id;
+    terminals[term_id].vidmem_addr = VIDEO;
     return 0;
+}
+
+
+static void setup_term_page(term_id_t term_id) {
+    uint32_t pt_idx = get_pt_idx(terminals[term_id].vidmem_addr);
+
+    pt0[pt_idx].present = 1;
+    pt0[pt_idx].rw = 1;
+    // vmem and physical address are the same (like for actual vidmem and kernel)
+    pt0[pt_idx].page_baseaddr = terminals[term_id].vidmem_addr >> 12;
 }
