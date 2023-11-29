@@ -10,8 +10,6 @@
 // keep track of whether RTC has had an interrupt
 volatile uint32_t rtc_flag = 0;
 
-int enterflag = 0;
-
 
 /*divide_zero_handler()
 * DESCRIPTION: Prints the divide by zero exception and emulates blue screen of death by infinitly looping
@@ -338,7 +336,8 @@ void rtc_handler() {
 void kbd_handler() {
     static unsigned int capslock = 0;
     
-    enterflag = 0;
+    terminals[curr_term].key_flags = unset_bit(terminals[curr_term].key_flags, ENTER_FLAG_BITNUM);
+    
     /* array of characters corresponding to the scancode as the index */
     /* only characters in the scancode 1 are included for checkpoint 1 purposes*/
     char lower_case[] = {'\0', '\0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 
@@ -394,11 +393,11 @@ void kbd_handler() {
 
     //ENTER LOGIC
     if (scan_code == ENTER_PRESSED) {
-        enterflag = 1;
+	terminals[curr_term].key_flags = set_bit(terminals[curr_term].key_flags, ENTER_FLAG_BITNUM);
     } else if (scan_code == ENTER_RELEASE) {
         // release
-        memset(terminals[curr_term].keybuf, '\0', KEYBUF_MAX_SIZE);
-        enterflag = 0;
+        //memset(terminals[curr_term].keybuf, '\0', KEYBUF_MAX_SIZE);
+        //enterflag = 0;
     }
 
     //CTRL LOGIC
@@ -455,20 +454,20 @@ void kbd_handler() {
 	}
     }
     // PRESSING LOGIC (lots of cases to consider...)
-    else if (enterflag == 1) { // if enter pressed
+    else if (get_bit(terminals[curr_term].key_flags, ENTER_FLAG_BITNUM)) { // if enter pressed
 	terminals[curr_term].keybuf[terminals[curr_term].keybufcnt++] = '\n';
-	putc('\n');
+	putc_term('\n', curr_term);
 	terminals[curr_term].prev_keybufcnt = terminals[curr_term].keybufcnt;
 	terminals[curr_term].keybufcnt = 0; 
     } else if (backspace == 1) { // handle backspace pressed
 	if (terminals[curr_term].keybufcnt != 0) {
-	    putc('\b');
+	    putc_term('\b', curr_term);
 	    terminals[curr_term].keybuf[--terminals[curr_term].keybufcnt] = '\0';
 	}
     } else if (terminals[curr_term].keybufcnt < KEYBUF_MAX_SIZE-1) { // if buffer not full, handle other key presses (-1 to leave space for \n)
         if (tab == 1) {
             if (terminals[curr_term].keybufcnt < KEYBUF_MAX_SIZE - TABSIZE - 1) { // if can fit a tab, add it to buffer
-                putc('\t');
+                putc_term('\t', curr_term);
                 terminals[curr_term].keybuf[terminals[curr_term].keybufcnt++] = ' ';
                 terminals[curr_term].keybuf[terminals[curr_term].keybufcnt++] = ' ';
                 terminals[curr_term].keybuf[terminals[curr_term].keybufcnt++] = ' ';
@@ -573,25 +572,25 @@ void kbd_handler() {
                                 // caps lock pressed and want special char
                                 if ((scan_code == BACKTICK_PRESSED) || (scan_code == ONE_PRESSED) || (scan_code == TWO_PRESSED) || (scan_code == THREE_PRESSED) || (scan_code == FOUR_PRESSED) || (scan_code == FIVE_PRESSED) || (scan_code == SIX_PRESSED) || (scan_code == SEVEN_PRESSED) || (scan_code == EIGHT_PRESSED) || (scan_code == NINE_PRESSED) || (scan_code == ZERO_PRESSED) || (scan_code == MINUS_PRESSED) || (scan_code == EQUAL_PRESSED) || (scan_code == LEFTBRACKET_PRESSED) || (scan_code == RIGHTBRACKET_PRESSED) || (scan_code == BACKSLASH_PRESSED) || (scan_code == SEMICOLON_PRESSED) || (scan_code == SINGLEQUOTE_PRESSED) || (scan_code == COMMA_PRESSED) || (scan_code == PERIOD_PRESSED) || (scan_code == FORWARDSLASH_PRESSED))
                                 {
-                                    printf("%c", schar_case_key);
+                                    putc_term(schar_case_key, curr_term);
                                     terminals[curr_term].keybuf[terminals[curr_term].keybufcnt] = schar_case_key;
                                     terminals[curr_term].keybufcnt++;
                                 } else {
-                                    printf("%c", lower_case_key);
+                                    putc_term(lower_case_key, curr_term);
                                     terminals[curr_term].keybuf[terminals[curr_term].keybufcnt] = lower_case_key;
                                     terminals[curr_term].keybufcnt++;
                                 }
                             } else if (shift == 1) {
-                                printf("%c", schar_case_key);
+                                putc_term(schar_case_key, curr_term);
                                 terminals[curr_term].keybuf[terminals[curr_term].keybufcnt] = schar_case_key;
                                 terminals[curr_term].keybufcnt++;
                             } else {
-                                printf("%c", upper_case_key);
+                                putc_term(upper_case_key, curr_term);
                                 terminals[curr_term].keybuf[terminals[curr_term].keybufcnt] = upper_case_key;
                                 terminals[curr_term].keybufcnt++;
                             }
                         } else {
-                            printf("%c", lower_case_key);
+                            putc_term(lower_case_key, curr_term);
                             terminals[curr_term].keybuf[terminals[curr_term].keybufcnt] = lower_case_key;
                             terminals[curr_term].keybufcnt++;
                         }
@@ -607,9 +606,6 @@ void kbd_handler() {
 
 
 void pit_handler() {
-    send_eoi(PIT_IRQ);
-    return;
-    // TODO : Implement scheduling here...
     static int nterm_started = 0;
     /* first 3 interrupts start a shell in each terminal.
      * rest of interrupts trigger scheduler */

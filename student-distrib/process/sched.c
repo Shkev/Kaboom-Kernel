@@ -1,7 +1,7 @@
 #include "sched.h"
 #include "../lib.h"
 
-uint8_t curr_term = 0;
+volatile uint8_t curr_term = 0;
 term_info_t terminals[MAX_TERMINAL];
 
 /////////// HELPER FUNCTIONS ///////////////////
@@ -12,6 +12,7 @@ static void swap_in_next_term(term_id_t term_id);
 
 ////////////////////////////////////////////////
 
+////////////////// TERMINAL STUFF ////////////////////////////////
 
 /* init_term()
  * 
@@ -37,6 +38,7 @@ int32_t init_term(term_id_t term_id) {
     terminals[term_id].keybufcnt = 0;
     terminals[term_id].prev_keybufcnt = 0;
     terminals[term_id].key_flags = 0;
+    terminals[term_id].curr_pid = -1;
     memset(terminals[term_id].keybuf, '\0', KEYBUF_MAX_SIZE);
 
     return 0;
@@ -106,3 +108,8 @@ void swap_in_next_term(term_id_t term_id) {
     update_cursor(terminals[term_id].cursor_x, terminals[term_id].cursor_y);
 }
 
+////////////////////// SCHEDULING PROCESSES STUFF ///////////////////////////
+
+void schedule() {
+    // TODO.
+}

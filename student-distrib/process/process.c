@@ -111,6 +111,7 @@ int32_t start_process(const int8_t* cmd) {
     set_process_tss(curr_pid);
 
     terminals[curr_term].nprocess++;
+    terminals[curr_term].curr_pid = curr_pid;
     
     // set up stack for iret
     uint32_t *first_instr_addr = (uint32_t*)(PROGRAM_VIRTUAL_ADDR + 24);
@@ -143,14 +144,15 @@ int32_t squash_process(uint8_t status) {
         // disable user video mem for program
         pd[USER_VIDEO_PD_IDX].kb.present = 0;
         pt1[USER_VIDEO_PT_IDX].present = 0;
-
-	terminals[curr_term].nprocess--;
 	
 	pcb_arr[curr_pid]->state = STOPPED;
         setup_process_page(pcb_arr[curr_pid]->parent_pid);
         flush_tlb();
         set_process_tss(pcb_arr[curr_pid]->parent_pid);
 	curr_pid = pcb_arr[curr_pid]->parent_pid;
+	
+	terminals[curr_term].curr_pid = curr_pid;
+	terminals[curr_term].nprocess--;
 
         if(pcb_arr[curr_pid]->exception_flag == 1) {
 	    pcb_arr[curr_pid]->exception_flag = 0;

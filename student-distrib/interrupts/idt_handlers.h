@@ -11,9 +11,6 @@
 extern volatile uint32_t rtc_flag;
 
 
-extern int enterflag; 			/* has ENTER been pressed on keyboard? */
-
-
 /* Exception handlers. These are the functions that are called when an
 * exception occurs in kernel */
 
