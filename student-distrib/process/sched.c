@@ -7,6 +7,8 @@ term_info_t terminals[MAX_TERMINAL];
 /////////// HELPER FUNCTIONS ///////////////////
 
 static void setup_term_page(term_id_t term_id);
+static void swap_out_curr_term();
+static void swap_in_next_term(term_id_t term_id);
 
 ////////////////////////////////////////////////
 
@@ -54,14 +56,32 @@ int32_t invalid_term_id(term_id_t term_id) {
 }
 
 
-int32_t switch_terminal(term_id_t term_id) {
+/* switch_terminal()
+ * 
+ * DESCRIPTION:   switch active terminal to terminal with given id
+ * INPUTS:        term_id  -  id of terminal to switch to
+ * OUTPUTS:       none
+ * RETURNS:       none
+ * SIDE EFFECTS:  change current terminal and modify page tables
+ */
+void switch_terminal(term_id_t term_id) {
     // TODO
+    swap_out_curr_term();
+    swap_in_next_term(term_id);
     curr_term = term_id;
     terminals[term_id].vidmem_addr = VIDEO;
     return 0;
 }
 
 
+/* setup_term_page()
+ * 
+ * DESCRIPTION:   setup page in page table for terminal's vidmem
+ * INPUTS:        term_id  -  id of terminal to setup
+ * OUTPUTS:       none
+ * RETURNS:       none
+ * SIDE EFFECTS:  modifies page tables
+ */
 static void setup_term_page(term_id_t term_id) {
     uint32_t pt_idx = get_pt_idx(terminals[term_id].vidmem_addr);
 
@@ -70,3 +90,4 @@ static void setup_term_page(term_id_t term_id) {
     // vmem and physical address are the same (like for actual vidmem and kernel)
     pt0[pt_idx].page_baseaddr = terminals[term_id].vidmem_addr >> 12;
 }
+

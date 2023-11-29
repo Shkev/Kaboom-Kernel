@@ -47,7 +47,7 @@ extern int32_t init_term(term_id_t term_id);
 extern int32_t invalid_term_id(term_id_t term_id);
 
 /* switch active terminal to terminal with given id */
-extern int32_t switch_terminal(term_id_t term_id);
+extern void switch_terminal(term_id_t term_id);
 
 ////////////////////////////////////////////////////////
 
