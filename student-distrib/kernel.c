@@ -32,6 +32,9 @@ void entry(unsigned long magic, unsigned long addr) {
 
     multiboot_info_t *mbi;
 
+    /* do all kernel stuff in default terminal 0 */
+    curr_term = 0;
+    
     /* Clear the screen. */
     clear();
 
@@ -246,8 +249,6 @@ void entry(unsigned long magic, unsigned long addr) {
     (void)init_term(0);
     (void)init_term(1);
     (void)init_term(2);
-    // start at terminal 0
-    (void)switch_terminal(0);
 
     clear();
     // ==============================================================

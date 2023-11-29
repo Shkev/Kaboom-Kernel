@@ -26,7 +26,7 @@ typedef struct term_info {
     int32_t cursor_x;		     /* x-pos of cursor on screen */
     int32_t cursor_y;		     /* y-pos of cursor on screen */
     uint32_t nprocess;		     /* number of processes running on the terminal */
-    volatile uint32_t curr_pid;	     /* pid of process currently running in terminal */
+    volatile pid_t curr_pid;	     /* pid of process currently running in terminal */
     uint32_t vidmem_addr;	     /* virtual mem addr for video memory terminal will write to */
     uint32_t keybufcnt;		     /* count characters typed in buffer */
     uint32_t prev_keybufcnt;	     /* num chars typed in previous buffer (before enter pressed) */
@@ -54,6 +54,7 @@ extern void switch_terminal(term_id_t term_id);
 
 ///////////////// PROCESS HANDLING STUFF ///////////////
 
+/* schedules next process in run queue */
 extern void schedule();
 
 ////////////////////////////////////////////////////////

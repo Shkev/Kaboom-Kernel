@@ -5,7 +5,7 @@
 
 
 /////// EXTERNALLY VISIBLE VARIABLES ////////
-int32_t curr_pid = -1;
+pid_t curr_pid = -1;
 pcb_t* pcb_arr[NUM_PROCESS];
 
 /////////////////////////////////////////////
@@ -15,7 +15,7 @@ static uint32_t return_status = 0;
 static int8_t command_line[CMD_ARG_LEN];
 
 ////// HELPER FUNCTIONS ///////
-static inline int32_t get_next_pid(int32_t pid);
+static inline int32_t get_next_pid(pid_t pid);
 
 /////////////////// SYSTEM EXECUTE HELPERS /////////////////////////////
 
@@ -26,13 +26,10 @@ static int32_t parse_args(const int8_t* arg, int8_t* const buf);
 static inline uint32_t is_executable(const int8_t* file_contents);
 
 /* setup process page addresses for process with given pid */
-static void setup_process_page(int32_t pid);
+static void setup_process_page(pid_t pid);
 
 /* initialize pcb memory block in kernel for given pid */
 static pcb_t* create_new_pcb();
-
-/* set entries in TSS for process */
-static inline void set_process_tss(int32_t pid);
 
 /* set up stack and iret to user space */
 static void switch_to_user(uint32_t user_eip);
@@ -40,7 +37,7 @@ static void switch_to_user(uint32_t user_eip);
 //////////////// SYSTEM HALT HELPERS //////////////////////////////////
 
 /* clear all entries in file descriptor array of given process */
-static void clear_fd_array(int32_t pid);
+static void clear_fd_array(pid_t pid);
 
 ///////////////////////////////////////////////////////////////////////
 
@@ -71,7 +68,7 @@ int32_t start_process(const int8_t* cmd) {
     // empty command line arg
     memset(command_line, '\0', CMD_ARG_LEN);
 
-    int32_t next_pid = get_next_pid(curr_pid);
+    pid_t next_pid = get_next_pid(curr_pid);
     if (next_pid < 0) {
         // max num processes reached, can't create more
         return -1;
@@ -176,6 +173,23 @@ int32_t squash_process(uint8_t status) {
 }
 
 
+//////////// HELPER FUNCTIONS ///////////////
+
+
+/* setup_process_tss()
+ * 
+ * DESCRIPTION:   sets up tss
+ * INPUTS:        pid - current process id number
+ * OUTPUTS:       none
+ * RETURNS:       none
+ * SIDE EFFECTS:  sets segment and stack base pointer of current process
+ */
+inline void set_process_tss(pid_t pid) {
+    tss.ss0 = KERNEL_DS;
+    tss.esp0 = pcb_arr[pid]->stack_base_ptr;
+}
+
+
 /* flush_tlb()
  * 
  * DESCRIPTION:   flushes TLB
@@ -195,9 +209,6 @@ inline void flush_tlb() {
 }
 
 
-//////////// HELPER FUNCTIONS ///////////////
-
-
 /* get_next_pid()
  * 
  * DESCRIPTION:   gets next available pid
@@ -206,7 +217,7 @@ inline void flush_tlb() {
  * RETURNS:       next available pid. Returns -1 if none available
  * SIDE EFFECTS:  none
  */
-static inline int32_t get_next_pid(int32_t pid) {
+static inline int32_t get_next_pid(pid_t pid) {
     unsigned int i;
     for (i = 0; i < NUM_PROCESS; ++i) {
 	if (pcb_arr[i] == NULL || pcb_arr[i]->state == STOPPED) {
@@ -283,7 +294,7 @@ static inline uint32_t is_executable(const int8_t* file_contents) {
  * RETURNS:       none
  * SIDE EFFECTS:  fills page directory entry with correct physical memory mapping
  */
-void setup_process_page(int32_t pid) {
+void setup_process_page(pid_t pid) {
     //Chooses correct page directory entry offset based on page
     pd[PROCESS_DIR_IDX].mb.page_baseaddr_bit31_22 = (PROCCESS_0_ADDR + pid * PAGE_SIZE_4MB) >> 22;
 }
@@ -296,7 +307,7 @@ void setup_process_page(int32_t pid) {
  * RETURNS:       new pcb_t struct object
  * SIDE EFFECTS:  initalizes new pcb_t struct object, and adds it to pcb array
  */
-pcb_t* create_new_pcb(int32_t pid) {
+pcb_t* create_new_pcb(pid_t pid) {
     uint32_t pcb_bottom_addr = KERNEL_END_ADDR - (pid)*PCB_SIZE;
     pcb_arr[pid] = (pcb_t*)(pcb_bottom_addr - PCB_SIZE);
 
@@ -373,18 +384,7 @@ static void switch_to_user(uint32_t user_eip) {
         return;
 }
 
-/* setup_process_tss()
- * 
- * DESCRIPTION:   sets up tss
- * INPUTS:        pid - current process id number
- * OUTPUTS:       none
- * RETURNS:       none
- * SIDE EFFECTS:  sets segment and stack base pointer of current process
- */
-static inline void set_process_tss(int32_t pid) {
-    tss.ss0 = KERNEL_DS;
-    tss.esp0 = pcb_arr[pid]->stack_base_ptr;
-}
+
 
 /* clear_fd_array()
  * 
@@ -394,7 +394,7 @@ static inline void set_process_tss(int32_t pid) {
  * RETURNS:       none
  * SIDE EFFECTS:  clears the flags and resets all file operation pointers
  */
-void clear_fd_array(int32_t pid) {
+void clear_fd_array(pid_t pid) {
     int i;
     //iterate through max size of fd array
     for (i = 0; i < MAXFILES_PER_TASK; i++) {

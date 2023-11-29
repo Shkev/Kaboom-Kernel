@@ -613,18 +613,21 @@ void pit_handler() {
 	case (0):
 	    switch_terminal(0);	    
 	    nterm_started++;
+	    clear();
 	    send_eoi(PIT_IRQ);
 	    sys_execute("shell");
 	    break;
 	case (1):
 	    switch_terminal(1);
 	    nterm_started++;
+	    clear();
 	    send_eoi(PIT_IRQ);
 	    sys_execute("shell");
 	    break;
 	case (2):
 	    switch_terminal(2);
 	    nterm_started++;
+	    clear();
 	    send_eoi(PIT_IRQ);
 	    sys_execute("shell");
 	    break;

@@ -42,8 +42,8 @@ enum task_state {
 
 /* Process control block stored in kernel for each running process */
 typedef struct pcb {
-    int32_t pid;
-    int32_t parent_pid;
+    pid_t pid;
+    pid_t parent_pid;
     uint32_t stack_ptr;		/* ESP */
     uint32_t stack_base_ptr;	/* EBP */
     enum task_state state;
@@ -60,7 +60,7 @@ extern pcb_t* pcb_arr[NUM_PROCESS];
 
 
 /* pid of most recently created process */
-extern int32_t curr_pid;
+extern pid_t curr_pid;
 
 //////////////////////////////// PROCEESS HANDLING FUNCTIONS ////////////////////////////////////
 

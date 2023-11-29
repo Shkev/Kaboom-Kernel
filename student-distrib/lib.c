@@ -20,18 +20,13 @@ static term_id_t process_term = 0;
  * Function: Clears video memory */
 void clear(void) {
     int32_t i;
-    if (!sentinel) {
-	process_term = pcb_arr[curr_pid]->term_id;
-    }
     for (i = 0; i < NUM_VIDEO_ROW * NUM_VIDEO_COL; i++) {
-        *(char *)(terminals[process_term].vidmem_addr + (i << 1)) = ' ';
-        *(char *)(terminals[process_term].vidmem_addr + (i << 1) + 1) = ATTRIB;
+        *(char *)(terminals[curr_term].vidmem_addr + (i << 1)) = ' ';
+        *(char *)(terminals[curr_term].vidmem_addr + (i << 1) + 1) = ATTRIB;
     }
-    terminals[process_term].cursor_x = 0;
-    terminals[process_term].cursor_y = 0;
-    if (process_term == curr_term) {
-	update_cursor(terminals[curr_term].cursor_x, terminals[curr_term].cursor_y);
-    }
+    terminals[curr_term].cursor_x = 0;
+    terminals[curr_term].cursor_y = 0;
+    update_cursor(terminals[curr_term].cursor_x, terminals[curr_term].cursor_y);
 }
 
 /* Standard printf().
@@ -175,6 +170,8 @@ int32_t puts(int8_t* s) {
 
 
 void putc(uint8_t c) {
+    /* add sentinel check so print statements work even when no process is running (i.e., in kernel.c)
+     * prints to terminal 0 by default */
     if (!sentinel) {
 	process_term = pcb_arr[curr_pid]->term_id;
     }

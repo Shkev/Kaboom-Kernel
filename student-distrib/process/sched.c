@@ -110,6 +110,16 @@ void swap_in_next_term(term_id_t term_id) {
 
 ////////////////////// SCHEDULING PROCESSES STUFF ///////////////////////////
 
+/* schedule()
+ * 
+ * DESCRIPTION:   switch to next process in run queue
+ * INPUTS:        none
+ * OUTPUTS:       none
+ * RETURNS:       none
+ * SIDE EFFECTS:  modify esp, ebp, tss, eip
+ */
 void schedule() {
-    // TODO.
+    pid_t next_pid;
+    
+    return;
 }
