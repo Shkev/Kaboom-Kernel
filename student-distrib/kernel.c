@@ -13,13 +13,15 @@
 #include "paging/paging.h"
 #include "filesystems/filesystem.h"
 #include "interrupts/syscalls.h"
-//#include "interrupts/syscalls.h"
+#include "process/process.h"
+#include "process/sched.h"
 
 #define RUN_TESTS 0
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
 #define CHECK_FLAG(flags, bit)   ((flags) & (1 << (bit)))
+
 
 /* Check if MAGIC is valid and print the Multiboot information structure
    pointed by ADDR. */
@@ -224,8 +226,6 @@ void entry(unsigned long magic, unsigned long addr) {
     //disable_all_irq();
     i8259_init();
 
-    clear();
-    
     /* initialize devices. Turn on IRQs for these devices */
     /*IRQ2 is enabled to account for secondary PIC*/
     enable_irq(2);
@@ -237,6 +237,16 @@ void entry(unsigned long magic, unsigned long addr) {
     init_ext2_filesys(ext2_filesys->mod_start);
     
     paging_init();
+
+    init_pcb_arr();
+    // initialize three terminals
+    (void)init_term(0);
+    (void)init_term(1);
+    (void)init_term(2);
+    // start at terminal 0
+    (void)switch_terminal(0);
+
+    clear();
     // ==============================================================
 
     /* Enable interrupts */

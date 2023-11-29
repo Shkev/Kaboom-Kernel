@@ -2,13 +2,14 @@
  * vim:ts=4 noexpandtab */
 
 #include "lib.h"
+#include "process/sched.h"
 
-#define NUM_COLS    80
-#define NUM_ROWS    25
 #define ATTRIB      0x2 
 
-static int screen_x;
-static int screen_y;
+// TODO
+// use curr terminals vidmem addr instead of this
+// then implement switch_terminals so the vidmem addr is updated on switch
+// and make sure the active terminal's vidmem addr points to the physical vidmem addr
 static char* video_mem = (char *)VIDEO;
 
 /* void clear(void);
@@ -17,13 +18,13 @@ static char* video_mem = (char *)VIDEO;
  * Function: Clears video memory */
 void clear(void) {
     int32_t i;
-    for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
-        *(uint8_t *)(video_mem + (i << 1)) = ' ';
-        *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
+    for (i = 0; i < NUM_VIDEO_ROW * NUM_VIDEO_COL; i++) {
+        *(char *)(terminals[curr_term].vidmem_addr + (i << 1)) = ' ';
+        *(char *)(terminals[curr_term].vidmem_addr + (i << 1) + 1) = ATTRIB;
     }
-    screen_x = 0;
-    screen_y = 0;
-    update_cursor(screen_x, screen_y);
+    terminals[curr_term].cursor_x = 0;
+    terminals[curr_term].cursor_y = 0;
+    update_cursor(terminals[curr_term].cursor_x, terminals[curr_term].cursor_y);
 }
 
 /* Standard printf().
@@ -171,48 +172,48 @@ int32_t puts(int8_t* s) {
  *  Function: Output a character to the console */
 void putc(uint8_t c) {
     if((c == '\n' || c == '\r')) {
-        screen_y++;
-        screen_x = 0;
-        if (screen_y >= NUM_ROWS)
+        terminals[curr_term].cursor_y++;
+        terminals[curr_term].cursor_x = 0;
+        if (terminals[curr_term].cursor_y >= NUM_VIDEO_ROW)
         {
             scrolling(); //scroll if at the bottom of the screen
-            screen_y = NUM_ROWS - 1;
+            terminals[curr_term].cursor_y = NUM_VIDEO_ROW - 1;
         }
     } else if (c == '\b') {
-        if (screen_x >= 1)
+        if (terminals[curr_term].cursor_x >= 1)
         {
-            screen_x--; //backspace logic
-            *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
-            *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
-        } else if ((screen_x == 0) && (screen_y >= 1)){
-            screen_x = 80;
-            screen_y = screen_y - 1; //go to the back row of the last screen
+            terminals[curr_term].cursor_x--; //backspace logic
+        } else if ((terminals[curr_term].cursor_x == 0) && (terminals[curr_term].cursor_y >= 1)){
+            terminals[curr_term].cursor_x = NUM_VIDEO_COL-1;
+            terminals[curr_term].cursor_y--; //go to the back row of the last screen
         } else {
-            screen_x = 0;
+            terminals[curr_term].cursor_x = 0;
         }
+	*(uint8_t *)(terminals[curr_term].vidmem_addr + ((NUM_VIDEO_COL * terminals[curr_term].cursor_y + terminals[curr_term].cursor_x) << 1)) = ' ';
+	*(uint8_t *)(terminals[curr_term].vidmem_addr + ((NUM_VIDEO_COL * terminals[curr_term].cursor_y + terminals[curr_term].cursor_x) << 1) + 1) = ATTRIB;
     } else if (c == '\t') { //tab logic
-        screen_x = screen_x + 4;
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
+        terminals[curr_term].cursor_x = terminals[curr_term].cursor_x + 4;
+        *(uint8_t *)(terminals[curr_term].vidmem_addr + ((NUM_VIDEO_COL * terminals[curr_term].cursor_y + terminals[curr_term].cursor_x) << 1)) = ' ';
+        *(uint8_t *)(terminals[curr_term].vidmem_addr + ((NUM_VIDEO_COL * terminals[curr_term].cursor_y + terminals[curr_term].cursor_x) << 1) + 1) = ATTRIB;
     } else {
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
-        screen_x++;
-        if (screen_x == NUM_COLS)
+        *(uint8_t *)(terminals[curr_term].vidmem_addr + ((NUM_VIDEO_COL * terminals[curr_term].cursor_y + terminals[curr_term].cursor_x) << 1)) = c;
+        *(uint8_t *)(terminals[curr_term].vidmem_addr + ((NUM_VIDEO_COL * terminals[curr_term].cursor_y + terminals[curr_term].cursor_x) << 1) + 1) = ATTRIB;
+        terminals[curr_term].cursor_x++;
+        if (terminals[curr_term].cursor_x == NUM_VIDEO_COL)
         {
-            screen_x = 0;
-            screen_y++;
-            if (screen_y >= NUM_ROWS)
+            terminals[curr_term].cursor_x = 0;
+            terminals[curr_term].cursor_y++;
+            if (terminals[curr_term].cursor_y >= NUM_VIDEO_ROW)
             {
                 scrolling();
-                screen_y = NUM_ROWS - 1;
+                terminals[curr_term].cursor_y = NUM_VIDEO_ROW - 1;
             }
         } else {
-            screen_x %= NUM_COLS;
-            screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
+            terminals[curr_term].cursor_x %= NUM_VIDEO_COL;
+            terminals[curr_term].cursor_y = (terminals[curr_term].cursor_y + (terminals[curr_term].cursor_x / NUM_VIDEO_COL)) % NUM_VIDEO_ROW;
         }
     }
-    update_cursor(screen_x, screen_y); //update the cursor location
+    update_cursor(terminals[curr_term].cursor_x, terminals[curr_term].cursor_y); //update the cursor location
 }
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);
@@ -517,18 +518,18 @@ int8_t strings_equal(const int8_t* a, const int8_t* b) {
  * Function: increments video memory. To be used to test rtc */
 void test_interrupts(void) {
     int32_t i;
-    for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
+    for (i = 0; i < NUM_VIDEO_ROW * NUM_VIDEO_COL; i++) {
         video_mem[i << 1]++;
     }
 }
 
-/* void update_cursor(int screen_x, int screen_y)
+/* void update_cursor(int xloc, int yloc)
  * Inputs: x location, y location from screen
  * Return Value: Location of cursor
  * Function: Updates cursor location to where typing */
 void update_cursor(int xloc, int yloc)
 {
-	uint16_t pos = yloc * NUM_COLS + xloc; //find the location and update it by doing math
+    uint16_t pos = yloc * NUM_VIDEO_COL + xloc; //find the location and update it by doing math
     outb(0x0F, 0x3D4);
     outb((uint8_t) (pos & 0xFF), 0x3D5);
     outb(0x0E, 0x3D4);
@@ -543,21 +544,23 @@ void scrolling()
     int i;
     int j;
     int k;
-    for (i = 0; i < NUM_ROWS - 1; i++) //loop through rows and columns
+    for (i = 0; i < NUM_VIDEO_ROW - 1; i++) //loop through rows and columns
     {
-        for (j = 0; j < NUM_COLS - 1; j++)
+        for (j = 0; j < NUM_VIDEO_COL - 1; j++)
         {
             // move terminal screen one row up
-            *(uint8_t *)(video_mem + ((NUM_COLS * i + j) << 1)) = *(uint8_t *)(video_mem + ((NUM_COLS * (i + 1) + j) << 1));
-            *(uint8_t *)(video_mem + ((NUM_COLS * i + j) << 1) + 1) = ATTRIB;
+            *(uint8_t *)(terminals[curr_term].vidmem_addr + ((NUM_VIDEO_COL * i + j) << 1)) = *(uint8_t *)(terminals[curr_term].vidmem_addr + ((NUM_VIDEO_COL * (i + 1) + j) << 1));
+            *(uint8_t *)(terminals[curr_term].vidmem_addr + ((NUM_VIDEO_COL * i + j) << 1) + 1) = ATTRIB;
         }
     }
-    for (k = 0; k < NUM_COLS; k++)
+    for (k = 0; k < NUM_VIDEO_COL; k++)
     {
-        *(uint8_t *)(video_mem + ((NUM_COLS * (NUM_ROWS - 1) + k) << 1)) = ' ';
-        *(uint8_t *)(video_mem + ((NUM_COLS * (NUM_ROWS - 1) + k) << 1) + 1) = ATTRIB;
+        *(uint8_t *)(terminals[curr_term].vidmem_addr + ((NUM_VIDEO_COL * (NUM_VIDEO_ROW - 1) + k) << 1)) = ' ';
+        *(uint8_t *)(terminals[curr_term].vidmem_addr + ((NUM_VIDEO_COL * (NUM_VIDEO_ROW - 1) + k) << 1) + 1) = ATTRIB;
     }
 }
+
+
 /* uint32_t max(uint32_t, uint32_t)
  * DESCRIPTION: Get minimum of two values
  * INPUTS: a, b - values to find min of
@@ -565,8 +568,49 @@ void scrolling()
  * RETURNS: min of a and b
  * SIDE EFFECTS: none
  */
-uint32_t min(uint32_t a, uint32_t b) {
+inline uint32_t min(uint32_t a, uint32_t b) {
     return a < b ? a : b;
 }
 
+
+/* get_bit()
+ * 
+ * DESCRIPTION:   get specified bit in given 32-bit value
+ * INPUTS:        val - value to get bit in
+ *                bit - index of bit to get (0-indexed starting from least sig)
+ * OUTPUTS:       none
+ * RETURNS:       specified bit in given val
+ * SIDE EFFECTS:  none
+ */
+inline uint8_t get_bit(uint32_t val, uint8_t bit) {
+    return (val & (1 << bit)) >> bit;
+}
+
+
+/* set_bit()
+ * 
+ * DESCRIPTION:   set given bit in given 32-bit value to 1 and return the new value
+ * INPUTS:        val - value to set bit in
+ *                bit - index of bit to set in given val (0-indexed starting from least sig)
+ * OUTPUTS:       none
+ * RETURNS:       value with given bit set
+ * SIDE EFFECTS:  none. Note that the given value is not modified.
+ */
+inline uint32_t set_bit(uint32_t val, uint8_t bit) {
+    return val | (1 << bit);
+}
+
+
+/* unset_bit()
+ * 
+ * DESCRIPTION:   set given bit in given 32-bit value to 0 and return the new value
+ * INPUTS:        val - value to unset bit in
+ *                bit - index of bit to unset in given val (0-indexed starting from least sig)
+ * OUTPUTS:       none
+ * RETURNS:       value with given bit unset
+ * SIDE EFFECTS:  none. Note that the given value is not modified.
+ */
+inline uint32_t unset_bit(uint32_t val, uint8_t bit) {
+    return val & ~(1 << bit);
+}
 

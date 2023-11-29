@@ -13,7 +13,6 @@
 #define USER_VIDEO 0x8400000 // right after user program addr block
 #define USER_VIDEO_PD_IDX (USER_VIDEO >> 22)
 #define USER_VIDEO_PT_IDX ((USER_VIDEO >> 12) & 0x3FF)
-
 #ifndef ASM
 
 #define ZERO_PAGEDIR_KB(name)     \
@@ -76,6 +75,10 @@ extern void enable_paging();
 
 /* enable mixed pages in x86 */
 extern void allow_mixed_pages();
+
+extern inline uint32_t get_pd_idx(uint32_t vmem_addr);
+
+extern inline uint32_t get_pt_idx(uint32_t vmem_addr);
 
 // Data structures for page directory entries and page table entries //
 
@@ -144,9 +147,9 @@ typedef union page_table_entry_t {
 
 /* only 1 page directory. All memory can be accessed through it */
 extern pagedir_entry_t pd[PAGEDIR_SIZE] __attribute__((aligned (PAGE_SIZE_4KB)));
+
 /* one page table for now for first 4MB in mem. Add more as needed by programs */
 extern page_table_entry_t pt0[PAGETABLE_SIZE] __attribute__((aligned (PAGE_SIZE_4KB)));
-
 // added for vidmap
 extern page_table_entry_t pt1[PAGETABLE_SIZE] __attribute__((aligned (PAGE_SIZE_4KB)));
 

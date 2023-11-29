@@ -3,11 +3,10 @@
 
 #include "../types.h"
 #include "../paging/paging.h"
+#include "sched.h"
 
 #define MAXFILES_PER_TASK 8
 #define NUM_PROCESS 6
-#define MAX_TERMINAL 3
-#define KEYBUF_MAX_SIZE 128
 // physical addresses //
 #define PROCCESS_0_ADDR KERNEL_END_ADDR
 /////////////////////////
@@ -41,16 +40,17 @@ enum task_state {
     STOPPED
 };
 
-/* Process control block stored in kernel*/
+/* Process control block stored in kernel for each running process */
 typedef struct pcb {
     int32_t pid;
     int32_t parent_pid;
-    fd_arr_entry_t fd_arr[MAXFILES_PER_TASK];  /* file descriptor array. A given file descriptor indexes into this array to get info about the file. */
-    uint32_t stack_ptr;
-    uint32_t stack_base_ptr;
+    uint32_t stack_ptr;		/* ESP */
+    uint32_t stack_base_ptr;	/* EBP */
     enum task_state state;
-    uint8_t using_video : 1;    /* set to 1 if process using video memory, else 0 by default */
-    int8_t command_line_args[CMD_ARG_LEN];
+    volatile uint8_t exception_flag;           /* track whether exception thrown in process (1 if excp occured, 0 otherwise) */
+    term_id_t term_id;			       /* terminal process is running in */
+    fd_arr_entry_t fd_arr[MAXFILES_PER_TASK];  /* file descriptor array. A given file descriptor indexes into this array to get info about the file. */
+    char command_line_args[CMD_ARG_LEN];
 } pcb_t;
 
 
@@ -62,11 +62,10 @@ extern pcb_t* pcb_arr[NUM_PROCESS];
 /* pid of most recently created process */
 extern int32_t curr_pid;
 
-/* track whether an exception has been thrown in current process */
-extern volatile uint32_t exception_flag;
-
 //////////////////////////////// PROCEESS HANDLING FUNCTIONS ////////////////////////////////////
 
+/* initialize PCBs in pcb_arr */
+extern void init_pcb_arr();
 
 /* start up a process */
 extern int32_t start_process(const int8_t* cmd);
@@ -76,8 +75,6 @@ extern int32_t squash_process(uint8_t status);
 
 extern int32_t get_command_line_args(int8_t* buf, int32_t nbytes);
 
-/* switch active terminal to terminal with given id */
-extern int32_t switch_terminal(uint8_t term_id);
 
 extern inline void flush_tlb();
 
