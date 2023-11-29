@@ -10,6 +10,7 @@
 // keep track of whether RTC has had an interrupt
 volatile uint32_t rtc_flag = 0;
 
+unsigned int nterm_started = 0;
 
 /*divide_zero_handler()
 * DESCRIPTION: Prints the divide by zero exception and emulates blue screen of death by infinitly looping
@@ -606,7 +607,6 @@ void kbd_handler() {
 
 
 void pit_handler() {
-    static int nterm_started = 0;
     /* first 3 interrupts start a shell in each terminal.
      * rest of interrupts trigger scheduler */
     switch (nterm_started) {
@@ -632,7 +632,6 @@ void pit_handler() {
 	    sys_execute("shell");
 	    break;
         default:
-	    // run scheduler
 	    send_eoi(PIT_IRQ);
 	    schedule();
     }

@@ -10,6 +10,8 @@ static void setup_term_page(term_id_t term_id);
 static void swap_out_curr_term();
 static void swap_in_next_term(term_id_t term_id);
 
+static pid_t next_active_pid();
+
 ////////////////////////////////////////////////
 
 ////////////////// TERMINAL STUFF ////////////////////////////////
@@ -70,6 +72,7 @@ void switch_terminal(term_id_t term_id) {
     // TODO
     swap_out_curr_term();
     swap_in_next_term(term_id);
+    flush_tlb();
 }
 
 
@@ -88,6 +91,7 @@ static void setup_term_page(term_id_t term_id) {
     pt0[pt_idx].rw = 1;
     // vmem and physical address are the same (like for actual vidmem and kernel)
     pt0[pt_idx].page_baseaddr = terminals[term_id].vidmem_addr >> 12;
+    flush_tlb();
 }
 
 
@@ -119,7 +123,51 @@ void swap_in_next_term(term_id_t term_id) {
  * SIDE EFFECTS:  modify esp, ebp, tss, eip
  */
 void schedule() {
-    pid_t next_pid;
+    cli();
+    pid_t next_pid = next_active_pid();
+    if (next_pid == -1) { 	/* no process to schedule, should never happen since shell always running */
+	return;
+    }
+
+    // save current procss stack pointers
+    uint32_t saved_ebp, saved_esp;
+    asm volatile(
+	"movl %%ebp, %0;"
+	"movl %%esp, %1;"
+	: "=r"(saved_ebp), "=r"(saved_esp) 
+	);
+    pcb_arr[curr_pid]->stack_ptr = saved_esp;
+    pcb_arr[curr_pid]->stack_base_ptr = saved_ebp;
     
+    curr_pid = next_pid;
+    set_process_tss(next_pid);
+    
+    // swap to next process kernel stack
+    saved_ebp = pcb_arr[next_pid]->stack_base_ptr;
+    saved_esp = pcb_arr[next_pid]->stack_ptr; 
+    asm volatile(
+	"movl %0, %%ebp;"
+	"movl %1, %%esp;"
+	:   
+	: "r"(saved_ebp), "r"(saved_esp)
+	);
+
+    sti();
     return;
+}
+
+
+pid_t next_active_pid() {
+    pid_t i;
+    for (i = curr_pid+1; i < NUM_PROCESS; ++i) {
+	if (pcb_arr[i] != NULL && pcb_arr[i]->state == ACTIVE) {
+	    return i;
+	}
+    }
+    for (i = 0; i <= curr_pid; ++i) {
+	if (pcb_arr[i] != NULL && pcb_arr[i]->state == ACTIVE) {
+	    return i;
+	}
+    }
+    return -1;
 }

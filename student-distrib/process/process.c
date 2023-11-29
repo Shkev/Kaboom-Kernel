@@ -123,19 +123,20 @@ int32_t start_process(const int8_t* cmd) {
  * INPUTS:        status - 8-bit unsigned value ranging from 0-255
  * OUTPUTS:       none
  * RETURNS:       status. If called through an exception returns 256
- *                Note: never reaches return if sentinel program being halted
+ *                Note: never reaches return if sentinel shell program being halted
  * SIDE EFFECTS:  stops current process, restores parent process's page directory memory mapping, flushes TLB, updates curr_pid, updates TSS, resets exception flag
  *                sets ebp and esp registers
  */
 int32_t squash_process(uint8_t status) {
-    if (terminals[pcb_arr[curr_pid]->term_id].nprocess == 1) {
+    cli();
+    if (terminals[pcb_arr[curr_pid]->term_id].nprocess == 1) { /* if terminating last process in the terminal */
 	terminals[curr_term].nprocess--;
 	pcb_arr[curr_pid]->state = STOPPED;
         curr_pid = pcb_arr[curr_pid]->parent_pid;
+	sti();
         // always start shell if nothing else running in the terminal
         sys_execute("shell");
     } else {
-        cli();
         clear_fd_array(curr_pid);
 
         // disable user video mem for program
@@ -312,14 +313,8 @@ pcb_t* create_new_pcb(pid_t pid) {
     pcb_arr[pid] = (pcb_t*)(pcb_bottom_addr - PCB_SIZE);
 
     pcb_arr[pid]->pid = pid;
+    pcb_arr[pid]->parent_pid = curr_pid;
 
-    /* if this is curr terminals first process, it has to parent process
-     * in this terminal */
-    if (terminals[curr_term].nprocess == 0) {
-	pcb_arr[pid]->parent_pid = -1;
-    } else {
-	pcb_arr[pid]->parent_pid = curr_pid;
-    }
     strcpy(pcb_arr[pid]->command_line_args, command_line);
 	
     //Initializes fd array for PCB with stdin and stdout
@@ -352,7 +347,7 @@ pcb_t* create_new_pcb(pid_t pid) {
 static void switch_to_user(uint32_t user_eip) {
     /* no need for stack pointer later if there is no parent process since in that case halt
      * will just restart shell and not return to execute/syscall linkage */
-    if (pcb_arr[curr_pid]->parent_pid != -1) {
+    if (pcb_arr[curr_pid]->parent_pid >= 0 && (nterm_started <= 3 || terminals[pcb_arr[curr_pid]->term_id].nprocess > 0)) {
         uint32_t saved_ebp;
         uint32_t saved_esp;
         // save current ebp and esp

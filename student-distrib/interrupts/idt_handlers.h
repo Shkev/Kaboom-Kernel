@@ -10,6 +10,8 @@
 /* has rtc encountered interrupt */
 extern volatile uint32_t rtc_flag;
 
+/* number of terminals started up (goes up to 3 on boot and then stays constant) */
+extern unsigned int nterm_started;
 
 /* Exception handlers. These are the functions that are called when an
 * exception occurs in kernel */
