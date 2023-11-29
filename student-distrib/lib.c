@@ -12,19 +12,26 @@
 // and make sure the active terminal's vidmem addr points to the physical vidmem addr
 static char* video_mem = (char *)VIDEO;
 
+static term_id_t process_term = 0;
+
 /* void clear(void);
  * Inputs: void
  * Return Value: none
  * Function: Clears video memory */
 void clear(void) {
     int32_t i;
-    for (i = 0; i < NUM_VIDEO_ROW * NUM_VIDEO_COL; i++) {
-        *(char *)(terminals[curr_term].vidmem_addr + (i << 1)) = ' ';
-        *(char *)(terminals[curr_term].vidmem_addr + (i << 1) + 1) = ATTRIB;
+    if (!sentinel) {
+	process_term = pcb_arr[curr_pid]->term_id;
     }
-    terminals[curr_term].cursor_x = 0;
-    terminals[curr_term].cursor_y = 0;
-    update_cursor(terminals[curr_term].cursor_x, terminals[curr_term].cursor_y);
+    for (i = 0; i < NUM_VIDEO_ROW * NUM_VIDEO_COL; i++) {
+        *(char *)(terminals[process_term].vidmem_addr + (i << 1)) = ' ';
+        *(char *)(terminals[process_term].vidmem_addr + (i << 1) + 1) = ATTRIB;
+    }
+    terminals[process_term].cursor_x = 0;
+    terminals[process_term].cursor_y = 0;
+    if (process_term == curr_term) {
+	update_cursor(terminals[curr_term].cursor_x, terminals[curr_term].cursor_y);
+    }
 }
 
 /* Standard printf().
@@ -171,49 +178,54 @@ int32_t puts(int8_t* s) {
  * Return Value: void
  *  Function: Output a character to the console */
 void putc(uint8_t c) {
+    if (!sentinel) {
+	process_term = pcb_arr[curr_pid]->term_id;
+    }
     if((c == '\n' || c == '\r')) {
-        terminals[curr_term].cursor_y++;
-        terminals[curr_term].cursor_x = 0;
-        if (terminals[curr_term].cursor_y >= NUM_VIDEO_ROW)
+        terminals[process_term].cursor_y++;
+        terminals[process_term].cursor_x = 0;
+        if (terminals[process_term].cursor_y >= NUM_VIDEO_ROW)
         {
             scrolling(); //scroll if at the bottom of the screen
-            terminals[curr_term].cursor_y = NUM_VIDEO_ROW - 1;
+            terminals[process_term].cursor_y = NUM_VIDEO_ROW - 1;
         }
     } else if (c == '\b') {
-        if (terminals[curr_term].cursor_x >= 1)
+        if (terminals[process_term].cursor_x >= 1)
         {
-            terminals[curr_term].cursor_x--; //backspace logic
-        } else if ((terminals[curr_term].cursor_x == 0) && (terminals[curr_term].cursor_y >= 1)){
-            terminals[curr_term].cursor_x = NUM_VIDEO_COL-1;
-            terminals[curr_term].cursor_y--; //go to the back row of the last screen
+            terminals[process_term].cursor_x--; //backspace logic
+        } else if ((terminals[process_term].cursor_x == 0) && (terminals[process_term].cursor_y >= 1)){
+            terminals[process_term].cursor_x = NUM_VIDEO_COL-1;
+            terminals[process_term].cursor_y--; //go to the back row of the last screen
         } else {
-            terminals[curr_term].cursor_x = 0;
+            terminals[process_term].cursor_x = 0;
         }
-	*(uint8_t *)(terminals[curr_term].vidmem_addr + ((NUM_VIDEO_COL * terminals[curr_term].cursor_y + terminals[curr_term].cursor_x) << 1)) = ' ';
-	*(uint8_t *)(terminals[curr_term].vidmem_addr + ((NUM_VIDEO_COL * terminals[curr_term].cursor_y + terminals[curr_term].cursor_x) << 1) + 1) = ATTRIB;
+	*(uint8_t *)(terminals[process_term].vidmem_addr + ((NUM_VIDEO_COL * terminals[process_term].cursor_y + terminals[process_term].cursor_x) << 1)) = ' ';
+	*(uint8_t *)(terminals[process_term].vidmem_addr + ((NUM_VIDEO_COL * terminals[process_term].cursor_y + terminals[process_term].cursor_x) << 1) + 1) = ATTRIB;
     } else if (c == '\t') { //tab logic
-        terminals[curr_term].cursor_x = terminals[curr_term].cursor_x + 4;
-        *(uint8_t *)(terminals[curr_term].vidmem_addr + ((NUM_VIDEO_COL * terminals[curr_term].cursor_y + terminals[curr_term].cursor_x) << 1)) = ' ';
-        *(uint8_t *)(terminals[curr_term].vidmem_addr + ((NUM_VIDEO_COL * terminals[curr_term].cursor_y + terminals[curr_term].cursor_x) << 1) + 1) = ATTRIB;
+        terminals[process_term].cursor_x = terminals[process_term].cursor_x + 4;
+        *(uint8_t *)(terminals[process_term].vidmem_addr + ((NUM_VIDEO_COL * terminals[process_term].cursor_y + terminals[process_term].cursor_x) << 1)) = ' ';
+        *(uint8_t *)(terminals[process_term].vidmem_addr + ((NUM_VIDEO_COL * terminals[process_term].cursor_y + terminals[process_term].cursor_x) << 1) + 1) = ATTRIB;
     } else {
-        *(uint8_t *)(terminals[curr_term].vidmem_addr + ((NUM_VIDEO_COL * terminals[curr_term].cursor_y + terminals[curr_term].cursor_x) << 1)) = c;
-        *(uint8_t *)(terminals[curr_term].vidmem_addr + ((NUM_VIDEO_COL * terminals[curr_term].cursor_y + terminals[curr_term].cursor_x) << 1) + 1) = ATTRIB;
-        terminals[curr_term].cursor_x++;
-        if (terminals[curr_term].cursor_x == NUM_VIDEO_COL)
+        *(uint8_t *)(terminals[process_term].vidmem_addr + ((NUM_VIDEO_COL * terminals[process_term].cursor_y + terminals[process_term].cursor_x) << 1)) = c;
+        *(uint8_t *)(terminals[process_term].vidmem_addr + ((NUM_VIDEO_COL * terminals[process_term].cursor_y + terminals[process_term].cursor_x) << 1) + 1) = ATTRIB;
+        terminals[process_term].cursor_x++;
+        if (terminals[process_term].cursor_x == NUM_VIDEO_COL)
         {
-            terminals[curr_term].cursor_x = 0;
-            terminals[curr_term].cursor_y++;
-            if (terminals[curr_term].cursor_y >= NUM_VIDEO_ROW)
+            terminals[process_term].cursor_x = 0;
+            terminals[process_term].cursor_y++;
+            if (terminals[process_term].cursor_y >= NUM_VIDEO_ROW)
             {
                 scrolling();
-                terminals[curr_term].cursor_y = NUM_VIDEO_ROW - 1;
+                terminals[process_term].cursor_y = NUM_VIDEO_ROW - 1;
             }
         } else {
-            terminals[curr_term].cursor_x %= NUM_VIDEO_COL;
-            terminals[curr_term].cursor_y = (terminals[curr_term].cursor_y + (terminals[curr_term].cursor_x / NUM_VIDEO_COL)) % NUM_VIDEO_ROW;
+            terminals[process_term].cursor_x %= NUM_VIDEO_COL;
+            terminals[process_term].cursor_y = (terminals[process_term].cursor_y + (terminals[process_term].cursor_x / NUM_VIDEO_COL)) % NUM_VIDEO_ROW;
         }
     }
-    update_cursor(terminals[curr_term].cursor_x, terminals[curr_term].cursor_y); //update the cursor location
+    if (process_term == curr_term) {
+	update_cursor(terminals[process_term].cursor_x, terminals[process_term].cursor_y); //update the cursor location
+    }
 }
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);
@@ -541,22 +553,23 @@ void update_cursor(int xloc, int yloc)
  * Function: Scrolls screen up to make more space in terminal */
 void scrolling()
 {
-    int i;
-    int j;
-    int k;
+    int i, j, k;
+    if (!sentinel) {
+	process_term = pcb_arr[curr_pid]->term_id;
+    }
     for (i = 0; i < NUM_VIDEO_ROW - 1; i++) //loop through rows and columns
     {
         for (j = 0; j < NUM_VIDEO_COL - 1; j++)
         {
             // move terminal screen one row up
-            *(uint8_t *)(terminals[curr_term].vidmem_addr + ((NUM_VIDEO_COL * i + j) << 1)) = *(uint8_t *)(terminals[curr_term].vidmem_addr + ((NUM_VIDEO_COL * (i + 1) + j) << 1));
-            *(uint8_t *)(terminals[curr_term].vidmem_addr + ((NUM_VIDEO_COL * i + j) << 1) + 1) = ATTRIB;
+            *(uint8_t *)(terminals[process_term].vidmem_addr + ((NUM_VIDEO_COL * i + j) << 1)) = *(uint8_t *)(terminals[process_term].vidmem_addr + ((NUM_VIDEO_COL * (i + 1) + j) << 1));
+            *(uint8_t *)(terminals[process_term].vidmem_addr + ((NUM_VIDEO_COL * i + j) << 1) + 1) = ATTRIB;
         }
     }
     for (k = 0; k < NUM_VIDEO_COL; k++)
     {
-        *(uint8_t *)(terminals[curr_term].vidmem_addr + ((NUM_VIDEO_COL * (NUM_VIDEO_ROW - 1) + k) << 1)) = ' ';
-        *(uint8_t *)(terminals[curr_term].vidmem_addr + ((NUM_VIDEO_COL * (NUM_VIDEO_ROW - 1) + k) << 1) + 1) = ATTRIB;
+        *(uint8_t *)(terminals[process_term].vidmem_addr + ((NUM_VIDEO_COL * (NUM_VIDEO_ROW - 1) + k) << 1)) = ' ';
+        *(uint8_t *)(terminals[process_term].vidmem_addr + ((NUM_VIDEO_COL * (NUM_VIDEO_ROW - 1) + k) << 1) + 1) = ATTRIB;
     }
 }
 

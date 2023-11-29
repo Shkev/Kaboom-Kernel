@@ -11,6 +11,8 @@
 #define NUM_VIDEO_COL 80
 #define NUM_VIDEO_ROW 25
 
+extern uint8_t sentinel;
+
 int32_t printf(int8_t *format, ...);
 void putc(uint8_t c);
 int32_t puts(int8_t *s);

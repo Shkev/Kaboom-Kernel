@@ -23,6 +23,9 @@
 #define CHECK_FLAG(flags, bit)   ((flags) & (1 << (bit)))
 
 
+/* flag to indicate when no programs running */
+uint8_t sentinel = 1;
+
 /* Check if MAGIC is valid and print the Multiboot information structure
    pointed by ADDR. */
 void entry(unsigned long magic, unsigned long addr) {
@@ -261,6 +264,7 @@ void entry(unsigned long magic, unsigned long addr) {
     //launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
+    sentinel = 0;
     sys_execute("shell");
     /* Spin (nicely, so we don't chew up cycles) */
     asm volatile (".1: hlt; jmp .1;");
