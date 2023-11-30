@@ -119,6 +119,9 @@ int32_t start_process(const int8_t* cmd) {
     uint32_t *first_instr_addr = (uint32_t*)(PROGRAM_VIRTUAL_ADDR + 24);
     switch_to_user(*first_instr_addr);
 
+    /* make parent of halted program active again */
+    pcb_arr[curr_pid]->state = ACTIVE;
+    
     return return_status;   //value returned is set by system halt
 }
 
@@ -147,8 +150,10 @@ int32_t squash_process(uint8_t status) {
         // disable user video mem for program
         pd[USER_VIDEO_PD_IDX].kb.present = 0;
         pt1[USER_VIDEO_PT_IDX].present = 0;
-	
+
+	// update process state
 	pcb_arr[curr_pid]->state = STOPPED;
+	
         setup_process_page(pcb_arr[curr_pid]->parent_pid);
         flush_tlb();
         set_process_tss(pcb_arr[curr_pid]->parent_pid);
@@ -352,7 +357,7 @@ pcb_t* create_new_pcb(pid_t pid) {
 static void switch_to_user(uint32_t user_eip) {
     /* no need for stack pointer later if there is no parent process since in that case halt
      * will just restart shell and not return to execute/syscall linkage */
-    if (pcb_arr[curr_pid]->parent_pid >= 0 && (nterm_started < 3 || terminals[pcb_arr[curr_pid]->term_id].nprocess > 0)) {
+    if (pcb_arr[curr_pid]->parent_pid >= 0 && (nterm_started <= 3 || terminals[pcb_arr[curr_pid]->term_id].nprocess > 0)) {
         uint32_t saved_ebp;
         uint32_t saved_esp;
         // save current ebp and esp
