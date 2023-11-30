@@ -102,8 +102,13 @@ int32_t start_process(const int8_t* cmd) {
 	    setup_process_page(curr_pid);
 	    return -1;
     }
-    //init new pcb struct
+    // init new pcb struct
     (void)create_new_pcb(next_pid);
+    /* if new process has a parent and is running in same terminal as parent, pause the parent
+     * note: in this design, curr_pid is the parent process. */
+    if (pcb_arr[next_pid]->parent_pid >= 0 && pcb_arr[curr_pid]->term_id == pcb_arr[next_pid]->term_id) {
+	pcb_arr[curr_pid]->state = PAUSED;
+    }
     curr_pid = next_pid;
     set_process_tss(curr_pid);
 
@@ -331,7 +336,7 @@ pcb_t* create_new_pcb(pid_t pid) {
     pcb_arr[pid]->state = ACTIVE;
 
     pcb_arr[pid]->exception_flag = 0;
-    pcb_arr[pid]->term_id = curr_term;
+    pcb_arr[pid]->term_id = curr_term; // may need to change this
     
     return pcb_arr[pid];
 }
@@ -347,7 +352,7 @@ pcb_t* create_new_pcb(pid_t pid) {
 static void switch_to_user(uint32_t user_eip) {
     /* no need for stack pointer later if there is no parent process since in that case halt
      * will just restart shell and not return to execute/syscall linkage */
-    if (pcb_arr[curr_pid]->parent_pid >= 0 && (nterm_started <= 3 || terminals[pcb_arr[curr_pid]->term_id].nprocess > 0)) {
+    if (pcb_arr[curr_pid]->parent_pid >= 0 && (nterm_started < 3 || terminals[pcb_arr[curr_pid]->term_id].nprocess > 0)) {
         uint32_t saved_ebp;
         uint32_t saved_esp;
         // save current ebp and esp

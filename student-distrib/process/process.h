@@ -37,6 +37,7 @@ typedef struct fd_arr_entry {
 /* Current state of a task. UPDATE LATER TO ADD MORE STATES AS NEEDED */
 enum task_state {
     ACTIVE = 0,
+    PAUSED,
     STOPPED
 };
 
