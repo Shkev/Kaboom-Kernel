@@ -197,7 +197,8 @@ int32_t squash_process(uint8_t status) {
  */
 inline void set_process_tss(pid_t pid) {
     tss.ss0 = KERNEL_DS;
-    tss.esp0 = pcb_arr[pid]->stack_base_ptr;
+    uint32_t pcb_bottom_addr = KERNEL_END_ADDR - (pid)*PCB_SIZE;
+    tss.esp0 = pcb_bottom_addr;
 }
 
 

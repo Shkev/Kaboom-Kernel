@@ -49,11 +49,13 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes)
  */
 int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes)
 {
+    cli();
     if (buf == NULL) return -1;
     int i;
     for (i = 0; i < nbytes; ++i) {
         putc(*((int8_t*)buf + i));
     }
     terminals[pcb_arr[curr_pid]->term_id].key_flags = unset_bit(terminals[pcb_arr[curr_pid]->term_id].key_flags, ENTER_FLAG_BITNUM);
+    sti();
     return strlen(buf); //return the length of the buffer
 }

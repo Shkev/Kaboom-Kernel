@@ -123,36 +123,42 @@ void swap_in_next_term(term_id_t term_id) {
  * SIDE EFFECTS:  modify esp, ebp, tss, eip
  */
 void schedule() {
-    cli();
     pid_t next_pid = next_active_pid();
     if (next_pid == -1) { 	/* no process to schedule, should never happen since shell always running */
 	return;
     }
 
     // save current procss stack pointers
-    uint32_t saved_ebp, saved_esp;
-    asm volatile(
-	"movl %%ebp, %0;"
-	"movl %%esp, %1;"
-	: "=r"(saved_ebp), "=r"(saved_esp) 
-	);
+    register uint32_t saved_ebp asm("ebp");
+    register uint32_t saved_esp asm("esp");
+    /* asm volatile( */
+    /* 	"movl %%ebp, %0;" */
+    /* 	"movl %%esp, %1;" */
+    /* 	: "=r"(saved_ebp), "=r"(saved_esp) */
+    /* 	: */
+    /* 	: "memory", "cc" */
+    /* 	); */
     pcb_arr[curr_pid]->stack_ptr = saved_esp;
     pcb_arr[curr_pid]->stack_base_ptr = saved_ebp;
     
     curr_pid = next_pid;
     set_process_tss(next_pid);
     
+    /* if (next_pid == 3) { */
+    /* 	printf("state: %d ", pcb_arr[curr_pid]->state); */
+    /* } */
+    
     // swap to next process kernel stack
     saved_ebp = pcb_arr[next_pid]->stack_base_ptr;
-    saved_esp = pcb_arr[next_pid]->stack_ptr; 
+    saved_esp = pcb_arr[next_pid]->stack_ptr;
     asm volatile(
 	"movl %0, %%ebp;"
 	"movl %1, %%esp;"
 	:   
 	: "r"(saved_ebp), "r"(saved_esp)
+	: "memory", "cc"
 	);
 
-    sti();
     return;
 }
 
