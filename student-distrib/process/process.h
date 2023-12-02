@@ -69,7 +69,7 @@ extern pid_t curr_pid;
 extern void init_pcb_arr();
 
 /* start up a process */
-extern int32_t start_process(const int8_t* cmd);
+extern int32_t start_process(const int8_t* cmd, term_id_t term_id);
 
 /* squash a process and return control to parent process */
 extern int32_t squash_process(uint8_t status);

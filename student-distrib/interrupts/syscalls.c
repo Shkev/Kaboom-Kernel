@@ -25,7 +25,7 @@ int32_t sys_execute(const int8_t* cmd) {
     if (cmd == NULL) {
         return -1;
     }
-    return start_process(cmd);
+    return start_process(cmd, curr_term);
 }
 
 /* sys_read()

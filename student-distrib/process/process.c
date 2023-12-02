@@ -29,7 +29,7 @@ static inline uint32_t is_executable(const int8_t* file_contents);
 static void setup_process_page(pid_t pid);
 
 /* initialize pcb memory block in kernel for given pid */
-static pcb_t* create_new_pcb();
+static pcb_t* create_new_pcb(pid_t pid, term_id_t term_id);
 
 /* set up stack and iret to user space */
 static void switch_to_user(uint32_t user_eip);
@@ -54,12 +54,13 @@ void init_pcb_arr() {
  * 
  * DESCRIPTION:   helper function for sys_execute, starts a process for command with given name
  * INPUTS:        cmd - program name to execute
+ *                term_id - terminal to start process in
  * OUTPUTS:       none
  * RETURNS:       returns 0-255 status from halt, 256 for exceptions, -1 if error occurs or invalid executable
  * SIDE EFFECTS:  Creates new PCB entry, modifies program page directory memory mapping, flushes TLB, updates curr_pid, updates TSS
  *                modifies memory at determined program location, and switches to user space to run program
  */
-int32_t start_process(const int8_t* cmd) {
+int32_t start_process(const int8_t* cmd, term_id_t term_id) {
     cli();
     int32_t res;    /* check whether file system operations succeeded */
     // later change to get all arguments to given command as well (probably get_args syscall?)
@@ -103,7 +104,7 @@ int32_t start_process(const int8_t* cmd) {
 	    return -1;
     }
     // init new pcb struct
-    (void)create_new_pcb(next_pid);
+    (void)create_new_pcb(next_pid, term_id);
     /* if new process has a parent and is running in same terminal as parent, pause the parent
      * note: in this design, curr_pid is the parent process. */
     if (pcb_arr[next_pid]->parent_pid >= 0 && pcb_arr[curr_pid]->term_id == pcb_arr[next_pid]->term_id) {
@@ -112,8 +113,8 @@ int32_t start_process(const int8_t* cmd) {
     curr_pid = next_pid;
     set_process_tss(curr_pid);
 
-    terminals[curr_term].nprocess++;
-    terminals[curr_term].curr_pid = curr_pid;
+    terminals[term_id].nprocess++;
+    terminals[term_id].curr_pid = curr_pid;
     
     // set up stack for iret
     uint32_t *first_instr_addr = (uint32_t*)(PROGRAM_VIRTUAL_ADDR + 24);
@@ -137,13 +138,14 @@ int32_t start_process(const int8_t* cmd) {
  */
 int32_t squash_process(uint8_t status) {
     cli();
-    if (terminals[pcb_arr[curr_pid]->term_id].nprocess == 1) { /* if terminating last process in the terminal */
-	terminals[curr_term].nprocess--;
+    term_id_t process_term = pcb_arr[curr_pid]->term_id;
+    if (terminals[process_term].nprocess == 1) { /* if terminating last process in the terminal */
+	terminals[process_term].nprocess--;
 	pcb_arr[curr_pid]->state = STOPPED;
         curr_pid = pcb_arr[curr_pid]->parent_pid;
 	sti();
         // always start shell if nothing else running in the terminal
-        sys_execute("shell");
+        start_process("shell", process_term);
     } else {
         clear_fd_array(curr_pid);
 
@@ -159,8 +161,8 @@ int32_t squash_process(uint8_t status) {
         set_process_tss(pcb_arr[curr_pid]->parent_pid);
 	curr_pid = pcb_arr[curr_pid]->parent_pid;
 	
-	terminals[curr_term].curr_pid = curr_pid;
-	terminals[curr_term].nprocess--;
+	terminals[process_term].curr_pid = curr_pid;
+	terminals[process_term].nprocess--;
 
         if(pcb_arr[curr_pid]->exception_flag == 1) {
 	    pcb_arr[curr_pid]->exception_flag = 0;
@@ -319,7 +321,7 @@ void setup_process_page(pid_t pid) {
  * RETURNS:       new pcb_t struct object
  * SIDE EFFECTS:  initalizes new pcb_t struct object, and adds it to pcb array
  */
-pcb_t* create_new_pcb(pid_t pid) {
+pcb_t* create_new_pcb(pid_t pid, term_id_t term_id) {
     uint32_t pcb_bottom_addr = KERNEL_END_ADDR - (pid)*PCB_SIZE;
     pcb_arr[pid] = (pcb_t*)(pcb_bottom_addr - PCB_SIZE);
 
@@ -342,7 +344,7 @@ pcb_t* create_new_pcb(pid_t pid) {
     pcb_arr[pid]->state = ACTIVE;
 
     pcb_arr[pid]->exception_flag = 0;
-    pcb_arr[pid]->term_id = curr_term; // may need to change this
+    pcb_arr[pid]->term_id = term_id;
     
     return pcb_arr[pid];
 }

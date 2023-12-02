@@ -18,7 +18,7 @@ static pid_t next_active_pid();
 
 /* init_term()
  * 
- * DESCRIPTION:   initialize new terminal and set curr_term to its terminal id
+ * DESCRIPTION:   initialize new terminal
  * INPUTS:        term_id  -  id of new terminal to initialize
  * OUTPUTS:       none
  * RETURNS:       0 on success, negative value on failure
@@ -69,7 +69,6 @@ int32_t invalid_term_id(term_id_t term_id) {
  * SIDE EFFECTS:  change current terminal and modify page tables
  */
 void switch_terminal(term_id_t term_id) {
-    // TODO
     swap_out_curr_term();
     swap_in_next_term(term_id);
     flush_tlb();
@@ -129,24 +128,17 @@ void schedule() {
     }
 
     // save current procss stack pointers
-    register uint32_t saved_ebp asm("ebp");
-    register uint32_t saved_esp asm("esp");
-    /* asm volatile( */
-    /* 	"movl %%ebp, %0;" */
-    /* 	"movl %%esp, %1;" */
-    /* 	: "=r"(saved_ebp), "=r"(saved_esp) */
-    /* 	: */
-    /* 	: "memory", "cc" */
-    /* 	); */
+    uint32_t saved_ebp, saved_esp;
+    asm volatile(
+	"movl %%ebp, %0;"
+	"movl %%esp, %1;"
+	: "=r"(saved_ebp), "=r"(saved_esp)
+	);
     pcb_arr[curr_pid]->stack_ptr = saved_esp;
     pcb_arr[curr_pid]->stack_base_ptr = saved_ebp;
     
     curr_pid = next_pid;
     set_process_tss(next_pid);
-    
-    /* if (next_pid == 3) { */
-    /* 	printf("state: %d ", pcb_arr[curr_pid]->state); */
-    /* } */
     
     // swap to next process kernel stack
     saved_ebp = pcb_arr[next_pid]->stack_base_ptr;
@@ -156,7 +148,6 @@ void schedule() {
 	"movl %1, %%esp;"
 	:   
 	: "r"(saved_ebp), "r"(saved_esp)
-	: "memory", "cc"
 	);
 
     return;

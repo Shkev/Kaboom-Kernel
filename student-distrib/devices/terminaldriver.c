@@ -37,6 +37,7 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes)
     return count;
 }
 
+
 /* terminal_write
  * 
  * DESCRIPTION:   writes to terminal
@@ -59,3 +60,4 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes)
     sti();
     return strlen(buf); //return the length of the buffer
 }
+
