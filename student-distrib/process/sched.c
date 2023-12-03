@@ -127,7 +127,8 @@ void schedule() {
 	return;
     }
 
-    // save current procss stack pointers
+    /* save curr process's ebp. note we only need ebp since that's where this function's return addresss
+     * is stored */
     uint32_t saved_ebp;
     asm volatile(
 	"movl %%ebp, %0;"
