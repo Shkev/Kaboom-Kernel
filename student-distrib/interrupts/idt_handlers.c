@@ -22,6 +22,7 @@ int enterflag = 0;
 */
 void divide_zero_handler() {
     //PRINT_HANDLER("divide_zero");
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt((uint8_t) 69);
 }
 
@@ -34,6 +35,7 @@ void divide_zero_handler() {
 */
 void debug_handler() {
     //PRINT_HANDLER("debug");
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt((uint8_t) 69);
 }
 
@@ -46,6 +48,7 @@ void debug_handler() {
 */
 void nmi_handler() {
     //PRINT_HANDLER("nmi");
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt((uint8_t) 69);
 }
 
@@ -58,6 +61,7 @@ void nmi_handler() {
 */
 void breakpoint_handler() {
     //PRINT_HANDLER("breakpoint");
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt((uint8_t) 69);
 }
 
@@ -70,6 +74,7 @@ void breakpoint_handler() {
 */
 void overflow_handler() {
     //PRINT_HANDLER("overflow");
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt((uint8_t) 69);
 }
 
@@ -82,6 +87,7 @@ void overflow_handler() {
 */
 void bnd_rng_exceed_handler() {
     //PRINT_HANDLER("bnd_rng_exceed");
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt((uint8_t) 69);
 }
 
@@ -94,6 +100,7 @@ void bnd_rng_exceed_handler() {
 */
 void invalid_opcode_handler() {
     //PRINT_HANDLER("invalid_opcode");
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt((uint8_t) 69);
 }
 
@@ -106,6 +113,7 @@ void invalid_opcode_handler() {
 */
 void device_na_handler() {
     //PRINT_HANDLER("device_na");
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt((uint8_t) 69);
 }
 
@@ -118,6 +126,7 @@ void device_na_handler() {
 */
 void double_fault_handler() {
     //PRINT_HANDLER("double_fault");
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt((uint8_t) 69);
 }
 
@@ -130,6 +139,7 @@ void double_fault_handler() {
 */
 void seg_overrun_handler() {
     //PRINT_HANDLER("seg_overrun");
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt((uint8_t) 69);
 }
 
@@ -142,6 +152,7 @@ void seg_overrun_handler() {
 */
 void invalid_tss_handler() {
     //PRINT_HANDLER("invalid_tss");
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt((uint8_t) 69);
 }
 
@@ -154,6 +165,7 @@ void invalid_tss_handler() {
 */
 void seg_nopres_handler() {
     //PRINT_HANDLER("seg_nopres");
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt((uint8_t) 69);
 }
 
@@ -166,6 +178,7 @@ void seg_nopres_handler() {
 */
 void stack_segfault_handler() {
     //PRINT_HANDLER("stack_segfault");
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt((uint8_t) 69);
 }
 
@@ -178,6 +191,7 @@ void stack_segfault_handler() {
 */
 void gen_protect_flt_handler() {
     //PRINT_HANDLER("gen_protect_flt");
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt((uint8_t) 69);
 }
 
@@ -203,6 +217,7 @@ void pg_fault_handler() {
 */
 void x87_fpe_handler() {
     //PRINT_HANDLER("x87_fpe");
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt((uint8_t) 69);
 }
 
@@ -215,6 +230,7 @@ void x87_fpe_handler() {
 */
 void align_check_handler() {
     //PRINT_HANDLER("align_check");
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt((uint8_t) 69);
 }
 
@@ -227,6 +243,7 @@ void align_check_handler() {
 */
 void machine_check_handler() {
     //PRINT_HANDLER("machine_check");
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt((uint8_t) 69);
 }
 
@@ -239,6 +256,7 @@ void machine_check_handler() {
 */
 void simd_fpe_handler() {
     //PRINT_HANDLER("simd_fpe");
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt((uint8_t) 69);
 }
 
@@ -251,6 +269,7 @@ void simd_fpe_handler() {
 */
 void virt_handler() {
     //PRINT_HANDLER("virt");
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt((uint8_t) 69);
 }
 
@@ -263,6 +282,7 @@ void virt_handler() {
 */
 void ctl_protect_handler() {
     //PRINT_HANDLER("ctl_protect");
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt((uint8_t) 69);
 }
 
@@ -275,6 +295,7 @@ void ctl_protect_handler() {
 */
 void hpi_handler() {
     //PRINT_HANDLER("hpi");
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt((uint8_t) 69);
 }
 
@@ -288,6 +309,7 @@ void hpi_handler() {
 */
 void vmm_comm_handler() {
     //PRINT_HANDLER("vmm_comm");
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt((uint8_t) 69);
 }
 
@@ -301,6 +323,7 @@ void vmm_comm_handler() {
 */
 void security_handler() {
     //PRINT_HANDLER("security");
+    pcb_arr[curr_pid]->exception_flag = 1;
     sys_halt((uint8_t)69);
 }
 
