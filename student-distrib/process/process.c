@@ -145,17 +145,7 @@ int32_t squash_process(uint8_t status) {
         clear_fd_array(curr_pid);
 
         // disable user video mem for program
-        uint32_t user_video;
-        switch (process_term) {
-            case (0):
-                user_video = USER_VIDEO1;
-            case (1):
-                user_video = USER_VIDEO2;
-            case (2):
-                user_video = USER_VIDEO3;
-        }
-        pd[get_pd_idx(user_video)].kb.present = 0;
-        pt1[get_pt_idx(user_video)].present = 0;
+        pt1[get_pt_idx(terminals[process_term].user_vidmem)].present = 0;
         pcb_arr[curr_pid]->using_video = 0;
 
 	// update process state

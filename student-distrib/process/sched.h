@@ -28,6 +28,7 @@ typedef struct term_info {
     uint32_t nprocess;		     /* number of processes running on the terminal */
     pid_t curr_pid;	             /* pid of process currently running in terminal */
     uint32_t vidmem_addr;	     /* virtual mem addr for video memory terminal will write to */
+    uint32_t user_vidmem;        /* user video memory virtual address */
     uint32_t keybufcnt;		     /* count characters typed in buffer */
     uint32_t prev_keybufcnt;	     /* num chars typed in previous buffer (before enter pressed) */
     volatile uint8_t key_flags;      /* flags indicating whether key is pressed */
@@ -49,6 +50,9 @@ extern int32_t invalid_term_id(term_id_t term_id);
 
 /* switch active terminal to terminal with given id */
 extern void switch_terminal(term_id_t term_id);
+
+/* get user video memory address for given terminal */
+extern inline uint32_t get_term_user_vidmem(term_id_t term_id);
 
 ////////////////////////////////////////////////////////
 

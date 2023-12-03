@@ -108,18 +108,8 @@ int32_t sys_vidmap(int8_t** screen_start) {
 
     pcb_arr[curr_pid]->using_video = 1;
 
-    uint32_t user_video;
-    switch (curr_term) {
-        case (0):
-            user_video = USER_VIDEO1;
-        case (1):
-            user_video = USER_VIDEO2;
-        case (2):
-            user_video = USER_VIDEO3;
-    }
-
-    uint32_t pd_idx = get_pd_idx(user_video);
-    uint32_t pt_idx = get_pt_idx(user_video);
+    uint32_t pd_idx = get_pd_idx(terminals[curr_term].user_vidmem);
+    uint32_t pt_idx = get_pt_idx(terminals[curr_term].user_vidmem);
     pd[pd_idx].kb.present = 1;
     pd[pd_idx].kb.us = 1;
     pd[pd_idx].kb.rw = 1;
@@ -128,7 +118,7 @@ int32_t sys_vidmap(int8_t** screen_start) {
     pt1[pt_idx].rw = 1;
     pt1[pt_idx].us = 1;
     pt1[pt_idx].page_baseaddr = terminals[pcb_arr[curr_pid]->term_id].vidmem_addr >> 12;
-    *screen_start = (int8_t*)user_video;
+    *screen_start = (int8_t*)terminals[curr_term].user_vidmem;
     flush_tlb();
     return 0;
 }

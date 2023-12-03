@@ -50,7 +50,6 @@ typedef struct pcb {
     enum task_state state;
     volatile uint8_t exception_flag : 1;           /* track whether exception thrown in process (1 if excp occured, 0 otherwise) */
     uint8_t using_video : 1;           /* whether current process using user video memory */
-    term_id_t term_id;			               /* terminal process is running in */
     volatile term_id_t term_id;		           /* terminal process is running in */
     uint16_t rtc_counter;                      /* number of rtc interrupts to wait before noifying program of rtc interrupt ("virtual interrupt"). acts as a frequency divider. */             
     uint16_t rtc_interrupt_cnt;                /* number of rtc interrupts occured since last virtual interrupt sent */

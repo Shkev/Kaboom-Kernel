@@ -26,12 +26,24 @@ static pid_t next_active_pid();
  */
 int32_t init_term(term_id_t term_id) {
     if (invalid_term_id(term_id)) {
-	return -1;
+	    return -1;
     }
     
     const uint32_t term_vidmem_addr = TERM0_VIDMEM_ADDR + term_id*PAGE_SIZE_4KB;
     terminals[term_id].vidmem_addr = term_vidmem_addr;
     setup_term_page(term_id);
+
+    switch (term_id) {
+        case (0):
+            terminals[term_id].user_vidmem = USER_VIDEO1;
+            break;
+        case (1):
+            terminals[term_id].user_vidmem = USER_VIDEO2;
+            break;
+        case (2):
+            terminals[term_id].user_vidmem = USER_VIDEO3;
+            break;
+    }
     
     terminals[term_id].cursor_x = 0;
     terminals[term_id].cursor_y = 0;
@@ -99,17 +111,7 @@ void swap_out_curr_term() {
     // doing video memory copying stuff here...
     const uint32_t term_vidmem_addr = TERM0_VIDMEM_ADDR + curr_term*PAGE_SIZE_4KB;
     terminals[curr_term].vidmem_addr = term_vidmem_addr;
-
-    uint32_t user_video;
-    switch (curr_term) {
-        case (0):
-            user_video = USER_VIDEO1;
-        case (1):
-            user_video = USER_VIDEO2;
-        case (2):
-            user_video = USER_VIDEO3;
-    }
-    //pt1[get_pt_idx(user_video)].page_baseaddr = term_vidmem_addr >> 12;
+    pt1[get_pt_idx(terminals[curr_term].user_vidmem)].page_baseaddr = term_vidmem_addr >> 12;
 
     memcpy((char*)term_vidmem_addr, (char*)VIDEO, PAGE_SIZE_4KB);
 }
@@ -123,16 +125,7 @@ void swap_in_next_term(term_id_t term_id) {
 
     /* swap in user video page if next terminal's process using it */
     if (curr_pid != -1 && pcb_arr[terminals[term_id].curr_pid] != NULL && pcb_arr[terminals[term_id].curr_pid]->using_video) {
-        uint32_t user_video;
-        switch (term_id) {
-            case (0):
-                user_video = USER_VIDEO1;
-            case (1):
-                user_video = USER_VIDEO2;
-            case (2):
-                user_video = USER_VIDEO3;
-        }
-        //pt1[get_pt_idx(user_video)].page_baseaddr = VIDEO >> 12;
+        pt1[get_pt_idx(terminals[term_id].user_vidmem)].page_baseaddr = VIDEO >> 12;
     }
 
     update_cursor(terminals[term_id].cursor_x, terminals[term_id].cursor_y);

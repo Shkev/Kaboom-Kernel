@@ -636,7 +636,7 @@ void pit_handler() {
 	    send_eoi(PIT_IRQ);
 	    start_process("shell", 2);
 	    break;
-        default:
+    default:
 	    send_eoi(PIT_IRQ);
 	    schedule();
     }
