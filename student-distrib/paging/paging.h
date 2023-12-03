@@ -10,9 +10,9 @@
 #define PROCESS_IMG_ADDR 0x08000000
 #define PROCESS_DIR_IDX (PROCESS_IMG_ADDR >> 22)
 
-#define USER_VIDEO 0x8400000 // right after user program addr block
-#define USER_VIDEO_PD_IDX (USER_VIDEO >> 22)
-#define USER_VIDEO_PT_IDX ((USER_VIDEO >> 12) & 0x3FF)
+#define USER_VIDEO1 0x8400000 // right after user program addr block
+#define USER_VIDEO2 0x8401000
+#define USER_VIDEO3 0x8402000
 #ifndef ASM
 
 #define ZERO_PAGEDIR_KB(name)     \

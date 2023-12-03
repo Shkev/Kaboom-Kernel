@@ -23,6 +23,7 @@ typedef unsigned char uint8_t;
 
 /* OS specific types */
 typedef uint8_t term_id_t;
+typedef int32_t pid_t;
 
 #endif /* ASM */
 

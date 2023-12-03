@@ -37,18 +37,22 @@ typedef struct fd_arr_entry {
 /* Current state of a task. UPDATE LATER TO ADD MORE STATES AS NEEDED */
 enum task_state {
     ACTIVE = 0,
+    PAUSED,
     STOPPED
 };
 
 /* Process control block stored in kernel for each running process */
 typedef struct pcb {
-    int32_t pid;
-    int32_t parent_pid;
+    pid_t pid;
+    pid_t parent_pid;
     uint32_t stack_ptr;		/* ESP */
     uint32_t stack_base_ptr;	/* EBP */
     enum task_state state;
-    volatile uint8_t exception_flag;           /* track whether exception thrown in process (1 if excp occured, 0 otherwise) */
-    term_id_t term_id;			       /* terminal process is running in */
+    volatile uint8_t exception_flag : 1;           /* track whether exception thrown in process (1 if excp occured, 0 otherwise) */
+    uint8_t using_video : 1;           /* whether current process using user video memory */
+    volatile term_id_t term_id;		           /* terminal process is running in */
+    uint16_t rtc_counter;                      /* number of rtc interrupts to wait before noifying program of rtc interrupt ("virtual interrupt"). acts as a frequency divider. */             
+    uint16_t rtc_interrupt_cnt;                /* number of rtc interrupts occured since last virtual interrupt sent */
     fd_arr_entry_t fd_arr[MAXFILES_PER_TASK];  /* file descriptor array. A given file descriptor indexes into this array to get info about the file. */
     char command_line_args[CMD_ARG_LEN];
 } pcb_t;
@@ -60,7 +64,7 @@ extern pcb_t* pcb_arr[NUM_PROCESS];
 
 
 /* pid of most recently created process */
-extern int32_t curr_pid;
+extern pid_t curr_pid;
 
 //////////////////////////////// PROCEESS HANDLING FUNCTIONS ////////////////////////////////////
 
@@ -68,13 +72,17 @@ extern int32_t curr_pid;
 extern void init_pcb_arr();
 
 /* start up a process */
-extern int32_t start_process(const int8_t* cmd);
+extern int32_t start_process(const int8_t* cmd, term_id_t term_id);
 
 /* squash a process and return control to parent process */
 extern int32_t squash_process(uint8_t status);
 
 extern int32_t get_command_line_args(int8_t* buf, int32_t nbytes);
 
+extern inline void set_process_tss(pid_t pid);
+
+/* setup process page addresses for process with given pid */
+extern void setup_process_page(pid_t pid);
 
 extern inline void flush_tlb();
 

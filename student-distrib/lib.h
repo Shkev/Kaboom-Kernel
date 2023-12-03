@@ -11,8 +11,11 @@
 #define NUM_VIDEO_COL 80
 #define NUM_VIDEO_ROW 25
 
+extern uint8_t sentinel;
+
 int32_t printf(int8_t *format, ...);
 void putc(uint8_t c);
+void putc_term(unsigned char c, term_id_t term_id);
 int32_t puts(int8_t *s);
 int8_t *itoa(uint32_t value, int8_t* buf, int32_t radix);
 int8_t *strrev(int8_t* s);
@@ -37,7 +40,7 @@ int32_t safe_strncpy(int8_t* dest, const int8_t* src, int32_t n);
 void test_interrupts(void);
 
 void update_cursor(int screen_x, int screen_y);
-void scrolling();
+void scrolling(term_id_t term_id);
 
 inline uint32_t min(uint32_t a, uint32_t b);
 

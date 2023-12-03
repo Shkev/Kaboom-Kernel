@@ -23,12 +23,18 @@
 #define CHECK_FLAG(flags, bit)   ((flags) & (1 << (bit)))
 
 
+/* flag to indicate when no programs running */
+uint8_t sentinel = 1;
+
 /* Check if MAGIC is valid and print the Multiboot information structure
    pointed by ADDR. */
 void entry(unsigned long magic, unsigned long addr) {
 
     multiboot_info_t *mbi;
 
+    /* do all kernel stuff in default terminal 0 */
+    curr_term = 0;
+    
     /* Clear the screen. */
     clear();
 
@@ -243,8 +249,6 @@ void entry(unsigned long magic, unsigned long addr) {
     (void)init_term(0);
     (void)init_term(1);
     (void)init_term(2);
-    // start at terminal 0
-    (void)switch_terminal(0);
 
     clear();
     // ==============================================================
@@ -261,7 +265,8 @@ void entry(unsigned long magic, unsigned long addr) {
     //launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
-    sys_execute("shell");
+    sentinel = 0;
+    //sys_execute("shell");
     /* Spin (nicely, so we don't chew up cycles) */
     asm volatile (".1: hlt; jmp .1;");
 }

@@ -14,7 +14,9 @@
  */
 int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes)
 {
-    if (buf == NULL) return -1;
+    if (buf == NULL) {
+	return -1;
+    }
     //initialize buf buffer
     uint32_t count;
 
@@ -24,17 +26,19 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes)
     }
 
     sti();
-    while (enterflag == 0);
+    while (get_bit(terminals[pcb_arr[curr_pid]->term_id].key_flags, ENTER_FLAG_BITNUM) == 0);
+    //while (curr_pid != terminals[curr_term].curr_pid);
     
     cli();
-    memcpy((int8_t*)buf, terminals[curr_term].keybuf, nbytes);
-    enterflag = 0;
+    memcpy((int8_t*)buf, terminals[pcb_arr[curr_pid]->term_id].keybuf, nbytes);
+    terminals[pcb_arr[curr_pid]->term_id].key_flags = unset_bit(terminals[pcb_arr[curr_pid]->term_id].key_flags, ENTER_FLAG_BITNUM);
     count = terminals[curr_term].prev_keybufcnt; // copy the count
     memset(terminals[curr_term].keybuf, '\0', KEYBUF_MAX_SIZE); //clear the buffer
     sti();
     
     return count;
 }
+
 
 /* terminal_write
  * 
@@ -48,11 +52,14 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes)
  */
 int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes)
 {
+    cli();
     if (buf == NULL) return -1;
     int i;
     for (i = 0; i < nbytes; ++i) {
         putc(*((int8_t*)buf + i));
     }
-    enterflag = 0;
+    terminals[pcb_arr[curr_pid]->term_id].key_flags = unset_bit(terminals[pcb_arr[curr_pid]->term_id].key_flags, ENTER_FLAG_BITNUM);
+    sti();
     return strlen(buf); //return the length of the buffer
 }
+

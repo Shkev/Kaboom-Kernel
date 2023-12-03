@@ -5,7 +5,7 @@
 
 
 /////// EXTERNALLY VISIBLE VARIABLES ////////
-int32_t curr_pid = -1;
+pid_t curr_pid = -1;
 pcb_t* pcb_arr[NUM_PROCESS];
 
 /////////////////////////////////////////////
@@ -15,7 +15,7 @@ static uint32_t return_status = 0;
 static int8_t command_line[CMD_ARG_LEN];
 
 ////// HELPER FUNCTIONS ///////
-static inline int32_t get_next_pid(int32_t pid);
+static inline int32_t get_next_pid(pid_t pid);
 
 /////////////////// SYSTEM EXECUTE HELPERS /////////////////////////////
 
@@ -25,14 +25,8 @@ static int32_t parse_args(const int8_t* arg, int8_t* const buf);
 /* check if file with given contents is an executable */
 static inline uint32_t is_executable(const int8_t* file_contents);
 
-/* setup process page addresses for process with given pid */
-static void setup_process_page(int32_t pid);
-
 /* initialize pcb memory block in kernel for given pid */
-static pcb_t* create_new_pcb();
-
-/* set entries in TSS for process */
-static inline void set_process_tss(int32_t pid);
+static pcb_t* create_new_pcb(pid_t pid, term_id_t term_id);
 
 /* set up stack and iret to user space */
 static void switch_to_user(uint32_t user_eip);
@@ -40,7 +34,7 @@ static void switch_to_user(uint32_t user_eip);
 //////////////// SYSTEM HALT HELPERS //////////////////////////////////
 
 /* clear all entries in file descriptor array of given process */
-static void clear_fd_array(int32_t pid);
+static void clear_fd_array(pid_t pid);
 
 ///////////////////////////////////////////////////////////////////////
 
@@ -57,12 +51,13 @@ void init_pcb_arr() {
  * 
  * DESCRIPTION:   helper function for sys_execute, starts a process for command with given name
  * INPUTS:        cmd - program name to execute
+ *                term_id - terminal to start process in
  * OUTPUTS:       none
  * RETURNS:       returns 0-255 status from halt, 256 for exceptions, -1 if error occurs or invalid executable
  * SIDE EFFECTS:  Creates new PCB entry, modifies program page directory memory mapping, flushes TLB, updates curr_pid, updates TSS
  *                modifies memory at determined program location, and switches to user space to run program
  */
-int32_t start_process(const int8_t* cmd) {
+int32_t start_process(const int8_t* cmd, term_id_t term_id) {
     cli();
     int32_t res;    /* check whether file system operations succeeded */
     // later change to get all arguments to given command as well (probably get_args syscall?)
@@ -71,7 +66,7 @@ int32_t start_process(const int8_t* cmd) {
     // empty command line arg
     memset(command_line, '\0', CMD_ARG_LEN);
 
-    int32_t next_pid = get_next_pid(curr_pid);
+    pid_t next_pid = get_next_pid(curr_pid);
     if (next_pid < 0) {
         // max num processes reached, can't create more
         return -1;
@@ -82,7 +77,6 @@ int32_t start_process(const int8_t* cmd) {
 	return -1;
     }
     setup_process_page(next_pid);
-    flush_tlb();
 
     // Obtain directory entry info for file
     dentry_t file_dentry;
@@ -105,17 +99,26 @@ int32_t start_process(const int8_t* cmd) {
 	    setup_process_page(curr_pid);
 	    return -1;
     }
-    //init new pcb struct
-    (void)create_new_pcb(next_pid);
+    // init new pcb struct
+    (void)create_new_pcb(next_pid, term_id);
+    /* if new process has a parent and is running in same terminal as parent, pause the parent
+     * note: in this design, curr_pid is the parent process. */
+    if (pcb_arr[next_pid]->parent_pid >= 0 && pcb_arr[curr_pid]->term_id == pcb_arr[next_pid]->term_id) {
+	pcb_arr[curr_pid]->state = PAUSED;
+    }
     curr_pid = next_pid;
     set_process_tss(curr_pid);
 
-    terminals[curr_term].nprocess++;
+    terminals[term_id].nprocess++;
+    terminals[term_id].curr_pid = curr_pid;
     
     // set up stack for iret
     uint32_t *first_instr_addr = (uint32_t*)(PROGRAM_VIRTUAL_ADDR + 24);
     switch_to_user(*first_instr_addr);
 
+    /* make parent of halted program active again */
+    pcb_arr[curr_pid]->state = ACTIVE;
+    
     return return_status;   //value returned is set by system halt
 }
 
@@ -125,32 +128,36 @@ int32_t start_process(const int8_t* cmd) {
  * INPUTS:        status - 8-bit unsigned value ranging from 0-255
  * OUTPUTS:       none
  * RETURNS:       status. If called through an exception returns 256
- *                Note: never reaches return if sentinel program being halted
+ *                Note: never reaches return if sentinel shell program being halted
  * SIDE EFFECTS:  stops current process, restores parent process's page directory memory mapping, flushes TLB, updates curr_pid, updates TSS, resets exception flag
  *                sets ebp and esp registers
  */
 int32_t squash_process(uint8_t status) {
-    if (terminals[pcb_arr[curr_pid]->term_id].nprocess == 1) {
-	terminals[curr_term].nprocess--;
+    cli();
+    term_id_t process_term = pcb_arr[curr_pid]->term_id;
+    if (terminals[process_term].nprocess == 1) { /* if terminating last process in the terminal */
+	terminals[process_term].nprocess--;
 	pcb_arr[curr_pid]->state = STOPPED;
         curr_pid = pcb_arr[curr_pid]->parent_pid;
         // always start shell if nothing else running in the terminal
-        sys_execute("shell");
+        start_process("shell", process_term);
     } else {
-        cli();
         clear_fd_array(curr_pid);
 
         // disable user video mem for program
-        pd[USER_VIDEO_PD_IDX].kb.present = 0;
-        pt1[USER_VIDEO_PT_IDX].present = 0;
+        pt1[get_pt_idx(terminals[process_term].user_vidmem)].present = 0;
+        pcb_arr[curr_pid]->using_video = 0;
 
-	terminals[curr_term].nprocess--;
-	
+	// update process state
 	pcb_arr[curr_pid]->state = STOPPED;
+	
         setup_process_page(pcb_arr[curr_pid]->parent_pid);
         flush_tlb();
         set_process_tss(pcb_arr[curr_pid]->parent_pid);
 	curr_pid = pcb_arr[curr_pid]->parent_pid;
+	
+	terminals[process_term].curr_pid = curr_pid;
+	terminals[process_term].nprocess--;
 
         if(pcb_arr[curr_pid]->exception_flag == 1) {
 	    pcb_arr[curr_pid]->exception_flag = 0;
@@ -174,6 +181,24 @@ int32_t squash_process(uint8_t status) {
 }
 
 
+//////////// HELPER FUNCTIONS ///////////////
+
+
+/* setup_process_tss()
+ * 
+ * DESCRIPTION:   sets up tss
+ * INPUTS:        pid - current process id number
+ * OUTPUTS:       none
+ * RETURNS:       none
+ * SIDE EFFECTS:  sets segment and stack base pointer of current process
+ */
+inline void set_process_tss(pid_t pid) {
+    tss.ss0 = KERNEL_DS;
+    uint32_t pcb_bottom_addr = KERNEL_END_ADDR - (pid)*PCB_SIZE;
+    tss.esp0 = pcb_bottom_addr;
+}
+
+
 /* flush_tlb()
  * 
  * DESCRIPTION:   flushes TLB
@@ -193,9 +218,6 @@ inline void flush_tlb() {
 }
 
 
-//////////// HELPER FUNCTIONS ///////////////
-
-
 /* get_next_pid()
  * 
  * DESCRIPTION:   gets next available pid
@@ -204,7 +226,7 @@ inline void flush_tlb() {
  * RETURNS:       next available pid. Returns -1 if none available
  * SIDE EFFECTS:  none
  */
-static inline int32_t get_next_pid(int32_t pid) {
+static inline int32_t get_next_pid(pid_t pid) {
     unsigned int i;
     for (i = 0; i < NUM_PROCESS; ++i) {
 	if (pcb_arr[i] == NULL || pcb_arr[i]->state == STOPPED) {
@@ -281,9 +303,10 @@ static inline uint32_t is_executable(const int8_t* file_contents) {
  * RETURNS:       none
  * SIDE EFFECTS:  fills page directory entry with correct physical memory mapping
  */
-void setup_process_page(int32_t pid) {
+void setup_process_page(pid_t pid) {
     //Chooses correct page directory entry offset based on page
     pd[PROCESS_DIR_IDX].mb.page_baseaddr_bit31_22 = (PROCCESS_0_ADDR + pid * PAGE_SIZE_4MB) >> 22;
+    flush_tlb();
 }
 
 /* create_new_pcb()
@@ -294,19 +317,13 @@ void setup_process_page(int32_t pid) {
  * RETURNS:       new pcb_t struct object
  * SIDE EFFECTS:  initalizes new pcb_t struct object, and adds it to pcb array
  */
-pcb_t* create_new_pcb(int32_t pid) {
+pcb_t* create_new_pcb(pid_t pid, term_id_t term_id) {
     uint32_t pcb_bottom_addr = KERNEL_END_ADDR - (pid)*PCB_SIZE;
     pcb_arr[pid] = (pcb_t*)(pcb_bottom_addr - PCB_SIZE);
 
     pcb_arr[pid]->pid = pid;
+    pcb_arr[pid]->parent_pid = curr_pid;
 
-    /* if this is curr terminals first process, it has to parent process
-     * in this terminal */
-    if (terminals[curr_term].nprocess == 0) {
-	pcb_arr[pid]->parent_pid = -1;
-    } else {
-	pcb_arr[pid]->parent_pid = curr_pid;
-    }
     strcpy(pcb_arr[pid]->command_line_args, command_line);
 	
     //Initializes fd array for PCB with stdin and stdout
@@ -314,6 +331,10 @@ pcb_t* create_new_pcb(int32_t pid) {
     fill_stdin_ops(&pcb_arr[pid]->fd_arr[STDIN_FD].ops_jtab);
     SET_FD_FLAG_INUSE(pcb_arr[pid]->fd_arr[STDOUT_FD].flags); // stdout
     fill_stdout_ops(&pcb_arr[pid]->fd_arr[STDOUT_FD].ops_jtab);
+    unsigned int i;
+    for (i = 2; i < MAXFILES_PER_TASK; ++i) {
+      UNSET_FD_FLAG_INUSE(pcb_arr[pid]->fd_arr[i].flags);
+    }
 
     //Saves Kernel stack pointer
     pcb_arr[pid]->stack_base_ptr = pcb_bottom_addr - sizeof(uint32_t);
@@ -323,8 +344,12 @@ pcb_t* create_new_pcb(int32_t pid) {
     pcb_arr[pid]->state = ACTIVE;
 
     pcb_arr[pid]->exception_flag = 0;
-    pcb_arr[pid]->term_id = curr_term;
-    
+    pcb_arr[pid]->term_id = term_id;
+    pcb_arr[pid]->using_video = 0;
+
+    pcb_arr[pid]->rtc_counter = RTC_MAX_FREQ / 2;  /* default RTC freq set to 2Hz */
+    pcb_arr[pid]->rtc_interrupt_cnt = 0;
+
     return pcb_arr[pid];
 }
 
@@ -339,7 +364,7 @@ pcb_t* create_new_pcb(int32_t pid) {
 static void switch_to_user(uint32_t user_eip) {
     /* no need for stack pointer later if there is no parent process since in that case halt
      * will just restart shell and not return to execute/syscall linkage */
-    if (pcb_arr[curr_pid]->parent_pid != -1) {
+    if (pcb_arr[curr_pid]->parent_pid >= 0 && (nterm_started <= 3 || terminals[pcb_arr[curr_pid]->term_id].nprocess > 0)) {
         uint32_t saved_ebp;
         uint32_t saved_esp;
         // save current ebp and esp
@@ -371,18 +396,7 @@ static void switch_to_user(uint32_t user_eip) {
         return;
 }
 
-/* setup_process_tss()
- * 
- * DESCRIPTION:   sets up tss
- * INPUTS:        pid - current process id number
- * OUTPUTS:       none
- * RETURNS:       none
- * SIDE EFFECTS:  sets segment and stack base pointer of current process
- */
-static inline void set_process_tss(int32_t pid) {
-    tss.ss0 = KERNEL_DS;
-    tss.esp0 = pcb_arr[pid]->stack_base_ptr;
-}
+
 
 /* clear_fd_array()
  * 
@@ -392,7 +406,7 @@ static inline void set_process_tss(int32_t pid) {
  * RETURNS:       none
  * SIDE EFFECTS:  clears the flags and resets all file operation pointers
  */
-void clear_fd_array(int32_t pid) {
+void clear_fd_array(pid_t pid) {
     int i;
     //iterate through max size of fd array
     for (i = 0; i < MAXFILES_PER_TASK; i++) {

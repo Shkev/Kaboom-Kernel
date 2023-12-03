@@ -219,14 +219,17 @@ int32_t fs_open(const int8_t* fname) {
 
 
 int32_t fs_read(int32_t fd, void* buf, int32_t nbytes) {
-    if (buf == NULL || fd < 0 || fd >= MAXFILES_PER_TASK || !FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[fd].flags)) return -1;
+    if (buf == NULL || fd < 0 || fd >= MAXFILES_PER_TASK || !FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[fd].flags)) {
+	return -1;
+    }
     int32_t read_bytes = pcb_arr[curr_pid]->fd_arr[fd].ops_jtab.read(fd, buf, nbytes);
     return read_bytes;
 }
 
 
 int32_t fs_write(int32_t fd, const void* buf, int32_t nbytes) {
-    if (buf == NULL || fd < 0 || fd >= MAXFILES_PER_TASK || !FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[fd].flags)) return -1;
+    if (buf == NULL || fd < 0 || fd >= MAXFILES_PER_TASK || !FD_FLAG_INUSE(pcb_arr[curr_pid]->fd_arr[fd].flags))
+      return -1;
     return pcb_arr[curr_pid]->fd_arr[fd].ops_jtab.write(fd, buf, nbytes);
 }
 
