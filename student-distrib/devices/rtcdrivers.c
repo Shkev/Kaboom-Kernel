@@ -1,8 +1,14 @@
 #include "rtcdrivers.h"
 #include "../lib.h"
 
+
+uint16_t virt_rtc_freq = 2; 	/* default to 2Hz */
+uint16_t rtc_counter = 4096; 	/* determined by virt_rtc_freq */
+uint16_t rtc_interrupt_cnt = 0;
+
+
 /* write new rate to RTC */
-static int32_t write_rtc_rate(uint32_t rate);
+extern int32_t write_rtc_rate(uint32_t rate);
 
 /* check if input is power of 2 */
 static uint8_t is_power_of_2(int32_t);
@@ -16,11 +22,16 @@ static uint32_t compute_rtc_rate_from_freq(int32_t freq);
  * INPUTS:        fname - ignore(?)
  * OUTPUTS:       none
  * RETURNS:       0
- * SIDE EFFECTS:  Changes RTC rate (value in register A)
+ * SIDE EFFECTS:  Changes RTC rate (value in register A). Initialize virtualization variables
  */
 int32_t rtc_open(const int8_t* fname) {
-    const uint8_t init_rate = 0x0F;           /* set frequency rate to 2 */
+    // set RTC to 1024 Hz
+    const uint8_t init_rate = 6;
     write_rtc_rate(init_rate);
+    // set default rate to 2Hz
+    virt_rtc_freq = 2;
+    rtc_counter = RTC_MAX_FREQ / virt_rtc_freq;
+    rtc_interrupt_cnt = 0;
     return 0;
 }
 
@@ -34,9 +45,9 @@ int32_t rtc_open(const int8_t* fname) {
  * SIDE EFFECTS:  Changes rtc flag
  */
 int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes) {
-    //if (buf == NULL) return -1;
     // some basic synchronization
     while (rtc_flag == 0);   /* wait for rtc interrupt */
+    cli();
     rtc_flag = 0;	     /* reset RTC flag to 0 */
     return 0;		     /* return 0 when rtc interrupt received */
 }
@@ -49,7 +60,7 @@ int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes) {
                   buf    - interrupt rate in Hz to set RTC to
  * OUTPUTS:       none
  * RETURNS:       0 on succeess, -1 if frequency is not a power of two or greater than 1024
- * SIDE EFFECTS:  Changes RTC rate (value in register A)
+ * SIDE EFFECTS:  Changes virtual rtc frequency
  */
 int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes) {
     if (buf == NULL) return -1;
@@ -57,11 +68,9 @@ int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes) {
     if (write_freq > 1024 || !is_power_of_2(write_freq)) {
 	    return -1;
     }
-    uint32_t rate = compute_rtc_rate_from_freq(write_freq);
-    if (rate == 0 || rate == 1 || rate == 2) {  /* rate faster than 3 causes issues */
-	    return -1;
-    }
-    write_rtc_rate(rate);
+    virt_rtc_freq = write_freq;
+    rtc_counter = RTC_MAX_FREQ / virt_rtc_freq;
+    rtc_interrupt_cnt = 0;
     return 0;
 }
 

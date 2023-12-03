@@ -1,5 +1,7 @@
 #include "init_devices.h"
 #include "../i8259.h"
+#include "rtcdrivers.h"
+
 
 /*init_rtc()
 * DESCRIPTION: initialize rtc
@@ -13,6 +15,7 @@ void init_rtc() {
     char prev = inb(RTC_DATA); // get previous value in reg B
     outb(0x8B, RTC_INDEX); // set read again
     outb(prev | 0x40, RTC_DATA); // set bit 6 in reg B (IRQ 8)
+    
     // enable irq 8 (RTC irq line)
     enable_irq(RTC_IRQ);
 }

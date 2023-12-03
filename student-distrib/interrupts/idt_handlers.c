@@ -2,8 +2,8 @@
 #include "syscalls.h"
 #include "../lib.h"
 #include "../i8259.h"
-
 #include "../process/sched.h"
+#include "../devices/rtcdrivers.h"
 
 #define PRINT_HANDLER(task) printf("EXCEPTION: " task "error\n")
 
@@ -314,16 +314,19 @@ void security_handler() {
 * SIDE EFFECTS: handles rtc, sends EOI when done
 */
 void rtc_handler() {
+    //test_interrupts();
+
+    rtc_interrupt_cnt++;
+    if (rtc_interrupt_cnt == rtc_counter) {
+	rtc_flag = 1;   // raise RTC flag when ready for virtual interrupt
+	rtc_interrupt_cnt = 0;
+    }
+
     /* We read register C to see what type of interrupt occured.
     * If register C not read RTC will not send future interrupts */
-    // select register C on RTC
-    outb(0x0C, RTC_INDEX);
-    // throw away info about interrupt. Change this later to do something
-    (void)inb(RTC_DATA);
-    //test_interrupts();
-    // send end of interrupt for IRQ8
+    outb(0x0C, RTC_INDEX);	/* select register C on RTC */
+    (void)inb(RTC_DATA);	/* throw away info about interrupt */
     send_eoi(RTC_IRQ);
-    rtc_flag = 1;   //raise RTC flag when interrupt signal is recieved
 }
 
 
@@ -618,24 +621,15 @@ void pit_handler() {
 	    start_process("shell", 0);
 	    break;
 	case (1):
-	    switch_terminal(1);
 	    nterm_started++;
-	    clear();
 	    send_eoi(PIT_IRQ);
 	    start_process("shell", 1);
 	    break;
 	case (2):
-	    switch_terminal(2);
 	    nterm_started++;
-	    clear();
 	    send_eoi(PIT_IRQ);
 	    start_process("shell", 2);
 	    break;
-	case (3):
-	    switch_terminal(0);
-	    // add 1 so it doesn't go here again
-	    nterm_started++;
-	    // intentional fall-through
         default:
 	    send_eoi(PIT_IRQ);
 	    schedule();

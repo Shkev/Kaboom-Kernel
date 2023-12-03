@@ -40,6 +40,7 @@ int32_t sys_execute(const int8_t* cmd) {
  */
 int32_t sys_read(int32_t fd, void* buf, int32_t nbytes) {
     int32_t res = fs_read(fd, buf, nbytes);
+    sti();
     return res;
 }
 
