@@ -365,7 +365,7 @@ pcb_t* create_new_pcb(pid_t pid, term_id_t term_id) {
 static void switch_to_user(uint32_t user_eip) {
     /* no need for stack pointer later if there is no parent process since in that case halt
      * will just restart shell and not return to execute/syscall linkage */
-    if (pcb_arr[curr_pid]->parent_pid >= 0 && (nterm_started <= 3 || terminals[pcb_arr[curr_pid]->term_id].nprocess > 0)) {
+    if (pcb_arr[curr_pid]->parent_pid >= 0 && (nterm_started <= 3 || terminals[pcb_arr[curr_pid]->term_id].nprocess > 1)) {
         uint32_t saved_ebp;
         uint32_t saved_esp;
         // save current ebp and esp
