@@ -16,7 +16,7 @@
 #define FILENAME_LEN    32
 #define DATABLOCK_SIZE 4096	/* size of file data blocks in memory */
 
-#define FD_FLAG_INUSE(flag) ((flag & 0x1) == 1)
+#define FD_FLAG_INUSE(flag) (((flag) & 0x1) == 1)
 #define SET_FD_FLAG_INUSE(flag) flag |= 0x1
 #define UNSET_FD_FLAG_INUSE(flag) flag &= 0xFFFFFFFE
 

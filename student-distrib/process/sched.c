@@ -138,6 +138,7 @@ void schedule() {
     pcb_arr[curr_pid]->stack_base_ptr = saved_ebp;
     
     curr_pid = next_pid;
+    setup_process_page(next_pid);
     set_process_tss(next_pid);
     
     // swap to next process kernel stack

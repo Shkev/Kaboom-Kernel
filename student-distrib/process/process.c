@@ -25,9 +25,6 @@ static int32_t parse_args(const int8_t* arg, int8_t* const buf);
 /* check if file with given contents is an executable */
 static inline uint32_t is_executable(const int8_t* file_contents);
 
-/* setup process page addresses for process with given pid */
-static void setup_process_page(pid_t pid);
-
 /* initialize pcb memory block in kernel for given pid */
 static pcb_t* create_new_pcb(pid_t pid, term_id_t term_id);
 
@@ -80,7 +77,6 @@ int32_t start_process(const int8_t* cmd, term_id_t term_id) {
 	return -1;
     }
     setup_process_page(next_pid);
-    flush_tlb();
 
     // Obtain directory entry info for file
     dentry_t file_dentry;
@@ -143,7 +139,6 @@ int32_t squash_process(uint8_t status) {
 	terminals[process_term].nprocess--;
 	pcb_arr[curr_pid]->state = STOPPED;
         curr_pid = pcb_arr[curr_pid]->parent_pid;
-	sti();
         // always start shell if nothing else running in the terminal
         start_process("shell", process_term);
     } else {
@@ -311,6 +306,7 @@ static inline uint32_t is_executable(const int8_t* file_contents) {
 void setup_process_page(pid_t pid) {
     //Chooses correct page directory entry offset based on page
     pd[PROCESS_DIR_IDX].mb.page_baseaddr_bit31_22 = (PROCCESS_0_ADDR + pid * PAGE_SIZE_4MB) >> 22;
+    flush_tlb();
 }
 
 /* create_new_pcb()
@@ -335,6 +331,10 @@ pcb_t* create_new_pcb(pid_t pid, term_id_t term_id) {
     fill_stdin_ops(&pcb_arr[pid]->fd_arr[STDIN_FD].ops_jtab);
     SET_FD_FLAG_INUSE(pcb_arr[pid]->fd_arr[STDOUT_FD].flags); // stdout
     fill_stdout_ops(&pcb_arr[pid]->fd_arr[STDOUT_FD].ops_jtab);
+    unsigned int i;
+    for (i = 2; i < MAXFILES_PER_TASK; ++i) {
+      UNSET_FD_FLAG_INUSE(pcb_arr[pid]->fd_arr[i].flags);
+    }
 
     //Saves Kernel stack pointer
     pcb_arr[pid]->stack_base_ptr = pcb_bottom_addr - sizeof(uint32_t);

@@ -12,8 +12,6 @@
 // and make sure the active terminal's vidmem addr points to the physical vidmem addr
 static char* video_mem = (char *)VIDEO;
 
-static term_id_t process_term = 0;
-
 /* void clear(void);
  * Inputs: void
  * Return Value: none
@@ -169,9 +167,11 @@ int32_t puts(int8_t* s) {
 }
 
 
+/* calls putc_term to the current process' terminal */
 void putc(uint8_t c) {
     /* add sentinel check so print statements work even when no process is running (i.e., in kernel.c)
      * prints to terminal 0 by default */
+    term_id_t process_term = 0;
     if (!sentinel) {
 	process_term = pcb_arr[curr_pid]->term_id;
     }

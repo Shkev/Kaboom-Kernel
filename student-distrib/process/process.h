@@ -78,6 +78,9 @@ extern int32_t get_command_line_args(int8_t* buf, int32_t nbytes);
 
 extern inline void set_process_tss(pid_t pid);
 
+/* setup process page addresses for process with given pid */
+extern void setup_process_page(pid_t pid);
+
 extern inline void flush_tlb();
 
 #endif /* endif PROCESS_H */

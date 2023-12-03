@@ -54,7 +54,9 @@ int32_t sys_read(int32_t fd, void* buf, int32_t nbytes) {
  * SIDE EFFECTS:  fills buffer with characters to write
  */
 int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes) {
+    cli();
     int32_t res = fs_write(fd, buf, nbytes);
+    sti();
     return res;
 }
 
@@ -88,11 +90,14 @@ int32_t sys_close(int32_t fd) {
     return res;
 }
 
-/* sys calls not yet implemented*/
 
 int32_t sys_getargs(int8_t* buf, int32_t nbytes) {
-    return get_command_line_args(buf,nbytes);
+    cli();
+    int32_t res = get_command_line_args(buf,nbytes);
+    sti();
+    return res;
 }
+
 
 int32_t sys_vidmap(int8_t** screen_start) {
     // invalid pointer given; address doesn't point to something in program's addr space
