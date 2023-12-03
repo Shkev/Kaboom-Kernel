@@ -104,15 +104,30 @@ int32_t sys_vidmap(int8_t** screen_start) {
     if ((screen_start == NULL) || (((uint32_t)screen_start & 0xFFB00000) != PROCESS_IMG_ADDR)) {
         return -1;
     }
-    pd[USER_VIDEO_PD_IDX].kb.present = 1;
-    pd[USER_VIDEO_PD_IDX].kb.us = 1;
-    pd[USER_VIDEO_PD_IDX].kb.rw = 1;
-    pd[USER_VIDEO_PD_IDX].kb.pt_baseaddr = ((uint32_t)pt1) >> 12;
-    pt1[USER_VIDEO_PT_IDX].present = 1;
-    pt1[USER_VIDEO_PT_IDX].rw = 1;
-    pt1[USER_VIDEO_PT_IDX].us = 1;
-    pt1[USER_VIDEO_PT_IDX].page_baseaddr = VIDEO >> 12;
-    *screen_start = (int8_t*)USER_VIDEO;
+
+    pcb_arr[curr_pid]->using_video = 1;
+
+    uint32_t user_video;
+    switch (curr_term) {
+        case (0):
+            user_video = USER_VIDEO1;
+        case (1):
+            user_video = USER_VIDEO2;
+        case (2):
+            user_video = USER_VIDEO3;
+    }
+
+    uint32_t pd_idx = get_pd_idx(user_video);
+    uint32_t pt_idx = get_pt_idx(user_video);
+    pd[pd_idx].kb.present = 1;
+    pd[pd_idx].kb.us = 1;
+    pd[pd_idx].kb.rw = 1;
+    pd[pd_idx].kb.pt_baseaddr = ((uint32_t)pt1) >> 12;
+    pt1[pt_idx].present = 1;
+    pt1[pt_idx].rw = 1;
+    pt1[pt_idx].us = 1;
+    pt1[pt_idx].page_baseaddr = terminals[pcb_arr[curr_pid]->term_id].vidmem_addr >> 12;
+    *screen_start = (int8_t*)user_video;
     flush_tlb();
     return 0;
 }

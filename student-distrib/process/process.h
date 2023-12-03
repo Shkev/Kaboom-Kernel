@@ -50,6 +50,7 @@ typedef struct pcb {
     enum task_state state;
     volatile uint8_t exception_flag;           /* track whether exception thrown in process (1 if excp occured, 0 otherwise) */
     term_id_t term_id;			       /* terminal process is running in */
+    uint8_t using_video : 1;           /* whether current process using user video memory */
     fd_arr_entry_t fd_arr[MAXFILES_PER_TASK];  /* file descriptor array. A given file descriptor indexes into this array to get info about the file. */
     char command_line_args[CMD_ARG_LEN];
 } pcb_t;
