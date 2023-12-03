@@ -345,6 +345,9 @@ pcb_t* create_new_pcb(pid_t pid, term_id_t term_id) {
 
     pcb_arr[pid]->exception_flag = 0;
     pcb_arr[pid]->term_id = term_id;
+
+    pcb_arr[pid]->rtc_counter = RTC_MAX_FREQ / 2; /* default RTC freq set to 2Hz */
+    //pcb_arr[pid]->rtc_interrupt_cnt = 0;
     
     return pcb_arr[pid];
 }

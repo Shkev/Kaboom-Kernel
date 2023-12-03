@@ -1,14 +1,9 @@
 #include "rtcdrivers.h"
 #include "../lib.h"
 
+uint16_t rtc_counter;
+uint16_t rtc_interrupt_cnt;
 
-uint16_t virt_rtc_freq = 2; 	/* default to 2Hz */
-uint16_t rtc_counter = 4096; 	/* determined by virt_rtc_freq */
-uint16_t rtc_interrupt_cnt = 0;
-
-
-/* write new rate to RTC */
-extern int32_t write_rtc_rate(uint32_t rate);
 
 /* check if input is power of 2 */
 static uint8_t is_power_of_2(int32_t);
@@ -25,12 +20,8 @@ static uint32_t compute_rtc_rate_from_freq(int32_t freq);
  * SIDE EFFECTS:  Changes RTC rate (value in register A). Initialize virtualization variables
  */
 int32_t rtc_open(const int8_t* fname) {
-    // set RTC to 1024 Hz
-    const uint8_t init_rate = 6;
-    write_rtc_rate(init_rate);
     // set default rate to 2Hz
-    virt_rtc_freq = 2;
-    rtc_counter = RTC_MAX_FREQ / virt_rtc_freq;
+    rtc_counter = RTC_MAX_FREQ / 2;
     rtc_interrupt_cnt = 0;
     return 0;
 }
@@ -68,8 +59,7 @@ int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes) {
     if (write_freq > 1024 || !is_power_of_2(write_freq)) {
 	    return -1;
     }
-    virt_rtc_freq = write_freq;
-    rtc_counter = RTC_MAX_FREQ / virt_rtc_freq;
+    rtc_counter = RTC_MAX_FREQ / write_freq;
     rtc_interrupt_cnt = 0;
     return 0;
 }
@@ -91,30 +81,6 @@ int32_t rtc_close(int32_t fd) {
 
 
 /////////////////// HELPER FUNCTIONS ////////////////////
-
-/* write_rtc_rate(uint32_t)
- *
- * DESCRIPTION:  write new rate to RTC
- * INPUTS:       rate   - the rate to write
- * OUTPUTS:      none
- * RETURNS:      0
- * SIDE EFFECTS: changes RTC rate (value in register A)
- */
-int32_t write_rtc_rate(uint32_t rate) {
-    // disable interrupts
-    cli();
-
-    /* note : RTC_INDEX and RTC_DATA defined in init_devices.h */
-    outb(0x8A, RTC_INDEX);	              /* set index to register A, disable NMI */
-    char prev = inb(RTC_DATA);	              /* get initial value of register A */
-    outb(0x8A, RTC_INDEX);
-    outb((prev & 0xF0) | rate, RTC_DATA);     /* write frequency rate to A; bottom 4 bits are the rate */
-
-    // enable interrupts
-    sti();
-    return 0;
-}
-
 
 /* is_power_of_2(uint32_t)
  * DESCRIPTION:     check if input is power of 2

@@ -3,6 +3,10 @@
 #include "rtcdrivers.h"
 
 
+/* write new rate to RTC */
+static int32_t write_rtc_rate(uint32_t rate);
+
+
 /*init_rtc()
 * DESCRIPTION: initialize rtc
 * INPUTS: none
@@ -15,6 +19,10 @@ void init_rtc() {
     char prev = inb(RTC_DATA); // get previous value in reg B
     outb(0x8B, RTC_INDEX); // set read again
     outb(prev | 0x40, RTC_DATA); // set bit 6 in reg B (IRQ 8)
+
+    // set RTC to 512 Hz
+    const uint8_t init_rate = 7;
+    write_rtc_rate(init_rate);
     
     // enable irq 8 (RTC irq line)
     enable_irq(RTC_IRQ);
@@ -40,4 +48,28 @@ void init_pit() {
     outb((uint8_t)(PIT_COUNTER >> 8), PIT_CHAN0_DATA);
     // enable irq 0 (PIT irq line)
     enable_irq(PIT_IRQ);
+}
+
+
+////////// HELPERS ///////////////
+
+/* write_rtc_rate(uint32_t)
+ *
+ * DESCRIPTION:  write new rate to RTC
+ * INPUTS:       rate   - the rate to write
+ * OUTPUTS:      none
+ * RETURNS:      0
+ * SIDE EFFECTS: changes RTC rate (value in register A)
+ */
+int32_t write_rtc_rate(uint32_t rate) {
+//    cli();
+
+    /* note : RTC_INDEX and RTC_DATA defined in init_devices.h */
+    outb(0x8A, RTC_INDEX);	              /* set index to register A, disable NMI */
+    char prev = inb(RTC_DATA);	              /* get initial value of register A */
+    outb(0x8A, RTC_INDEX);
+    outb((prev & 0xF0) | rate, RTC_DATA);     /* write frequency rate to A; bottom 4 bits are the rate */
+
+//    sti();
+    return 0;
 }

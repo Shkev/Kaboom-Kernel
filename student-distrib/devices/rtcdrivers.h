@@ -5,12 +5,9 @@
 #include "../interrupts/idt_handlers.h"
 
 #define RTC_MAGIC_RATENUM 32768
-#define RTC_MAX_FREQ 1024
+#define RTC_MAX_FREQ 512
 
 ////////// VIRTUALIZING RTC PARAMS /////////////
-
-/* RTC freq seen by programs */
-extern uint16_t virt_rtc_freq;
 
 /* number of rtc interrupts to wait before noifying program of rtc interrupt ("virtual interrupt")
  * acts as a frequency divider. */
