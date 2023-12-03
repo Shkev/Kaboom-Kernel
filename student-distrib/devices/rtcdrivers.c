@@ -1,8 +1,6 @@
 #include "rtcdrivers.h"
 #include "../lib.h"
 
-/* write new rate to RTC */
-static int32_t write_rtc_rate(uint32_t rate);
 
 /* check if input is power of 2 */
 static uint8_t is_power_of_2(int32_t);
@@ -16,11 +14,12 @@ static uint32_t compute_rtc_rate_from_freq(int32_t freq);
  * INPUTS:        fname - ignore(?)
  * OUTPUTS:       none
  * RETURNS:       0
- * SIDE EFFECTS:  Changes RTC rate (value in register A)
+ * SIDE EFFECTS:  Changes RTC rate (value in register A). Initialize virtualization variables
  */
 int32_t rtc_open(const int8_t* fname) {
-    const uint8_t init_rate = 0x0F;           /* set frequency rate to 2 */
-    write_rtc_rate(init_rate);
+    // set default rate to 2Hz
+    pcb_arr[curr_pid]->rtc_counter = RTC_MAX_FREQ / 2;
+    pcb_arr[curr_pid]->rtc_interrupt_cnt = 0;
     return 0;
 }
 
@@ -34,9 +33,9 @@ int32_t rtc_open(const int8_t* fname) {
  * SIDE EFFECTS:  Changes rtc flag
  */
 int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes) {
-    //if (buf == NULL) return -1;
     // some basic synchronization
     while (rtc_flag == 0);   /* wait for rtc interrupt */
+    cli();
     rtc_flag = 0;	     /* reset RTC flag to 0 */
     return 0;		     /* return 0 when rtc interrupt received */
 }
@@ -49,7 +48,7 @@ int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes) {
                   buf    - interrupt rate in Hz to set RTC to
  * OUTPUTS:       none
  * RETURNS:       0 on succeess, -1 if frequency is not a power of two or greater than 1024
- * SIDE EFFECTS:  Changes RTC rate (value in register A)
+ * SIDE EFFECTS:  Changes virtual rtc frequency
  */
 int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes) {
     if (buf == NULL) return -1;
@@ -57,11 +56,8 @@ int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes) {
     if (write_freq > 1024 || !is_power_of_2(write_freq)) {
 	    return -1;
     }
-    uint32_t rate = compute_rtc_rate_from_freq(write_freq);
-    if (rate == 0 || rate == 1 || rate == 2) {  /* rate faster than 3 causes issues */
-	    return -1;
-    }
-    write_rtc_rate(rate);
+    pcb_arr[curr_pid]->rtc_counter = RTC_MAX_FREQ / write_freq;
+    pcb_arr[curr_pid]->rtc_interrupt_cnt = 0;
     return 0;
 }
 
@@ -82,30 +78,6 @@ int32_t rtc_close(int32_t fd) {
 
 
 /////////////////// HELPER FUNCTIONS ////////////////////
-
-/* write_rtc_rate(uint32_t)
- *
- * DESCRIPTION:  write new rate to RTC
- * INPUTS:       rate   - the rate to write
- * OUTPUTS:      none
- * RETURNS:      0
- * SIDE EFFECTS: changes RTC rate (value in register A)
- */
-int32_t write_rtc_rate(uint32_t rate) {
-    // disable interrupts
-    cli();
-
-    /* note : RTC_INDEX and RTC_DATA defined in init_devices.h */
-    outb(0x8A, RTC_INDEX);	              /* set index to register A, disable NMI */
-    char prev = inb(RTC_DATA);	              /* get initial value of register A */
-    outb(0x8A, RTC_INDEX);
-    outb((prev & 0xF0) | rate, RTC_DATA);     /* write frequency rate to A; bottom 4 bits are the rate */
-
-    // enable interrupts
-    sti();
-    return 0;
-}
-
 
 /* is_power_of_2(uint32_t)
  * DESCRIPTION:     check if input is power of 2

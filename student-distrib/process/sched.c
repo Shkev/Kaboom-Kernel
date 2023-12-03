@@ -154,14 +154,13 @@ void schedule() {
 	return;
     }
 
-    // save current procss stack pointers
-    uint32_t saved_ebp, saved_esp;
+    /* save curr process's ebp. note we only need ebp since that's where this function's return addresss
+     * is stored */
+    uint32_t saved_ebp;
     asm volatile(
 	"movl %%ebp, %0;"
-	"movl %%esp, %1;"
-	: "=r"(saved_ebp), "=r"(saved_esp)
+	: "=r"(saved_ebp)
 	);
-    pcb_arr[curr_pid]->stack_ptr = saved_esp;
     pcb_arr[curr_pid]->stack_base_ptr = saved_ebp;
     
     curr_pid = next_pid;
@@ -170,12 +169,10 @@ void schedule() {
     
     // swap to next process kernel stack
     saved_ebp = pcb_arr[next_pid]->stack_base_ptr;
-    saved_esp = pcb_arr[next_pid]->stack_ptr;
     asm volatile(
 	"movl %0, %%ebp;"
-	"movl %1, %%esp;"
 	:   
-	: "r"(saved_ebp), "r"(saved_esp)
+	: "r"(saved_ebp)
 	);
 
     return;

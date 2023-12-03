@@ -2,8 +2,8 @@
 #include "syscalls.h"
 #include "../lib.h"
 #include "../i8259.h"
-
 #include "../process/sched.h"
+#include "../devices/rtcdrivers.h"
 
 #define PRINT_HANDLER(task) printf("EXCEPTION: " task "error\n")
 
@@ -314,16 +314,25 @@ void security_handler() {
 * SIDE EFFECTS: handles rtc, sends EOI when done
 */
 void rtc_handler() {
+    //test_interrupts();
+
+    pid_t pid;
+    for (pid = 0; pid < NUM_PROCESS; ++pid) {
+	if (pcb_arr[pid] != NULL && pcb_arr[pid]->state == ACTIVE) {
+	    pcb_arr[pid]->rtc_interrupt_cnt++;
+	}
+    }
+    
+    if (pcb_arr[curr_pid]->rtc_interrupt_cnt >= pcb_arr[curr_pid]->rtc_counter) {
+	rtc_flag = 1;   // raise RTC flag when ready for virtual interrupt
+	pcb_arr[curr_pid]->rtc_interrupt_cnt = 0;
+    }
+
     /* We read register C to see what type of interrupt occured.
     * If register C not read RTC will not send future interrupts */
-    // select register C on RTC
-    outb(0x0C, RTC_INDEX);
-    // throw away info about interrupt. Change this later to do something
-    (void)inb(RTC_DATA);
-    //test_interrupts();
-    // send end of interrupt for IRQ8
+    outb(0x0C, RTC_INDEX);	/* select register C on RTC */
+    (void)inb(RTC_DATA);	/* throw away info about interrupt */
     send_eoi(RTC_IRQ);
-    rtc_flag = 1;   //raise RTC flag when interrupt signal is recieved
 }
 
 
@@ -430,13 +439,13 @@ void kbd_handler() {
 	memset(terminals[curr_term].keybuf, '\0', KEYBUF_MAX_SIZE);
     } else if ((ctrl == 1) && (scan_code == C_PRESS)) {
 	// CTRL-C logic to halt current program
-	memset(terminals[curr_term].keybuf, '\0', KEYBUF_MAX_SIZE);
-	terminals[curr_term].keybufcnt = 0;
-	if (curr_pid >= 0) { // if there is a process running terminate it
-	    send_eoi(1);
-	    // halt acts like a soft interrupt here
-	    sys_halt(1);
-	}
+	// DOES NOT WORK. NEEDS SIGNALS IMPLEMENTED
+	/* memset(terminals[curr_term].keybuf, '\0', KEYBUF_MAX_SIZE); */
+	/* terminals[curr_term].keybufcnt = 0; */
+	/* if (curr_pid >= 0) { // if there is a process running terminate it */
+	/*     send_eoi(1); */
+	/*     sys_halt(1); */
+	/* } */
     } else if (alt == 1) {
 	// ALT commands (switching active terminal)
 	switch (scan_code) {
@@ -618,24 +627,15 @@ void pit_handler() {
 	    start_process("shell", 0);
 	    break;
 	case (1):
-	    switch_terminal(1);
 	    nterm_started++;
-	    clear();
 	    send_eoi(PIT_IRQ);
 	    start_process("shell", 1);
 	    break;
 	case (2):
-	    switch_terminal(2);
 	    nterm_started++;
-	    clear();
 	    send_eoi(PIT_IRQ);
 	    start_process("shell", 2);
 	    break;
-	case (3):
-	    switch_terminal(0);
-	    // add 1 so it doesn't go here again
-	    nterm_started++;
-	    // intentional fall-through
         default:
 	    send_eoi(PIT_IRQ);
 	    schedule();
