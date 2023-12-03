@@ -1,9 +1,6 @@
 #include "rtcdrivers.h"
 #include "../lib.h"
 
-uint16_t rtc_counter;
-uint16_t rtc_interrupt_cnt;
-
 
 /* check if input is power of 2 */
 static uint8_t is_power_of_2(int32_t);
