@@ -5,6 +5,7 @@
 
 
 /////// EXTERNALLY VISIBLE VARIABLES ////////
+
 pid_t curr_pid = -1;
 pcb_t* pcb_arr[NUM_PROCESS];
 

@@ -59,7 +59,7 @@ int32_t init_term(term_id_t term_id) {
 }
 
 
-/* invalid_term_id()
+/* invalid_term_id(term_id_t)
  * 
  * DESCRIPTION:   determines whether given terminal id is considered invalid
  * INPUTS:        term_id  -  id of new terminal to check
@@ -72,7 +72,7 @@ int32_t invalid_term_id(term_id_t term_id) {
 }
 
 
-/* switch_terminal()
+/* switch_terminal(term_id_t)
  * 
  * DESCRIPTION:   switch active terminal to terminal with given id
  * INPUTS:        term_id  -  id of terminal to switch to
@@ -87,7 +87,7 @@ void switch_terminal(term_id_t term_id) {
 }
 
 
-/* setup_term_page()
+/* setup_term_page(term_id_t)
  * 
  * DESCRIPTION:   setup page in page table for terminal's vidmem
  * INPUTS:        term_id  -  id of terminal to setup
@@ -106,17 +106,35 @@ static void setup_term_page(term_id_t term_id) {
 }
 
 
+/* swap_out_curr_term()
+ * 
+ * DESCRIPTION:   swap out current terminal from visible screen (changes video memory mappings)
+ * INPUTS:        none
+ * OUTPUTS:       none
+ * RETURNS:       none
+ * SIDE EFFECTS:  modifies page tables
+ */
 void swap_out_curr_term() {
     // saving screen x, y done through lib.c function (i.e., printf, putc, etc.)
     // doing video memory copying stuff here...
     const uint32_t term_vidmem_addr = TERM0_VIDMEM_ADDR + curr_term*PAGE_SIZE_4KB;
     terminals[curr_term].vidmem_addr = term_vidmem_addr;
+
+    // change user video memory page to point to terminal's backup vidmem
     pt1[get_pt_idx(terminals[curr_term].user_vidmem)].page_baseaddr = term_vidmem_addr >> 12;
 
     memcpy((char*)term_vidmem_addr, (char*)VIDEO, PAGE_SIZE_4KB);
 }
 
 
+/* swap_in_next_term(term_id_t)
+ * 
+ * DESCRIPTION:   swap in desired terminal to visible screen (changes video memory mappings)
+ * INPUTS:        none
+ * OUTPUTS:       none
+ * RETURNS:       none
+ * SIDE EFFECTS:  modifies page tables
+ */
 void swap_in_next_term(term_id_t term_id) {
     curr_term = term_id; 	/* handles restoring cursor position */
     const uint32_t term_vidmem_addr = TERM0_VIDMEM_ADDR + term_id*PAGE_SIZE_4KB;
@@ -172,6 +190,14 @@ void schedule() {
 }
 
 
+/* next_active_pid()
+ * 
+ * DESCRIPTION:   get next process that is ACTIVE
+ * INPUTS:        none
+ * OUTPUTS:       none
+ * RETURNS:       -1 if no active processes, otherwise the pid of the next active process
+ * SIDE EFFECTS:  none
+ */
 pid_t next_active_pid() {
     pid_t i;
     for (i = curr_pid+1; i < NUM_PROCESS; ++i) {

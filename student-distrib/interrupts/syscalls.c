@@ -1,7 +1,7 @@
 #include "syscalls.h"
 #include "../lib.h"
 
-/* sys_halt()
+/* sys_halt(uint8_t)
  * 
  * DESCRIPTION:   system call for halt
  * INPUTS:        status - return value for system execute call
@@ -13,7 +13,7 @@ int32_t sys_halt(uint8_t status) {
     return squash_process(status);
 }
 
-/* sys_execute()
+/* sys_execute(const int8_t*)
  * 
  * DESCRIPTION:   system call for execute
  * INPUTS:        cmd - program to execute
@@ -28,7 +28,7 @@ int32_t sys_execute(const int8_t* cmd) {
     return start_process(cmd, curr_term);
 }
 
-/* sys_read()
+/* sys_read(int32_t, void*, int32_t)
  * 
  * DESCRIPTION:   system call for read
  * INPUTS:        fd - file descriptor index
@@ -44,7 +44,7 @@ int32_t sys_read(int32_t fd, void* buf, int32_t nbytes) {
     return res;
 }
 
-/* sys_write()
+/* sys_write(int32_t, const void*, int32_t)
  * 
  * DESCRIPTION:   system call for write
  * INPUTS:        fd - file descriptor index
@@ -61,7 +61,7 @@ int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes) {
     return res;
 }
 
-/* sys_open()
+/* sys_open(const int8_t*)
  * 
  * DESCRIPTION:   system call for open
  * INPUTS:        file - file to open
@@ -76,7 +76,7 @@ int32_t sys_open(const int8_t* fname) {
     return res;
 }
 
-/* sys_close()
+/* sys_close(int32_t)
  * 
  * DESCRIPTION:   system call for close
  * INPUTS:        fd - file directory index
@@ -92,6 +92,15 @@ int32_t sys_close(int32_t fd) {
 }
 
 
+/* sys_getargs(int8_t*, int32_t)
+ * 
+ * DESCRIPTION:   system call to get command line arguments
+ * INPUTS:        buf - buffer to copy args into
+ *                nbytes - max number of bytes to copy into buffer
+ * OUTPUTS:       none
+ * RETURNS:       0 if success, -1 otherwise
+ * SIDE EFFECTS:  fills given buffer
+*/
 int32_t sys_getargs(int8_t* buf, int32_t nbytes) {
     cli();
     int32_t res = get_command_line_args(buf,nbytes);
@@ -100,6 +109,14 @@ int32_t sys_getargs(int8_t* buf, int32_t nbytes) {
 }
 
 
+/* sys_vidmap(int8_t**)
+ * 
+ * DESCRIPTION:   system call to map user video memory
+ * INPUTS:        screen_start - pointer to pointer in user space to the video memory address for program
+ * OUTPUTS:       none
+ * RETURNS:       0 if success, -1 otherwise
+ * SIDE EFFECTS:  modify page tables
+*/
 int32_t sys_vidmap(int8_t** screen_start) {
     // invalid pointer given; address doesn't point to something in program's addr space
     if ((screen_start == NULL) || (((uint32_t)screen_start & 0xFFB00000) != PROCESS_IMG_ADDR)) {
@@ -122,6 +139,9 @@ int32_t sys_vidmap(int8_t** screen_start) {
     flush_tlb();
     return 0;
 }
+
+
+///////// SIGNALS SYSCALLS //////////////
 
 int32_t sys_set_handler(int32_t signum, void* handler_addr) {
     return -1;

@@ -34,7 +34,10 @@ typedef struct fd_arr_entry {
     uint32_t flags;	                /* first bit 1 indicates in use, 0 indicates not in use. */
 } fd_arr_entry_t;
 
-/* Current state of a task. UPDATE LATER TO ADD MORE STATES AS NEEDED */
+/* Current state of a task. UPDATE LATER TO ADD MORE STATES AS NEEDED
+ * ACTIVE  - process is currently running
+ * PAUSED  - process suspended while child process runs
+ * STOPPED - process terminated */
 enum task_state {
     ACTIVE = 0,
     PAUSED,
@@ -45,11 +48,11 @@ enum task_state {
 typedef struct pcb {
     pid_t pid;
     pid_t parent_pid;
-    uint32_t stack_ptr;		/* ESP */
+    uint32_t stack_ptr;		    /* ESP */
     uint32_t stack_base_ptr;	/* EBP */
     enum task_state state;
-    volatile uint8_t exception_flag : 1;           /* track whether exception thrown in process (1 if excp occured, 0 otherwise) */
-    uint8_t using_video : 1;           /* whether current process using user video memory */
+    volatile uint8_t exception_flag : 1;       /* track whether exception thrown in process (1 if excp occured, 0 otherwise) */
+    uint8_t using_video : 1;                   /* whether current process using user video memory */
     volatile term_id_t term_id;		           /* terminal process is running in */
     uint16_t rtc_counter;                      /* number of rtc interrupts to wait before noifying program of rtc interrupt ("virtual interrupt"). acts as a frequency divider. */             
     uint16_t rtc_interrupt_cnt;                /* number of rtc interrupts occured since last virtual interrupt sent */
@@ -61,7 +64,6 @@ typedef struct pcb {
 //////////////// Variables to track the current state of running processes ////////////////////
 
 extern pcb_t* pcb_arr[NUM_PROCESS];
-
 
 /* pid of most recently created process */
 extern pid_t curr_pid;
