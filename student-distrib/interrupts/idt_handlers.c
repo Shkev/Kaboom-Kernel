@@ -439,13 +439,13 @@ void kbd_handler() {
 	memset(terminals[curr_term].keybuf, '\0', KEYBUF_MAX_SIZE);
     } else if ((ctrl == 1) && (scan_code == C_PRESS)) {
 	// CTRL-C logic to halt current program
-	memset(terminals[curr_term].keybuf, '\0', KEYBUF_MAX_SIZE);
-	terminals[curr_term].keybufcnt = 0;
-	if (curr_pid >= 0) { // if there is a process running terminate it
-	    send_eoi(1);
-	    // halt acts like a soft interrupt here
-	    sys_halt(1);
-	}
+	// DOES NOT WORK. NEEDS SIGNALS IMPLEMENTED
+	/* memset(terminals[curr_term].keybuf, '\0', KEYBUF_MAX_SIZE); */
+	/* terminals[curr_term].keybufcnt = 0; */
+	/* if (curr_pid >= 0) { // if there is a process running terminate it */
+	/*     send_eoi(1); */
+	/*     sys_halt(1); */
+	/* } */
     } else if (alt == 1) {
 	// ALT commands (switching active terminal)
 	switch (scan_code) {
