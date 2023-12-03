@@ -51,7 +51,7 @@ typedef struct pcb {
     volatile uint8_t exception_flag;           /* track whether exception thrown in process (1 if excp occured, 0 otherwise) */
     volatile term_id_t term_id;		       /* terminal process is running in */
     uint16_t rtc_counter;                      /* number of rtc interrupts to wait before noifying program of rtc interrupt ("virtual interrupt"). acts as a frequency divider. */             
-    //uint16_t rtc_interrupt_cnt;                /* number of rtc interrupts occured since last virtual interrupt sent */
+    uint16_t rtc_interrupt_cnt;                /* number of rtc interrupts occured since last virtual interrupt sent */
     fd_arr_entry_t fd_arr[MAXFILES_PER_TASK];  /* file descriptor array. A given file descriptor indexes into this array to get info about the file. */
     char command_line_args[CMD_ARG_LEN];
 } pcb_t;

@@ -316,10 +316,16 @@ void security_handler() {
 void rtc_handler() {
     //test_interrupts();
 
-    rtc_interrupt_cnt++;
-    if (rtc_interrupt_cnt == rtc_counter) {
+    pid_t pid;
+    for (pid = 0; pid < NUM_PROCESS; ++pid) {
+	if (pcb_arr[pid] != NULL && pcb_arr[pid]->state == ACTIVE) {
+	    pcb_arr[pid]->rtc_interrupt_cnt++;
+	}
+    }
+    
+    if (pcb_arr[curr_pid]->rtc_interrupt_cnt >= pcb_arr[curr_pid]->rtc_counter) {
 	rtc_flag = 1;   // raise RTC flag when ready for virtual interrupt
-	rtc_interrupt_cnt = 0;
+	pcb_arr[curr_pid]->rtc_interrupt_cnt = 0;
     }
 
     /* We read register C to see what type of interrupt occured.

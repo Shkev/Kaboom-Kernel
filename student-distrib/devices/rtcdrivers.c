@@ -21,8 +21,8 @@ static uint32_t compute_rtc_rate_from_freq(int32_t freq);
  */
 int32_t rtc_open(const int8_t* fname) {
     // set default rate to 2Hz
-    rtc_counter = RTC_MAX_FREQ / 2;
-    rtc_interrupt_cnt = 0;
+    pcb_arr[curr_pid]->rtc_counter = RTC_MAX_FREQ / 2;
+    pcb_arr[curr_pid]->rtc_interrupt_cnt = 0;
     return 0;
 }
 
@@ -59,8 +59,8 @@ int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes) {
     if (write_freq > 1024 || !is_power_of_2(write_freq)) {
 	    return -1;
     }
-    rtc_counter = RTC_MAX_FREQ / write_freq;
-    rtc_interrupt_cnt = 0;
+    pcb_arr[curr_pid]->rtc_counter = RTC_MAX_FREQ / write_freq;
+    pcb_arr[curr_pid]->rtc_interrupt_cnt = 0;
     return 0;
 }
 
