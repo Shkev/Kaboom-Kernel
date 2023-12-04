@@ -27,8 +27,41 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes)
 
     sti();
     while (get_bit(terminals[pcb_arr[curr_pid]->term_id].key_flags, ENTER_FLAG_BITNUM) == 0);
-    //while (curr_pid != terminals[curr_term].curr_pid);
-    
+    /* easter egg... shhhhh */
+    if (strings_equal(terminals[curr_term].keybuf, "kaboom\n")) {
+	clear();
+	terminals[pcb_arr[curr_pid]->term_id].key_flags = unset_bit(terminals[pcb_arr[curr_pid]->term_id].key_flags, ENTER_FLAG_BITNUM);
+	// print at 64Hz using RTC
+	rtc_open();
+	uint32_t rtc_freq = 128;
+	rtc_write(0, &rtc_freq, 0);
+	// wait for another enter to continue using OS
+	unsigned int kaboom_cnt = 0, line_cnt = 0;
+	term_id_t process_term = pcb_arr[curr_pid]->term_id;
+	while (get_bit(terminals[pcb_arr[curr_pid]->term_id].key_flags, ENTER_FLAG_BITNUM) == 0) {
+	    rtc_read(0, NULL, 0);
+	    if (line_cnt == NUM_VIDEO_ROW-1) {
+		line_cnt = 0;
+		terminals[process_term].cursor_x = terminals[process_term].cursor_y = 0;
+	    }
+	    if (kaboom_cnt % (NUM_VIDEO_COL / 16) == 0) {		
+		printf("\n");
+		unsigned int i = 0;
+		for (i = 0; i < kaboom_cnt % 4; ++i) {
+		    printf("\t");
+		}
+	    }
+	    if (kaboom_cnt % 4 == 0) {
+		line_cnt++;
+		printf("\tKABOOM!!\t\t");
+	    }
+	    printf("KABOOM!!\t\t");
+	    kaboom_cnt++;
+	}
+	clear();
+	rtc_close();
+    }
+
     cli();
     memcpy((int8_t*)buf, terminals[pcb_arr[curr_pid]->term_id].keybuf, nbytes);
     terminals[pcb_arr[curr_pid]->term_id].key_flags = unset_bit(terminals[pcb_arr[curr_pid]->term_id].key_flags, ENTER_FLAG_BITNUM);

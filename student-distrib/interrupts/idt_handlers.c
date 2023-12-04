@@ -427,10 +427,6 @@ void kbd_handler() {
     //ENTER LOGIC
     if (scan_code == ENTER_PRESSED) {
 	terminals[curr_term].key_flags = set_bit(terminals[curr_term].key_flags, ENTER_FLAG_BITNUM);
-    } else if (scan_code == ENTER_RELEASE) {
-        // release
-        //memset(terminals[curr_term].keybuf, '\0', KEYBUF_MAX_SIZE);
-        //enterflag = 0;
     }
 
     //CTRL LOGIC
